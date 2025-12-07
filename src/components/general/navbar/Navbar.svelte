@@ -12,11 +12,19 @@
     Zap,
     User,
     MoreHorizontal,
-    Feather
+    Feather,
+    ChevronLeft,
+    ChevronRight,
   } from "lucide-svelte";
+
+  export let isCollapsed = false;
+
+  function toggleCollapse() {
+    isCollapsed = !isCollapsed;
+  }
 </script>
 
-<nav class="sidebar">
+<nav class="sidebar {isCollapsed ? 'collapsed' : ''}">
   <div class="sidebar-container">
     <div class="brand">
       <a href="/" aria-label="Home">
@@ -135,6 +143,14 @@
       </div>
     </button>
   </div>
+
+  <button class="collapse-toggle" on:click={toggleCollapse} aria-label="Toggle Menu">
+    {#if isCollapsed}
+        <ChevronRight size={24} />
+    {:else}
+        <ChevronLeft size={24} />
+    {/if}
+  </button>
 </nav>
 
 <style>
@@ -161,6 +177,58 @@
     background-color: #ffffff;
     z-index: 1000;
     box-sizing: border-box;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Collapsed state styles - mimics tablet media query but via class */
+  .sidebar.collapsed {
+    width: 88px; /* Force width */
+    padding: 0 12px;
+    align-items: center;
+  }
+
+  .sidebar.collapsed .brand,
+  .sidebar.collapsed .nav-links li {
+    justify-content: center;
+  }
+
+  .sidebar.collapsed .text,
+  .sidebar.collapsed .profile-details {
+    display: none;
+    opacity: 0; /* Fade out effect helper */
+  }
+
+  .sidebar.collapsed .icon-container,
+  .sidebar.collapsed .profile-avatar {
+     margin-right: 0;
+  }
+
+  .sidebar.collapsed .profile-card {
+      justify-content: center;
+      padding: 12px;
+  }
+
+  .sidebar.collapsed .post-btn {
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    min-width: 56px;
+    border-radius: 50%;
+  }
+
+  .sidebar.collapsed .post-btn .text {
+    display: none;
+  }
+
+  .sidebar.collapsed .post-btn .icon-feather {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar.collapsed .nav-item,
+  .sidebar.collapsed .nav-item-button {
+      padding: 12px;
   }
 
   .sidebar-container {
@@ -169,6 +237,12 @@
     height: 100%;
     align-items: flex-start;
     width: 100%;
+    /* Transition inner container just in case */
+    transition: align-items 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .sidebar.collapsed .sidebar-container {
+      align-items: center;
   }
 
   /* Brand */
@@ -177,6 +251,7 @@
     margin-bottom: 4px;
     width: 100%;
     display: flex;
+    transition: justify-content 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* Profile Card */
@@ -189,10 +264,11 @@
     border-radius: 9999px;
     text-decoration: none;
     color: var(--text-color);
-    transition: background-color 0.2s, transform 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-sizing: border-box;
     background-color: #f7f9f9;
     border: 2px solid transparent;
+    overflow: hidden; /* Hide overflow content during transition */
   }
 
   .profile-card:hover {
@@ -201,12 +277,17 @@
     border-color: #d0ebff;
   }
 
+  .sidebar.collapsed .profile-card:hover {
+      transform: scale(1.1); /* Slightly more bounce when small */
+  }
+
   .profile-avatar {
     margin-right: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 48px;
+    transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .profile-avatar img {
@@ -222,6 +303,8 @@
     flex-direction: column;
     justify-content: center;
     line-height: 1.2;
+    white-space: nowrap; /* Prevent wrapping during transition */
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .profile-name {
@@ -242,7 +325,7 @@
     margin-top: 4px;
   }
 
-  /* Responsive adjustment for Profile Card */
+  /* Responsive adjustment for Profile Card - keep existing media query as fallback/base */
   @media (max-width: 1280px) {
     .profile-card {
       justify-content: center;
@@ -301,12 +384,13 @@
     border-radius: 9999px;
     text-decoration: none;
     color: var(--text-color);
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     background: none;
     border: none;
     outline: none;
     margin: 10px 0;
+    overflow: hidden;
   }
 
   .nav-item:hover,
@@ -321,6 +405,7 @@
     justify-content: center;
     width: 48px;
     margin-right: 20px;
+    transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .text {
@@ -330,6 +415,8 @@
     color: #0f1419;
     margin-right: 16px;
     font-family: var(--font-family);
+    white-space: nowrap;
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* Post Button */
@@ -344,16 +431,38 @@
     font-size: 20px;
     font-weight: 700;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+    transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s, width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
   }
 
   .post-btn:hover {
     background-color: #1a8cd8;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Collapse Toggle Button */
+  .collapse-toggle {
+    margin-top: auto;
+    margin-bottom: 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+    transition: background-color 0.2s;
+    align-self: center; /* Center horizontally in flex column */
+  }
+
+  .collapse-toggle:hover {
+    background-color: var(--hover-bg);
   }
 
   .post-btn .icon-feather {
@@ -411,6 +520,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+
+    /* Hide toggle on small screens where it's always collapsed anyway or controlled by system */
+    .collapse-toggle {
+        display: none;
     }
   }
 </style>

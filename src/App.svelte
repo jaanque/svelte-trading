@@ -1,9 +1,11 @@
 <script lang="ts">
   import Navbar from "./components/general/navbar/Navbar.svelte";
+
+  let isCollapsed = false;
 </script>
 
-<div class="app-layout">
-  <Navbar />
+<div class="app-layout" style="--sidebar-width: {isCollapsed ? '88px' : '275px'}">
+  <Navbar bind:isCollapsed />
   <main class="main-content">
     <!-- Content will go here -->
     <h1>Home</h1>
@@ -27,15 +29,11 @@
   }
 
   .main-content {
-    /* 
-       The Navbar is fixed, so we need to offset the content.
-       Since we can't easily share variables between Svelte component styles (without global CSS vars),
-       we'll match the values used in navbar.css
-    */
-    margin-left: 275px;
-    width: calc(100% - 275px);
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
     padding: 2rem;
     box-sizing: border-box;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   @media (max-width: 1280px) {

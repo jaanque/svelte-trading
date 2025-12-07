@@ -34,7 +34,7 @@
     */
     margin-left: 275px;
     width: calc(100% - 275px);
-    padding: 1rem;
+    padding: 2rem;
     box-sizing: border-box;
   }
 

@@ -224,7 +224,7 @@
     background: none;
     border: none;
     outline: none;
-    margin: 8px 0;
+    margin: 10px 0;
   }
 
   .nav-item:hover,
@@ -266,14 +266,14 @@
 
   /* Post Button */
   .post-btn {
-    margin-top: 24px;
+    margin-top: 32px;
     background-color: #0f1419;
     color: white;
     border: none;
     border-radius: 9999px;
-    height: 56px;
+    height: 60px;
     width: 90%;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     cursor: pointer;
     transition: background-color 0.2s;

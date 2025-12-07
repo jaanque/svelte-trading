@@ -31,6 +31,20 @@
       </a>
     </div>
 
+    <a href="/profile" class="profile-card nav-item">
+      <div class="profile-avatar">
+        <img
+          src="https://api.dicebear.com/9.x/avataaars/svg?seed=Jules"
+          alt="Profile"
+        />
+      </div>
+      <div class="profile-details">
+        <div class="profile-name">Jules Agent</div>
+        <div class="profile-handle">@jules_agent</div>
+        <div class="profile-value">▲ $1,240.00</div>
+      </div>
+    </a>
+
     <ul class="nav-links">
       <li>
         <a href="/" class="nav-item active">
@@ -105,14 +119,6 @@
         </a>
       </li>
       <li>
-        <a href="/profile" class="nav-item">
-          <div class="icon-container">
-            <User size={28} strokeWidth={2} />
-          </div>
-          <span class="text">Profile</span>
-        </a>
-      </li>
-      <li>
         <button class="nav-item-button">
           <div class="icon-container">
             <MoreHorizontal size={28} strokeWidth={2} />
@@ -171,6 +177,78 @@
     margin-bottom: 4px;
     width: 100%;
     display: flex;
+  }
+
+  /* Profile Card */
+  .profile-card {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    margin: 8px 0 16px 0;
+    width: 100%;
+    border-radius: 9999px;
+    text-decoration: none;
+    color: var(--text-color);
+    transition: background-color 0.2s;
+    box-sizing: border-box;
+  }
+
+  .profile-card:hover {
+    background-color: var(--hover-bg);
+  }
+
+  .profile-avatar {
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .profile-avatar img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #ddd;
+  }
+
+  .profile-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.2;
+  }
+
+  .profile-name {
+    font-weight: 700;
+    font-size: 16px;
+    color: #0f1419;
+  }
+
+  .profile-handle {
+    font-size: 14px;
+    color: #536471;
+  }
+
+  .profile-value {
+    font-size: 14px;
+    color: #00ba7c;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  /* Responsive adjustment for Profile Card */
+  @media (max-width: 1280px) {
+    .profile-card {
+      justify-content: center;
+      padding: 12px;
+    }
+    .profile-details {
+      display: none;
+    }
+    .profile-avatar {
+      margin-right: 0;
+    }
   }
 
   .brand a {

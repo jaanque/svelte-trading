@@ -1,4 +1,6 @@
-<script lang="ts" src="./navbar.ts"></script>
+<script lang="ts">
+  import "./navbar.ts";
+</script>
 
 <nav class="navbar">
   <div class="navbar-container">
@@ -21,5 +23,5 @@
 </nav>
 
 <style>
-  @import './navbar.css';
+  @import "./navbar.css";
 </style>

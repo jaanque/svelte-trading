@@ -51,7 +51,6 @@
       <li>
         <a href="/notifications" class="nav-item">
           <div class="icon-container">
-            <div class="badge">20+</div>
             <Bell size={28} strokeWidth={2} />
           </div>
           <span class="text">Notifications</span>
@@ -247,21 +246,6 @@
     color: #0f1419;
     margin-right: 16px;
     font-family: var(--font-family);
-  }
-
-  /* Badge */
-  .badge {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background-color: #1d9bf0;
-    color: white;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 1px 4px;
-    border-radius: 999px;
-    border: 1px solid #fff;
-    z-index: 1;
   }
 
   /* Post Button */

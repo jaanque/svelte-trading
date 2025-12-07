@@ -33,11 +33,11 @@
 
     <ul class="nav-links">
       <li>
-        <a href="/" class="nav-item">
+        <a href="/" class="nav-item active">
           <div class="icon-container">
-            <Home size={28} strokeWidth={2} />
+            <Home size={30} strokeWidth={3} />
           </div>
-          <span class="text">Home</span>
+          <span class="text" style="font-weight: 700;">Home</span>
         </a>
       </li>
       <li>
@@ -242,7 +242,7 @@
 
   .text {
     font-size: 20px;
-    font-weight: 400;
+    font-weight: 500;
     line-height: 24px;
     color: #0f1419;
     margin-right: 16px;
@@ -267,7 +267,7 @@
   /* Post Button */
   .post-btn {
     margin-top: 32px;
-    background-color: #0f1419;
+    background-color: #1d9bf0;
     color: white;
     border: none;
     border-radius: 9999px;
@@ -276,7 +276,7 @@
     font-size: 20px;
     font-weight: 700;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -284,7 +284,8 @@
   }
 
   .post-btn:hover {
-    background-color: #272c30;
+    background-color: #1a8cd8;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
   }
 
   .post-btn .icon-feather {

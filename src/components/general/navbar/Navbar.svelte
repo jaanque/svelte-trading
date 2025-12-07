@@ -183,25 +183,30 @@
   .profile-card {
     display: flex;
     align-items: center;
-    padding: 12px;
-    margin: 8px 0 16px 0;
+    padding: 16px;
+    margin: 12px 0 24px 0;
     width: 100%;
     border-radius: 9999px;
     text-decoration: none;
     color: var(--text-color);
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.2s;
     box-sizing: border-box;
+    background-color: #f7f9f9;
+    border: 2px solid transparent;
   }
 
   .profile-card:hover {
-    background-color: var(--hover-bg);
+    background-color: #e8f5fe;
+    transform: scale(1.02);
+    border-color: #d0ebff;
   }
 
   .profile-avatar {
-    margin-right: 12px;
+    margin-right: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 48px;
   }
 
   .profile-avatar img {
@@ -220,21 +225,21 @@
   }
 
   .profile-name {
-    font-weight: 700;
-    font-size: 16px;
+    font-weight: 800;
+    font-size: 17px;
     color: #0f1419;
   }
 
   .profile-handle {
-    font-size: 14px;
+    font-size: 15px;
     color: #536471;
   }
 
   .profile-value {
-    font-size: 14px;
+    font-size: 15px;
     color: #00ba7c;
-    font-weight: 600;
-    margin-top: 2px;
+    font-weight: 700;
+    margin-top: 4px;
   }
 
   /* Responsive adjustment for Profile Card */
@@ -314,6 +319,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 48px;
     margin-right: 20px;
   }
 

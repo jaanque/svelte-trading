@@ -23,92 +23,125 @@
 </nav>
 
 <style>
+  :root {
+    --navbar-height: 70px;
+    --primary-color: #007bff;
+    --hover-bg: #f3f4f6;
+    --text-color: #374151;
+    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
   .navbar {
     background-color: #ffffff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid #e5e7eb;
     position: sticky;
     top: 0;
     z-index: 1000;
     width: 100%;
+    height: var(--navbar-height);
+    display: flex;
+    align-items: center;
+    font-family: var(--font-family);
   }
 
   .navbar-container {
-    max-width: 1200px;
+    width: 100%;
+    max-width: 1920px; /* Limit width on ultra-wide screens but keep it spacious */
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 2rem;
+    padding: 0 2rem; /* Consistent horizontal padding */
   }
 
+  /* Brand / Logo */
   .brand a {
     font-size: 1.5rem;
-    font-weight: 700;
-    color: #333;
+    font-weight: 800;
+    color: #111827;
     text-decoration: none;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.025em;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s ease;
   }
 
+  .brand a:hover {
+    background-color: var(--hover-bg);
+  }
+
+  /* Navigation Links */
   .nav-links {
     list-style: none;
     display: flex;
-    gap: 2rem;
+    gap: 0.5rem; /* Space between the "boxes" */
     margin: 0;
     padding: 0;
   }
 
   .nav-links a {
-    color: #555;
+    color: var(--text-color);
     text-decoration: none;
     font-weight: 500;
-    font-size: 1rem;
-    transition: color 0.2s ease;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem; /* Create the box area */
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    display: block;
   }
 
   .nav-links a:hover {
-    color: #000;
+    background-color: var(--hover-bg);
+    color: #111827;
   }
 
+  /* Auth Buttons */
   .auth-actions {
     display: flex;
-    gap: 1rem;
+    gap: 0.75rem;
     align-items: center;
   }
 
   .btn {
     text-decoration: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.5rem;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .btn-text {
-    color: #555;
+    color: var(--text-color);
   }
 
   .btn-text:hover {
-    color: #000;
-    background-color: #f5f5f5;
+    background-color: var(--hover-bg);
+    color: #111827;
   }
 
   .btn-primary {
-    background-color: #007bff;
+    background-color: #111827; /* Darker, more professional black/grey */
     color: white;
-    border: 1px solid #007bff;
   }
 
   .btn-primary:hover {
-    background-color: #0056b3;
-    border-color: #0056b3;
-    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+    background-color: #000000;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
-  /* Responsive adjustments could go here */
+  /* Responsive Behavior */
   @media (max-width: 768px) {
     .nav-links {
-      display: none; /* Mobile menu implementation needed for smaller screens */
+      display: none; /* In a real app, this would be a hamburger menu */
+    }
+
+    .navbar-container {
+      padding: 0 1rem;
     }
   }
 </style>

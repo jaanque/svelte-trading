@@ -33,23 +33,25 @@
 <div class="app-layout" style="--sidebar-width: {isCollapsed ? '88px' : '275px'}">
   <Navbar bind:isCollapsed {currentPath} onNavigate={handleNavigate} />
   <main class="main-content">
-    {#if currentPath === "/" || currentPath === ""}
-      <Home />
-    {:else if currentPath === "/markets"}
-      <Markets />
-    {:else if currentPath === "/messages"}
-      <Messages />
-    {:else if currentPath === "/portfolio"}
-      <Portfolio />
-    {:else if currentPath === "/notifications"}
-      <Notifications />
-    {:else if currentPath === "/settings"}
-      <Settings />
-    {:else if currentPath === "/profile"}
-      <Profile />
-    {:else}
-      <Home />
-    {/if}
+    <div class="page-container">
+      {#if currentPath === "/" || currentPath === ""}
+        <Home />
+      {:else if currentPath === "/markets"}
+        <Markets />
+      {:else if currentPath === "/messages"}
+        <Messages />
+      {:else if currentPath === "/portfolio"}
+        <Portfolio />
+      {:else if currentPath === "/notifications"}
+        <Notifications />
+      {:else if currentPath === "/settings"}
+        <Settings />
+      {:else if currentPath === "/profile"}
+        <Profile />
+      {:else}
+        <Home />
+      {/if}
+    </div>
   </main>
 </div>
 
@@ -63,6 +65,15 @@
     color: #0f1419;
   }
 
+  /* Global Typography Refinements for Pages */
+  :global(h1) {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 24px 0;
+    line-height: 28px;
+    color: #0f1419;
+  }
+
   .app-layout {
     display: flex;
     width: 100%;
@@ -72,9 +83,15 @@
   .main-content {
     margin-left: var(--sidebar-width);
     width: calc(100% - var(--sidebar-width));
-    padding: 2rem;
+    padding: 0; /* Reset padding to allow full control by page container or sticky headers if needed */
     box-sizing: border-box;
     transition: margin-left 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .page-container {
+    padding: 16px 20px;
+    max-width: 600px; /* Twitter-like content column width */
+    margin: 0;
   }
 
   @media (max-width: 768px) {
@@ -88,8 +105,11 @@
     .main-content {
       margin-left: 0;
       width: 100%;
-      padding: 1rem;
       padding-bottom: 80px; /* Space for bottom nav */
+    }
+
+    .page-container {
+      padding: 12px 16px;
     }
   }
 </style>

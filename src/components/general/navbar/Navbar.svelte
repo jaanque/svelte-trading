@@ -45,17 +45,6 @@
 
         if (activeIndex !== -1 && navElements[activeIndex]) {
           const el = navElements[activeIndex];
-          // Since indicator is relative to ul, and li are flex items in ul (flex-col).
-          // We need to be careful. The indicator is absolute in ul.
-          // el is the <a> tag. It has a parent <li>.
-          // The <li> is what stacks. The <a> is inside <li>.
-          // If we want to highlight the <a> tag area:
-          // We need to calculate el.offsetTop relative to the UL.
-          // el.offsetTop is relative to offsetParent.
-          // If <li> is not positioned, offsetParent is <ul> (because we will make it relative).
-          // However, <a> has margin.
-          // Let's rely on offsetTop/offsetLeft.
-
           indicatorStyle = `
             top: ${el.offsetTop}px;
             left: ${el.offsetLeft}px;
@@ -124,7 +113,8 @@
             <div class="icon-container">
               <svelte:component this={item.icon} size={item.size} strokeWidth={item.strokeWidth} />
             </div>
-            <span class="text">{item.label}</span>
+            <!-- Use data-text to create a bold placeholder -->
+            <span class="text" data-text={item.label}>{item.label}</span>
           </a>
         </li>
       {/each}
@@ -242,11 +232,17 @@
 
   /* Brand */
   .brand {
-    padding: 4px 0;
+    padding: 4px 0 4px 12px; /* Adjusted padding for alignment in expanded mode */
     margin-bottom: 4px;
     width: 100%;
     display: flex;
+    box-sizing: border-box; /* Ensure padding is included in width */
     transition: justify-content 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* Reset padding in collapsed mode to ensure centering */
+  .sidebar.collapsed .brand {
+    padding-left: 0;
   }
 
   /* Profile Card */
@@ -428,6 +424,16 @@
     font-weight: 800;
   }
 
+  /* Reserve space for bold text to prevent layout shift */
+  .text::after {
+    display: block;
+    content: attr(data-text);
+    font-weight: 800;
+    height: 0;
+    overflow: hidden;
+    visibility: hidden;
+  }
+
   /* Active Indicator */
   .active-indicator {
     position: absolute;
@@ -498,6 +504,10 @@
 
     .sidebar-container {
       align-items: center;
+    }
+
+    .brand {
+       padding-left: 0;
     }
 
     .brand,

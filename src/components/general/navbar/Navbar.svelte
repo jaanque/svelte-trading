@@ -12,6 +12,8 @@
     MoreHorizontal,
   } from "lucide-svelte";
   import { onMount } from "svelte";
+  // @ts-ignore
+  import svelteLogo from "../../../assets/svelte.svg";
 
   export let isCollapsed = false;
   export let currentPath = "/";
@@ -71,14 +73,7 @@
   <div class="sidebar-container">
     <div class="brand">
       <a href="/" aria-label="Home" on:click={(e) => handleLinkClick(e, "/")}>
-        <!-- X logo (Brand) -->
-        <svg viewBox="0 0 24 24" aria-hidden="true" class="brand-icon">
-          <g>
-            <path
-              d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
-            ></path>
-          </g>
-        </svg>
+        <img src={svelteLogo} class="brand-icon" alt="Svelte Logo" />
       </a>
     </div>
 
@@ -365,7 +360,7 @@
   .brand-icon {
     height: 32px;
     width: 32px;
-    fill: currentColor;
+    object-fit: contain; /* Ensure image fits nicely */
   }
 
   /* Nav Links */
@@ -387,7 +382,7 @@
 
   .nav-item {
     display: inline-flex;
-    align-items: center;
+    align-items: center; /* Ensures vertical alignment of icon and text */
     padding: 16px 24px 16px 16px;
     border-radius: 9999px;
     text-decoration: none;
@@ -454,7 +449,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
+    width: 48px; /* Fixed width for icon container ensures alignment */
+    height: 32px; /* Ensure sufficient height */
     margin-right: 20px;
     transition: margin-right 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }

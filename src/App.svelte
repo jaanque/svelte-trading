@@ -7,6 +7,8 @@
   import Notifications from "./components/pages/Notifications.svelte";
   import Settings from "./components/pages/Settings.svelte";
   import Profile from "./components/pages/Profile.svelte";
+  import Login from "./components/pages/Login.svelte";
+  import Register from "./components/pages/Register.svelte";
   import { onMount } from "svelte";
 
   let isCollapsed = false;
@@ -28,32 +30,42 @@
       window.removeEventListener("popstate", handlePopState);
     };
   });
+
+  $: isAuthPage = currentPath === "/login" || currentPath === "/register";
 </script>
 
-<div class="app-layout" style="--sidebar-width: {isCollapsed ? '88px' : '275px'}">
-  <Navbar bind:isCollapsed {currentPath} onNavigate={handleNavigate} />
-  <main class="main-content">
-    <div class="page-container">
-      {#if currentPath === "/" || currentPath === ""}
-        <Home />
-      {:else if currentPath === "/markets"}
-        <Markets />
-      {:else if currentPath === "/messages"}
-        <Messages />
-      {:else if currentPath === "/portfolio"}
-        <Portfolio />
-      {:else if currentPath === "/notifications"}
-        <Notifications />
-      {:else if currentPath === "/settings"}
-        <Settings />
-      {:else if currentPath === "/profile"}
-        <Profile />
-      {:else}
-        <Home />
-      {/if}
-    </div>
-  </main>
-</div>
+{#if isAuthPage}
+  {#if currentPath === "/login"}
+    <Login onNavigate={handleNavigate} />
+  {:else if currentPath === "/register"}
+    <Register onNavigate={handleNavigate} />
+  {/if}
+{:else}
+  <div class="app-layout" style="--sidebar-width: {isCollapsed ? '88px' : '275px'}">
+    <Navbar bind:isCollapsed {currentPath} onNavigate={handleNavigate} />
+    <main class="main-content">
+      <div class="page-container">
+        {#if currentPath === "/" || currentPath === ""}
+          <Home />
+        {:else if currentPath === "/markets"}
+          <Markets />
+        {:else if currentPath === "/messages"}
+          <Messages />
+        {:else if currentPath === "/portfolio"}
+          <Portfolio />
+        {:else if currentPath === "/notifications"}
+          <Notifications />
+        {:else if currentPath === "/settings"}
+          <Settings />
+        {:else if currentPath === "/profile"}
+          <Profile />
+        {:else}
+          <Home />
+        {/if}
+      </div>
+    </main>
+  </div>
+{/if}
 
 <style>
   :global(body) {

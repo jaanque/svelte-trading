@@ -29,7 +29,7 @@
   }
 
   const navItems = [
-    { path: "/", label: "Home", icon: Home, size: 30, strokeWidth: 3 },
+    { path: "/", label: "Home", icon: Home, size: 28, strokeWidth: 2 },
     { path: "/markets", label: "Markets", icon: Search, size: 28, strokeWidth: 2 },
     { path: "/messages", label: "Messages", icon: Mail, size: 28, strokeWidth: 2 },
     { path: "/portfolio", label: "Portfolio", icon: BarChart3, size: 28, strokeWidth: 2 },

@@ -1,13 +1,14 @@
 <script lang="ts">
   import "./navbar.ts";
   import {
-    LayoutDashboard,
+    Home,
     Compass,
     Activity,
     MessageCircle,
     MoreHorizontal,
     ChevronLeft,
     ChevronRight,
+    BadgeCheck,
   } from "lucide-svelte";
 
   export let isCollapsed = false;
@@ -40,9 +41,15 @@
         />
       </div>
       <div class="profile-details">
-        <div class="profile-name">Jules Agent</div>
+        <div class="profile-header">
+          <div class="profile-name">Jules Agent</div>
+          <BadgeCheck size={16} class="verified-icon" color="#1d9bf0" fill="white" />
+        </div>
         <div class="profile-handle">@jules_agent</div>
         <div class="profile-value">▲ $1,240.00</div>
+      </div>
+      <div class="profile-more">
+        <MoreHorizontal size={18} />
       </div>
     </a>
 
@@ -50,7 +57,7 @@
       <li>
         <a href="/" class="nav-item active">
           <div class="icon-container">
-            <LayoutDashboard size={30} strokeWidth={3} />
+            <Home size={30} strokeWidth={3} />
           </div>
           <span class="text" style="font-weight: 700;">Home</span>
         </a>
@@ -140,7 +147,8 @@
 
   /* Animate text fading and hiding */
   .text,
-  .profile-details {
+  .profile-details,
+  .profile-more {
     opacity: 1;
     width: auto;
     margin-right: 16px;
@@ -149,7 +157,8 @@
   }
 
   .sidebar.collapsed .text,
-  .sidebar.collapsed .profile-details {
+  .sidebar.collapsed .profile-details,
+  .sidebar.collapsed .profile-more {
     opacity: 0;
     width: 0;
     margin-right: 0;
@@ -250,10 +259,27 @@
     /* Transition is handled by common rule above */
   }
 
+  .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+  }
+
   .profile-name {
     font-weight: 800;
     font-size: 17px;
     color: #0f1419;
+  }
+
+  /* Lucide icon class needs global or deep selector if passing class prop, but here inline styles or wrapper works better.
+     However, we can just style it via SVG tag if needed, but let's assume default sizing works.
+  */
+
+  .profile-more {
+      margin-left: auto;
+      color: #0f1419;
+      display: flex;
+      align-items: center;
   }
 
   .profile-handle {
@@ -339,6 +365,10 @@
   .nav-item:hover,
   .nav-item-button:hover {
     background-color: var(--hover-bg);
+  }
+
+  .nav-item.active {
+      background-color: rgba(29, 155, 240, 0.1); /* Subtle blue tint */
   }
 
   .icon-container {

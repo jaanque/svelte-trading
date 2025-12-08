@@ -527,4 +527,90 @@
         display: none;
     }
   }
+
+  /* Mobile Bottom Navigation */
+  @media (max-width: 640px) {
+    .sidebar,
+    .sidebar.collapsed {
+      width: 100%;
+      height: auto;
+      top: auto;
+      bottom: 0;
+      flex-direction: row;
+      border-right: none;
+      border-top: 1px solid rgb(239, 243, 244);
+      padding: 0;
+      z-index: 2000;
+      overflow-y: visible;
+    }
+
+    .sidebar-container {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-around;
+      width: 100%;
+      height: 60px; /* Adjust as needed */
+    }
+
+    /* Hide unnecessary elements on mobile */
+    .brand,
+    .profile-card,
+    .collapse-toggle {
+      display: none;
+    }
+
+    .nav-links {
+      flex-direction: row;
+      justify-content: space-around;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .nav-links li {
+      width: auto;
+    }
+
+    .nav-item,
+    .nav-item-button,
+    .sidebar.collapsed .nav-item {
+      padding: 8px;
+      margin: 0;
+    }
+
+    .icon-container,
+    .sidebar.collapsed .icon-container {
+      margin-right: 0;
+      width: auto;
+    }
+
+    .text {
+      display: none;
+    }
+
+    /* Transform Post Button to Floating Action Button (FAB) */
+    .post-btn,
+    .sidebar.collapsed .post-btn {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      margin: 0;
+      padding: 0;
+      z-index: 2100;
+      box-shadow: 0 4px 10px rgba(29, 155, 240, 0.3);
+    }
+
+    .post-btn .text {
+      display: none;
+    }
+
+    .post-btn .icon-feather {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
 </style>

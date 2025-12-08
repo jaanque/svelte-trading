@@ -42,4 +42,13 @@
       width: calc(100% - 88px);
     }
   }
+
+  @media (max-width: 640px) {
+    .main-content {
+      margin-left: 0;
+      width: 100%;
+      padding: 1rem;
+      padding-bottom: 80px; /* Space for bottom nav */
+    }
+  }
 </style>

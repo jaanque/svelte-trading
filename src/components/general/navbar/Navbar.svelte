@@ -13,16 +13,23 @@
   } from "lucide-svelte";
 
   export let isCollapsed = false;
+  export let currentPath = "/";
+  export let onNavigate: (path: string) => void = () => {};
 
   function toggleCollapse() {
     isCollapsed = !isCollapsed;
+  }
+
+  function handleLinkClick(event: MouseEvent, path: string) {
+    event.preventDefault();
+    onNavigate(path);
   }
 </script>
 
 <nav class="sidebar {isCollapsed ? 'collapsed' : ''}">
   <div class="sidebar-container">
     <div class="brand">
-      <a href="/" aria-label="Home">
+      <a href="/" aria-label="Home" on:click={(e) => handleLinkClick(e, "/")}>
         <!-- X logo (Brand) -->
         <svg viewBox="0 0 24 24" aria-hidden="true" class="brand-icon">
           <g>
@@ -34,7 +41,7 @@
       </a>
     </div>
 
-    <a href="/profile" class="profile-card nav-item">
+    <a href="/profile" class="profile-card nav-item" on:click={(e) => handleLinkClick(e, "/profile")}>
       <div class="profile-avatar">
         <img
           src="https://api.dicebear.com/9.x/avataaars/svg?seed=Jules"
@@ -53,7 +60,7 @@
 
     <ul class="nav-links">
       <li>
-        <a href="/" class="nav-item active" title="Home">
+        <a href="/" class="nav-item {currentPath === '/' ? 'active' : ''}" title="Home" on:click={(e) => handleLinkClick(e, "/")}>
           <div class="icon-container">
             <Home size={30} strokeWidth={3} />
           </div>
@@ -61,7 +68,7 @@
         </a>
       </li>
       <li>
-        <a href="/markets" class="nav-item" title="Markets">
+        <a href="/markets" class="nav-item {currentPath === '/markets' ? 'active' : ''}" title="Markets" on:click={(e) => handleLinkClick(e, "/markets")}>
           <div class="icon-container">
             <Search size={28} strokeWidth={2} />
           </div>
@@ -69,7 +76,7 @@
         </a>
       </li>
       <li>
-        <a href="/messages" class="nav-item" title="Messages">
+        <a href="/messages" class="nav-item {currentPath === '/messages' ? 'active' : ''}" title="Messages" on:click={(e) => handleLinkClick(e, "/messages")}>
           <div class="icon-container">
             <Mail size={28} strokeWidth={2} />
           </div>
@@ -77,7 +84,7 @@
         </a>
       </li>
       <li>
-        <a href="/portfolio" class="nav-item" title="Portfolio">
+        <a href="/portfolio" class="nav-item {currentPath === '/portfolio' ? 'active' : ''}" title="Portfolio" on:click={(e) => handleLinkClick(e, "/portfolio")}>
           <div class="icon-container">
             <BarChart3 size={28} strokeWidth={2} />
           </div>
@@ -85,7 +92,7 @@
         </a>
       </li>
       <li>
-        <a href="/notifications" class="nav-item" title="Notifications">
+        <a href="/notifications" class="nav-item {currentPath === '/notifications' ? 'active' : ''}" title="Notifications" on:click={(e) => handleLinkClick(e, "/notifications")}>
           <div class="icon-container">
             <Bell size={28} strokeWidth={2} />
           </div>
@@ -93,7 +100,7 @@
         </a>
       </li>
       <li>
-        <a href="/settings" class="nav-item" title="Configuration">
+        <a href="/settings" class="nav-item {currentPath === '/settings' ? 'active' : ''}" title="Configuration" on:click={(e) => handleLinkClick(e, "/settings")}>
           <div class="icon-container">
             <Settings size={28} strokeWidth={2} />
           </div>

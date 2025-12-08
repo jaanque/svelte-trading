@@ -123,7 +123,7 @@
     background-color: #ffffff;
     z-index: 1000;
     box-sizing: border-box;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   /* Collapsed state styles - mimics tablet media query but via class */
@@ -138,10 +138,25 @@
     justify-content: center;
   }
 
+  /* Animate text fading and hiding */
+  .text,
+  .profile-details {
+    opacity: 1;
+    width: auto;
+    margin-right: 16px;
+    transform: translateX(0);
+    transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), margin-right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
   .sidebar.collapsed .text,
   .sidebar.collapsed .profile-details {
-    display: none;
-    opacity: 0; /* Fade out effect helper */
+    opacity: 0;
+    width: 0;
+    margin-right: 0;
+    transform: translateX(-10px);
+    overflow: hidden;
+    white-space: nowrap;
+    pointer-events: none; /* Prevent clicks on hidden text */
   }
 
   .sidebar.collapsed .icon-container,
@@ -166,7 +181,7 @@
     align-items: flex-start;
     width: 100%;
     /* Transition inner container just in case */
-    transition: align-items 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: align-items 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .sidebar.collapsed .sidebar-container {
@@ -179,7 +194,7 @@
     margin-bottom: 4px;
     width: 100%;
     display: flex;
-    transition: justify-content 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: justify-content 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   /* Profile Card */
@@ -192,7 +207,7 @@
     border-radius: 9999px;
     text-decoration: none;
     color: var(--text-color);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
     box-sizing: border-box;
     background-color: #f7f9f9;
     border: 2px solid transparent;
@@ -215,7 +230,7 @@
     align-items: center;
     justify-content: center;
     width: 48px;
-    transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: margin-right 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .profile-avatar img {
@@ -232,7 +247,7 @@
     justify-content: center;
     line-height: 1.2;
     white-space: nowrap; /* Prevent wrapping during transition */
-    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Transition is handled by common rule above */
   }
 
   .profile-name {
@@ -254,7 +269,7 @@
   }
 
   /* Responsive adjustment for Profile Card - keep existing media query as fallback/base */
-  @media (max-width: 1280px) {
+  @media (max-width: 768px) {
     .profile-card {
       justify-content: center;
       padding: 12px;
@@ -312,7 +327,7 @@
     border-radius: 9999px;
     text-decoration: none;
     color: var(--text-color);
-    transition: background-color 0.2s, padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.2s, padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
     cursor: pointer;
     background: none;
     border: none;
@@ -333,7 +348,7 @@
     justify-content: center;
     width: 48px;
     margin-right: 20px;
-    transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: margin-right 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .text {
@@ -344,7 +359,7 @@
     margin-right: 16px;
     font-family: var(--font-family);
     white-space: nowrap;
-    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Transition is handled by common rule above */
   }
 
   /* Collapse Toggle Button */

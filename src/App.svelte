@@ -33,7 +33,7 @@
     width: calc(100% - var(--sidebar-width));
     padding: 2rem;
     box-sizing: border-box;
-    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: margin-left 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   @media (max-width: 768px) {

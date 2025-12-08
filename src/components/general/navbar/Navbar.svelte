@@ -5,14 +5,7 @@
     Search,
     Bell,
     Mail,
-    SquareTerminal,
-    FileText,
-    Bookmark,
-    Users,
-    Zap,
-    User,
     MoreHorizontal,
-    Feather,
     ChevronLeft,
     ChevronRight,
   } from "lucide-svelte";
@@ -87,46 +80,6 @@
         </a>
       </li>
       <li>
-        <a href="/grok" class="nav-item">
-          <div class="icon-container">
-            <SquareTerminal size={28} strokeWidth={2} />
-          </div>
-          <span class="text">Grok</span>
-        </a>
-      </li>
-      <li>
-        <a href="/lists" class="nav-item">
-          <div class="icon-container">
-            <FileText size={28} strokeWidth={2} />
-          </div>
-          <span class="text">Lists</span>
-        </a>
-      </li>
-      <li>
-        <a href="/bookmarks" class="nav-item">
-          <div class="icon-container">
-            <Bookmark size={28} strokeWidth={2} />
-          </div>
-          <span class="text">Bookmarks</span>
-        </a>
-      </li>
-      <li>
-        <a href="/communities" class="nav-item">
-          <div class="icon-container">
-            <Users size={28} strokeWidth={2} />
-          </div>
-          <span class="text">Communities</span>
-        </a>
-      </li>
-      <li>
-        <a href="/premium" class="nav-item">
-          <div class="icon-container">
-            <Zap size={28} strokeWidth={2} />
-          </div>
-          <span class="text">Premium</span>
-        </a>
-      </li>
-      <li>
         <button class="nav-item-button">
           <div class="icon-container">
             <MoreHorizontal size={28} strokeWidth={2} />
@@ -135,13 +88,6 @@
         </button>
       </li>
     </ul>
-
-    <button class="post-btn">
-      <span class="text">Post</span>
-      <div class="icon-feather">
-        <Feather size={24} color="white" />
-      </div>
-    </button>
   </div>
 
   <button class="collapse-toggle" on:click={toggleCollapse} aria-label="Toggle Menu">
@@ -206,24 +152,6 @@
   .sidebar.collapsed .profile-card {
       justify-content: center;
       padding: 12px;
-  }
-
-  .sidebar.collapsed .post-btn {
-    width: 56px;
-    height: 56px;
-    padding: 0;
-    min-width: 56px;
-    border-radius: 50%;
-  }
-
-  .sidebar.collapsed .post-btn .text {
-    display: none;
-  }
-
-  .sidebar.collapsed .post-btn .icon-feather {
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .sidebar.collapsed .nav-item,
@@ -419,31 +347,6 @@
     transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Post Button */
-  .post-btn {
-    margin-top: 32px;
-    background-color: #1d9bf0;
-    color: white;
-    border: none;
-    border-radius: 9999px;
-    height: 60px;
-    width: 90%;
-    font-size: 20px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s, width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-  }
-
-  .post-btn:hover {
-    background-color: #1a8cd8;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
-  }
-
   /* Collapse Toggle Button */
   .collapse-toggle {
     margin-top: auto;
@@ -463,10 +366,6 @@
 
   .collapse-toggle:hover {
     background-color: var(--hover-bg);
-  }
-
-  .post-btn .icon-feather {
-    display: none;
   }
 
   /* Responsive adjustments */
@@ -502,24 +401,6 @@
 
     .icon-container {
       margin-right: 0;
-    }
-
-    .post-btn {
-      width: 56px;
-      height: 56px;
-      padding: 0;
-      min-width: 56px;
-      border-radius: 50%;
-    }
-
-    .post-btn .text {
-      display: none;
-    }
-
-    .post-btn .icon-feather {
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     /* Hide toggle on small screens where it's always collapsed anyway or controlled by system */
@@ -586,31 +467,6 @@
 
     .text {
       display: none;
-    }
-
-    /* Transform Post Button to Floating Action Button (FAB) */
-    .post-btn,
-    .sidebar.collapsed .post-btn {
-      position: fixed;
-      bottom: 70px;
-      right: 20px;
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      margin: 0;
-      padding: 0;
-      z-index: 2100;
-      box-shadow: 0 4px 10px rgba(29, 155, 240, 0.3);
-    }
-
-    .post-btn .text {
-      display: none;
-    }
-
-    .post-btn .icon-feather {
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
   }
 </style>

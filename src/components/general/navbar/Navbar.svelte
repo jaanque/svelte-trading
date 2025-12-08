@@ -51,15 +51,15 @@
 
     <ul class="nav-links">
       <li>
-        <a href="/" class="nav-item active">
+        <a href="/" class="nav-item active" title="Home">
           <div class="icon-container">
             <Home size={30} strokeWidth={3} />
           </div>
-          <span class="text" style="font-weight: 700;">Home</span>
+          <span class="text">Home</span>
         </a>
       </li>
       <li>
-        <a href="/explore" class="nav-item">
+        <a href="/explore" class="nav-item" title="Explore">
           <div class="icon-container">
             <Compass size={28} strokeWidth={2} />
           </div>
@@ -67,7 +67,7 @@
         </a>
       </li>
       <li>
-        <a href="/notifications" class="nav-item">
+        <a href="/notifications" class="nav-item" title="Notifications">
           <div class="icon-container">
             <Activity size={28} strokeWidth={2} />
           </div>
@@ -75,7 +75,7 @@
         </a>
       </li>
       <li>
-        <a href="/messages" class="nav-item">
+        <a href="/messages" class="nav-item" title="Messages">
           <div class="icon-container">
             <MessageCircle size={28} strokeWidth={2} />
           </div>
@@ -83,7 +83,7 @@
         </a>
       </li>
       <li>
-        <button class="nav-item-button">
+        <button class="nav-item-button" title="More">
           <div class="icon-container">
             <MoreHorizontal size={28} strokeWidth={2} />
           </div>
@@ -346,7 +346,7 @@
     border-radius: 9999px;
     text-decoration: none;
     color: var(--text-color);
-    transition: background-color 0.2s, padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: background-color 0.2s, padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
     cursor: pointer;
     background: none;
     border: none;
@@ -358,10 +358,20 @@
   .nav-item:hover,
   .nav-item-button:hover {
     background-color: var(--hover-bg);
+    transform: scale(1.02);
+  }
+
+  .nav-item:active,
+  .nav-item-button:active {
+    transform: scale(0.98);
   }
 
   .nav-item.active {
       background-color: rgba(29, 155, 240, 0.1); /* Subtle blue tint */
+  }
+
+  .nav-item.active .text {
+      font-weight: 800;
   }
 
   .icon-container {
@@ -484,6 +494,11 @@
       align-items: center;
       width: 100%;
       height: 100%;
+    }
+
+    .nav-item.active {
+        background: none; /* No background on mobile */
+        color: var(--primary-color);
     }
 
     .nav-links li {

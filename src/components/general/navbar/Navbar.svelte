@@ -8,7 +8,6 @@
     MoreHorizontal,
     ChevronLeft,
     ChevronRight,
-    BadgeCheck,
   } from "lucide-svelte";
 
   export let isCollapsed = false;
@@ -41,15 +40,12 @@
         />
       </div>
       <div class="profile-details">
-        <div class="profile-header">
-          <div class="profile-name">Jules Agent</div>
-          <BadgeCheck size={16} class="verified-icon" color="#1d9bf0" fill="white" />
-        </div>
+        <div class="profile-name">Jules Agent</div>
         <div class="profile-handle">@jules_agent</div>
         <div class="profile-value">▲ $1,240.00</div>
       </div>
       <div class="profile-more">
-        <MoreHorizontal size={18} />
+        <MoreHorizontal size={18} color="#536471" />
       </div>
     </a>
 
@@ -218,15 +214,17 @@
     color: var(--text-color);
     transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
     box-sizing: border-box;
-    background-color: #f7f9f9;
-    border: 2px solid transparent;
+    background-color: #ffffff;
+    border: 1px solid rgb(239, 243, 244);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
     overflow: hidden; /* Hide overflow content during transition */
   }
 
   .profile-card:hover {
-    background-color: #e8f5fe;
-    transform: scale(1.02);
-    border-color: #d0ebff;
+    background-color: #f7f9f9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: transparent;
   }
 
   .sidebar.collapsed .profile-card:hover {
@@ -259,11 +257,6 @@
     /* Transition is handled by common rule above */
   }
 
-  .profile-header {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-  }
 
   .profile-name {
     font-weight: 800;

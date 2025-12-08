@@ -1,10 +1,10 @@
 <script lang="ts">
   import "./navbar.ts";
   import {
-    Home,
-    Search,
-    Bell,
-    Mail,
+    LayoutDashboard,
+    Compass,
+    Activity,
+    MessageCircle,
     MoreHorizontal,
     ChevronLeft,
     ChevronRight,
@@ -50,7 +50,7 @@
       <li>
         <a href="/" class="nav-item active">
           <div class="icon-container">
-            <Home size={30} strokeWidth={3} />
+            <LayoutDashboard size={30} strokeWidth={3} />
           </div>
           <span class="text" style="font-weight: 700;">Home</span>
         </a>
@@ -58,7 +58,7 @@
       <li>
         <a href="/explore" class="nav-item">
           <div class="icon-container">
-            <Search size={28} strokeWidth={2} />
+            <Compass size={28} strokeWidth={2} />
           </div>
           <span class="text">Explore</span>
         </a>
@@ -66,7 +66,7 @@
       <li>
         <a href="/notifications" class="nav-item">
           <div class="icon-container">
-            <Bell size={28} strokeWidth={2} />
+            <Activity size={28} strokeWidth={2} />
           </div>
           <span class="text">Notifications</span>
         </a>
@@ -74,7 +74,7 @@
       <li>
         <a href="/messages" class="nav-item">
           <div class="icon-container">
-            <Mail size={28} strokeWidth={2} />
+            <MessageCircle size={28} strokeWidth={2} />
           </div>
           <span class="text">Messages</span>
         </a>

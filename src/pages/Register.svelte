@@ -1,46 +1,101 @@
 <script lang="ts">
-  import { supabase } from "../../lib/supabase";
+  import { supabase } from "../lib/supabase";
 
+  let name = "";
+  let username = "";
   let email = "";
   let password = "";
+  let confirmPassword = "";
   let errorMsg = "";
   let loading = false;
 
   export let onNavigate: (path: string) => void = () => {};
 
-  async function handleLogin() {
+  async function handleRegister() {
+    if (password !== confirmPassword) {
+      errorMsg = "Passwords do not match";
+      return;
+    }
+
+    if (username.length < 3) {
+      errorMsg = "Username must be at least 3 characters long";
+      return;
+    }
+
     loading = true;
     errorMsg = "";
 
-    const { error } = await supabase.auth.signInWithPassword({
+    // 1. Sign up the user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          full_name: name,
+          username: username,
+        },
+      },
     });
 
-    if (error) {
-      errorMsg = error.message;
+    if (authError) {
+      errorMsg = authError.message;
       loading = false;
-    } else {
+      return;
+    }
+
+    if (authData.user) {
+      // 2. Create profile entry (optional, depends on if trigger is used or manual insert)
+      // Since we provided meta data, if we have a trigger, it might handle it.
+      // But typically we might want to manually insert into a public profiles table if triggers aren't set up.
+      // For now, let's assume the user is created and we can redirect.
+      // However, the prompt asked for "script sql for tables", implying we need a profiles table.
+      // Best practice with Supabase is to use a trigger on auth.users to create a public profile.
+      // I will include that in the SQL script.
+
       loading = false;
+      // Ideally show a message to check email if email confirmation is on.
+      // Assuming auto-confirm or just redirecting for now.
       onNavigate("/");
     }
   }
 
-  function goToRegister(e: Event) {
+  function goToLogin(e: Event) {
     e.preventDefault();
-    onNavigate("/register");
+    onNavigate("/login");
   }
 </script>
 
 <div class="auth-container">
   <div class="auth-card">
-    <h1>Log in</h1>
+    <h1>Create your account</h1>
 
     {#if errorMsg}
       <div class="error">{errorMsg}</div>
     {/if}
 
-    <form on:submit|preventDefault={handleLogin}>
+    <form on:submit|preventDefault={handleRegister}>
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input
+          type="text"
+          id="name"
+          bind:value={name}
+          placeholder="Enter your name"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          bind:value={username}
+          placeholder="Choose a unique username"
+          required
+        />
+      </div>
+
       <div class="form-group">
         <label for="email">Email</label>
         <input
@@ -58,18 +113,29 @@
           type="password"
           id="password"
           bind:value={password}
-          placeholder="Enter your password"
+          placeholder="Create a password"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Verify Password</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          bind:value={confirmPassword}
+          placeholder="Confirm your password"
           required
         />
       </div>
 
       <button type="submit" disabled={loading}>
-        {loading ? "Logging in..." : "Log in"}
+        {loading ? "Creating account..." : "Sign up"}
       </button>
     </form>
 
     <div class="footer">
-      <p>Don't have an account? <a href="/register" on:click={goToRegister}>Sign up</a></p>
+      <p>Have an account already? <a href="/login" on:click={goToLogin}>Log in</a></p>
     </div>
   </div>
 </div>

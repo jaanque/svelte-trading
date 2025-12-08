@@ -1,14 +1,15 @@
 <script lang="ts">
   import Navbar from "./components/general/navbar/Navbar.svelte";
-  import Home from "./components/pages/Home.svelte";
-  import Markets from "./components/pages/Markets.svelte";
-  import Messages from "./components/pages/Messages.svelte";
-  import Portfolio from "./components/pages/Portfolio.svelte";
-  import Notifications from "./components/pages/Notifications.svelte";
-  import Settings from "./components/pages/Settings.svelte";
-  import Profile from "./components/pages/Profile.svelte";
-  import Login from "./components/pages/Login.svelte";
-  import Register from "./components/pages/Register.svelte";
+  import Home from "./pages/Home.svelte";
+  import Markets from "./pages/Markets.svelte";
+  import Messages from "./pages/Messages.svelte";
+  import Portfolio from "./pages/Portfolio.svelte";
+  import Notifications from "./pages/Notifications.svelte";
+  import Settings from "./pages/Settings.svelte";
+  import Profile from "./pages/Profile.svelte";
+  import Login from "./pages/Login.svelte";
+  import Register from "./pages/Register.svelte";
+  import TopNavbar from "./components/general/TopNavbar.svelte";
   import { onMount } from "svelte";
 
   let isCollapsed = false;
@@ -44,6 +45,7 @@
   <div class="app-layout" style="--sidebar-width: {isCollapsed ? '88px' : '275px'}">
     <Navbar bind:isCollapsed {currentPath} onNavigate={handleNavigate} />
     <main class="main-content">
+      <TopNavbar onNavigate={handleNavigate} />
       <div class="page-container">
         {#if currentPath === "/" || currentPath === ""}
           <Home />

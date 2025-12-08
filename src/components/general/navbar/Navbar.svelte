@@ -11,6 +11,7 @@
     ChevronRight,
     MoreHorizontal,
   } from "lucide-svelte";
+  import { onMount } from "svelte";
 
   export let isCollapsed = false;
   export let currentPath = "/";
@@ -24,6 +25,57 @@
     event.preventDefault();
     onNavigate(path);
   }
+
+  const navItems = [
+    { path: "/", label: "Home", icon: Home, size: 30, strokeWidth: 3 },
+    { path: "/markets", label: "Markets", icon: Search, size: 28, strokeWidth: 2 },
+    { path: "/messages", label: "Messages", icon: Mail, size: 28, strokeWidth: 2 },
+    { path: "/portfolio", label: "Portfolio", icon: BarChart3, size: 28, strokeWidth: 2 },
+    { path: "/notifications", label: "Notifications", icon: Bell, size: 28, strokeWidth: 2 },
+    { path: "/settings", label: "Configuration", icon: Settings, size: 28, strokeWidth: 2 },
+  ];
+
+  let navElements: HTMLAnchorElement[] = [];
+  let indicatorStyle = "";
+
+  function updateIndicator() {
+    // Wait for the DOM to settle if called during render
+    requestAnimationFrame(() => {
+        const activeIndex = navItems.findIndex((item) => item.path === currentPath);
+
+        if (activeIndex !== -1 && navElements[activeIndex]) {
+          const el = navElements[activeIndex];
+          // Since indicator is relative to ul, and li are flex items in ul (flex-col).
+          // We need to be careful. The indicator is absolute in ul.
+          // el is the <a> tag. It has a parent <li>.
+          // The <li> is what stacks. The <a> is inside <li>.
+          // If we want to highlight the <a> tag area:
+          // We need to calculate el.offsetTop relative to the UL.
+          // el.offsetTop is relative to offsetParent.
+          // If <li> is not positioned, offsetParent is <ul> (because we will make it relative).
+          // However, <a> has margin.
+          // Let's rely on offsetTop/offsetLeft.
+
+          indicatorStyle = `
+            top: ${el.offsetTop}px;
+            left: ${el.offsetLeft}px;
+            width: ${el.offsetWidth}px;
+            height: ${el.offsetHeight}px;
+            opacity: 1;
+          `;
+        } else {
+          indicatorStyle = "opacity: 0;";
+        }
+    });
+  }
+
+  $: currentPath, isCollapsed, updateIndicator();
+
+  onMount(() => {
+    updateIndicator();
+    window.addEventListener('resize', updateIndicator);
+    return () => window.removeEventListener('resize', updateIndicator);
+  });
 </script>
 
 <nav class="sidebar {isCollapsed ? 'collapsed' : ''}">
@@ -59,54 +111,23 @@
     </a>
 
     <ul class="nav-links">
-      <li>
-        <a href="/" class="nav-item {currentPath === '/' ? 'active' : ''}" title="Home" on:click={(e) => handleLinkClick(e, "/")}>
-          <div class="icon-container">
-            <Home size={30} strokeWidth={3} />
-          </div>
-          <span class="text">Home</span>
-        </a>
-      </li>
-      <li>
-        <a href="/markets" class="nav-item {currentPath === '/markets' ? 'active' : ''}" title="Markets" on:click={(e) => handleLinkClick(e, "/markets")}>
-          <div class="icon-container">
-            <Search size={28} strokeWidth={2} />
-          </div>
-          <span class="text">Markets</span>
-        </a>
-      </li>
-      <li>
-        <a href="/messages" class="nav-item {currentPath === '/messages' ? 'active' : ''}" title="Messages" on:click={(e) => handleLinkClick(e, "/messages")}>
-          <div class="icon-container">
-            <Mail size={28} strokeWidth={2} />
-          </div>
-          <span class="text">Messages</span>
-        </a>
-      </li>
-      <li>
-        <a href="/portfolio" class="nav-item {currentPath === '/portfolio' ? 'active' : ''}" title="Portfolio" on:click={(e) => handleLinkClick(e, "/portfolio")}>
-          <div class="icon-container">
-            <BarChart3 size={28} strokeWidth={2} />
-          </div>
-          <span class="text">Portfolio</span>
-        </a>
-      </li>
-      <li>
-        <a href="/notifications" class="nav-item {currentPath === '/notifications' ? 'active' : ''}" title="Notifications" on:click={(e) => handleLinkClick(e, "/notifications")}>
-          <div class="icon-container">
-            <Bell size={28} strokeWidth={2} />
-          </div>
-          <span class="text">Notifications</span>
-        </a>
-      </li>
-      <li>
-        <a href="/settings" class="nav-item {currentPath === '/settings' ? 'active' : ''}" title="Configuration" on:click={(e) => handleLinkClick(e, "/settings")}>
-          <div class="icon-container">
-            <Settings size={28} strokeWidth={2} />
-          </div>
-          <span class="text">Configuration</span>
-        </a>
-      </li>
+      <div class="active-indicator" style={indicatorStyle}></div>
+      {#each navItems as item, i}
+        <li>
+          <a
+            href={item.path}
+            class="nav-item {currentPath === item.path ? 'active' : ''}"
+            title={item.label}
+            on:click={(e) => handleLinkClick(e, item.path)}
+            bind:this={navElements[i]}
+          >
+            <div class="icon-container">
+              <svelte:component this={item.icon} size={item.size} strokeWidth={item.strokeWidth} />
+            </div>
+            <span class="text">{item.label}</span>
+          </a>
+        </li>
+      {/each}
     </ul>
   </div>
 
@@ -360,6 +381,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    position: relative; /* Essential for absolute positioning of indicator */
   }
 
   .nav-links li {
@@ -384,6 +406,8 @@
     outline: none;
     margin: 10px 0;
     overflow: hidden;
+    position: relative; /* Ensure it's above indicator if z-index is tricky, or below? */
+    z-index: 1; /* Content above indicator */
   }
 
   .nav-item:hover {
@@ -395,12 +419,28 @@
     transform: scale(0.98);
   }
 
+  /* Remove old active background */
   .nav-item.active {
-    background-color: rgba(29, 155, 240, 0.1); /* Subtle blue tint */
+    background-color: transparent;
   }
 
   .nav-item.active .text {
     font-weight: 800;
+  }
+
+  /* Active Indicator */
+  .active-indicator {
+    position: absolute;
+    background-color: rgba(29, 155, 240, 0.1);
+    border-radius: 9999px;
+    z-index: 0; /* Behind the link content */
+    pointer-events: none;
+    transition:
+      top 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+      left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+      width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+      height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 0.2s;
   }
 
   .icon-container {
@@ -528,6 +568,14 @@
       background: none; /* No background on mobile */
       color: var(--primary-color);
     }
+
+    /* Since mobile layout changes drastically (horizontal), absolute positioning of indicator might be tricky.
+       Maybe hide the sliding indicator on mobile and fall back to simple color?
+       Or try to make it horizontal?
+       For now, let's keep it simple. If it works, great.
+       Horizontal flex: offsetTop will be constant (0 or small), left will change.
+       It should work!
+    */
 
     .nav-links li {
       width: auto;

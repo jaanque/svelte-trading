@@ -89,7 +89,7 @@
         <div class="profile-details">
           <div class="profile-name">{$userProfile.full_name}</div>
           <div class="profile-handle">@{$userProfile.username}</div>
-          <div class="profile-value">▲ $1,240.00</div>
+          <div class="profile-value">{$userProfile.tokens} tokens</div>
         </div>
         <div class="profile-more">
           <MoreHorizontal size={18} color="#536471" />

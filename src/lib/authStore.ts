@@ -45,7 +45,7 @@ async function handleSession(session: Session | null) {
         username: session.user.user_metadata?.username || 'user',
         full_name: session.user.user_metadata?.full_name || 'User',
         avatar_url: session.user.user_metadata?.avatar_url || '',
-        tokens: 50,
+        tokens: 250,
       });
     }
   } else {

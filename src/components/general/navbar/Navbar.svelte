@@ -300,7 +300,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px; 
+    width: 28px;
     height: 28px;
     margin-right: 16px;
     transition: margin-right 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -343,7 +343,7 @@
   .nav-item.active .text {
     font-weight: 700;
   }
-  
+
   .nav-item.active {
       color: var(--text-main); /* Ensure text stays main color */
   }
@@ -363,11 +363,11 @@
     border-radius: 9999px;
     transition: background-color 0.2s;
   }
-  
+
   .profile-card-container:hover {
      background-color: var(--bg-hover);
   }
-  
+
   .sidebar.collapsed .profile-card-container {
     justify-content: center;
     padding: 0;
@@ -379,13 +379,13 @@
     margin: 0;
     flex-grow: 1;
   }
-  
+
   .sidebar.collapsed .profile-card {
      justify-content: center;
      flex-grow: 0;
      padding: 12px;
   }
-  
+
   .sidebar.collapsed .profile-card:hover {
      background-color: var(--bg-hover);
      border-radius: 50%;
@@ -400,7 +400,7 @@
     height: 40px;
     transition: margin-right 0.5s;
   }
-  
+
   .sidebar.collapsed .profile-avatar {
     margin-right: 0;
   }
@@ -454,7 +454,7 @@
     border-radius: 50%;
     transition: background-color 0.2s;
   }
-  
+
   .sidebar.collapsed .profile-more-btn {
       display: none;
   }
@@ -503,7 +503,7 @@
   .menu-item.logout {
     color: var(--text-main);
   }
-  
+
   /* Collapse Toggle Button */
   .collapse-toggle {
     margin-top: auto;
@@ -591,7 +591,7 @@
       padding: 8px;
       margin: 0;
     }
-    
+
     .icon-container {
         margin-right: 0;
     }

@@ -227,7 +227,7 @@
 
   /* Brand */
   .brand {
-    padding: 4px 0 4px 12px; /* Adjusted padding for alignment in expanded mode */
+    padding: 4px 0 4px 16px; /* Adjusted padding for alignment in expanded mode */
     margin-bottom: 4px;
     width: 100%;
     display: flex;
@@ -346,8 +346,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     transition: background-color 0.2s;
     color: var(--text-color);
@@ -358,8 +358,8 @@
   }
 
   .brand-icon {
-    height: 32px;
-    width: 32px;
+    height: 28px;
+    width: 28px;
     object-fit: contain; /* Ensure image fits nicely */
   }
 

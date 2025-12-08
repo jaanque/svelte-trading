@@ -11,6 +11,7 @@
   import Register from "./pages/Register.svelte";
   import TopNavbar from "./components/general/TopNavbar.svelte";
   import { onMount } from "svelte";
+  import { initAuth } from "./lib/authStore";
 
   let isCollapsed = false;
   let currentPath = window.location.pathname;
@@ -21,6 +22,8 @@
   }
 
   onMount(() => {
+    initAuth(); // Initialize authentication listener
+
     const handlePopState = () => {
       currentPath = window.location.pathname;
     };

@@ -12,6 +12,7 @@
     MoreHorizontal,
   } from "lucide-svelte";
   import { onMount } from "svelte";
+  import { userProfile } from "../../../lib/authStore";
   // @ts-ignore
   import svelteLogo from "../../../assets/svelte.svg";
 
@@ -77,22 +78,24 @@
       </a>
     </div>
 
-    <a href="/profile" class="profile-card nav-item" on:click={(e) => handleLinkClick(e, "/profile")}>
-      <div class="profile-avatar">
-        <img
-          src="https://api.dicebear.com/9.x/avataaars/svg?seed=Jules"
-          alt="Profile"
-        />
-      </div>
-      <div class="profile-details">
-        <div class="profile-name">Jules Agent</div>
-        <div class="profile-handle">@jules_agent</div>
-        <div class="profile-value">▲ $1,240.00</div>
-      </div>
-      <div class="profile-more">
-        <MoreHorizontal size={18} color="#536471" />
-      </div>
-    </a>
+    {#if $userProfile}
+      <a href="/profile" class="profile-card nav-item" on:click={(e) => handleLinkClick(e, "/profile")}>
+        <div class="profile-avatar">
+          <img
+            src={$userProfile.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${$userProfile.username}`}
+            alt="Profile"
+          />
+        </div>
+        <div class="profile-details">
+          <div class="profile-name">{$userProfile.full_name}</div>
+          <div class="profile-handle">@{$userProfile.username}</div>
+          <div class="profile-value">▲ $1,240.00</div>
+        </div>
+        <div class="profile-more">
+          <MoreHorizontal size={18} color="#536471" />
+        </div>
+      </a>
+    {/if}
 
     <ul class="nav-links">
       <div class="active-indicator" style={indicatorStyle}></div>

@@ -1,24 +1,8 @@
 <script lang="ts">
   import { supabase } from "../../lib/supabase";
-  import { onMount } from "svelte";
+  import { userSession } from "../../lib/authStore";
 
   export let onNavigate: (path: string) => void = () => {};
-
-  let session = null;
-
-  onMount(() => {
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      session = s;
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, s) => {
-      session = s;
-    });
-
-    return () => subscription.unsubscribe();
-  });
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -29,7 +13,7 @@
 <div class="top-navbar">
   <div class="spacer"></div>
   <div class="auth-buttons">
-    {#if !session}
+    {#if !$userSession}
       <button class="btn-login" on:click={() => onNavigate("/login")}>Log in</button>
       <button class="btn-register" on:click={() => onNavigate("/register")}>Sign up</button>
     {:else}

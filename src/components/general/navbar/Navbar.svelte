@@ -2,10 +2,11 @@
   import "./navbar.ts";
   import {
     Home,
-    Compass,
-    Activity,
-    MessageCircle,
-    MoreHorizontal,
+    Search,
+    Mail,
+    BarChart3,
+    Bell,
+    Settings,
     ChevronLeft,
     ChevronRight,
   } from "lucide-svelte";
@@ -59,36 +60,44 @@
         </a>
       </li>
       <li>
-        <a href="/explore" class="nav-item" title="Explore">
+        <a href="/markets" class="nav-item" title="Markets">
           <div class="icon-container">
-            <Compass size={28} strokeWidth={2} />
+            <Search size={28} strokeWidth={2} />
           </div>
-          <span class="text">Explore</span>
-        </a>
-      </li>
-      <li>
-        <a href="/notifications" class="nav-item" title="Notifications">
-          <div class="icon-container">
-            <Activity size={28} strokeWidth={2} />
-          </div>
-          <span class="text">Notifications</span>
+          <span class="text">Markets</span>
         </a>
       </li>
       <li>
         <a href="/messages" class="nav-item" title="Messages">
           <div class="icon-container">
-            <MessageCircle size={28} strokeWidth={2} />
+            <Mail size={28} strokeWidth={2} />
           </div>
           <span class="text">Messages</span>
         </a>
       </li>
       <li>
-        <button class="nav-item-button" title="More">
+        <a href="/portfolio" class="nav-item" title="Portfolio">
           <div class="icon-container">
-            <MoreHorizontal size={28} strokeWidth={2} />
+            <BarChart3 size={28} strokeWidth={2} />
           </div>
-          <span class="text">More</span>
-        </button>
+          <span class="text">Portfolio</span>
+        </a>
+      </li>
+      <li>
+        <a href="/notifications" class="nav-item" title="Notifications">
+          <div class="icon-container">
+            <Bell size={28} strokeWidth={2} />
+          </div>
+          <span class="text">Notifications</span>
+        </a>
+      </li>
+      <li>
+        <a href="/settings" class="nav-item" title="Configuration">
+          <div class="icon-container">
+            <Settings size={28} strokeWidth={2} />
+          </div>
+          <span class="text">Configuration</span>
+        </a>
       </li>
     </ul>
   </div>

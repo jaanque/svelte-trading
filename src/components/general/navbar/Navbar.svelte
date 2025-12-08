@@ -32,11 +32,41 @@
 
   const navItems = [
     { path: "/", label: "Home", icon: Home, size: 28, strokeWidth: 2 },
-    { path: "/markets", label: "Markets", icon: Search, size: 28, strokeWidth: 2 },
-    { path: "/messages", label: "Messages", icon: Mail, size: 28, strokeWidth: 2 },
-    { path: "/portfolio", label: "Portfolio", icon: BarChart3, size: 28, strokeWidth: 2 },
-    { path: "/notifications", label: "Notifications", icon: Bell, size: 28, strokeWidth: 2 },
-    { path: "/settings", label: "Configuration", icon: Settings, size: 28, strokeWidth: 2 },
+    {
+      path: "/markets",
+      label: "Markets",
+      icon: Search,
+      size: 28,
+      strokeWidth: 2,
+    },
+    {
+      path: "/messages",
+      label: "Messages",
+      icon: Mail,
+      size: 28,
+      strokeWidth: 2,
+    },
+    {
+      path: "/portfolio",
+      label: "Portfolio",
+      icon: BarChart3,
+      size: 28,
+      strokeWidth: 2,
+    },
+    {
+      path: "/notifications",
+      label: "Notifications",
+      icon: Bell,
+      size: 28,
+      strokeWidth: 2,
+    },
+    {
+      path: "/settings",
+      label: "Configuration",
+      icon: Settings,
+      size: 28,
+      strokeWidth: 2,
+    },
   ];
 
   let navElements: HTMLAnchorElement[] = [];
@@ -49,7 +79,7 @@
     showProfileMenu = false;
     // Redirect or reload is handled by authStore/app state changes usually,
     // but explicit redirect might be good.
-    window.location.href = '/';
+    window.location.href = "/";
   }
 
   function toggleProfileMenu(e: Event) {
@@ -60,20 +90,22 @@
   function updateIndicator() {
     // Wait for the DOM to settle if called during render
     requestAnimationFrame(() => {
-        const activeIndex = navItems.findIndex((item) => item.path === currentPath);
+      const activeIndex = navItems.findIndex(
+        (item) => item.path === currentPath,
+      );
 
-        if (activeIndex !== -1 && navElements[activeIndex]) {
-          const el = navElements[activeIndex];
-          indicatorStyle = `
+      if (activeIndex !== -1 && navElements[activeIndex]) {
+        const el = navElements[activeIndex];
+        indicatorStyle = `
             top: ${el.offsetTop}px;
             left: ${el.offsetLeft}px;
             width: ${el.offsetWidth}px;
             height: ${el.offsetHeight}px;
             opacity: 1;
           `;
-        } else {
-          indicatorStyle = "opacity: 0;";
-        }
+      } else {
+        indicatorStyle = "opacity: 0;";
+      }
     });
   }
 
@@ -81,12 +113,12 @@
 
   onMount(() => {
     updateIndicator();
-    window.addEventListener('resize', updateIndicator);
-    const closeMenu = () => showProfileMenu = false;
-    window.addEventListener('click', closeMenu);
+    window.addEventListener("resize", updateIndicator);
+    const closeMenu = () => (showProfileMenu = false);
+    window.addEventListener("click", closeMenu);
     return () => {
-      window.removeEventListener('resize', updateIndicator);
-      window.removeEventListener('click', closeMenu);
+      window.removeEventListener("resize", updateIndicator);
+      window.removeEventListener("click", closeMenu);
     };
   });
 </script>
@@ -102,10 +134,15 @@
     {#if $userProfile}
       <div class="profile-card-container">
         <!-- Main profile click area navigates to profile -->
-        <a href="/profile" class="profile-card nav-item" on:click={(e) => handleLinkClick(e, "/profile")}>
+        <a
+          href="/profile"
+          class="profile-card nav-item"
+          on:click={(e) => handleLinkClick(e, "/profile")}
+        >
           <div class="profile-avatar">
             <img
-              src={$userProfile.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${$userProfile.username}`}
+              src={$userProfile.avatar_url ||
+                `https://api.dicebear.com/9.x/avataaars/svg?seed=${$userProfile.username}`}
               alt="Profile"
             />
           </div>
@@ -143,7 +180,11 @@
             bind:this={navElements[i]}
           >
             <div class="icon-container">
-              <svelte:component this={item.icon} size={item.size} strokeWidth={item.strokeWidth} />
+              <svelte:component
+                this={item.icon}
+                size={item.size}
+                strokeWidth={item.strokeWidth}
+              />
             </div>
             <!-- Use data-text to create a bold placeholder -->
             <span class="text" data-text={item.label}>{item.label}</span>
@@ -289,10 +330,6 @@
     transition: background-color 0.2s;
   }
 
-  .profile-card-container:hover {
-     background-color: var(--hover-bg);
-  }
-
   .profile-card {
     display: flex;
     align-items: center;
@@ -397,7 +434,9 @@
     width: 200px;
     background-color: white;
     border-radius: 16px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1), 0 0 3px 1px rgba(0,0,0,0.05);
+    box-shadow:
+      0 0 15px rgba(0, 0, 0, 0.1),
+      0 0 3px 1px rgba(0, 0, 0, 0.05);
     padding: 8px 0;
     z-index: 2000;
     overflow: hidden;
@@ -453,7 +492,7 @@
       display: none;
     }
     .profile-card-container {
-        justify-content: center;
+      justify-content: center;
     }
     /* On tablet, maybe clicking profile should open a modal or just go to profile page?
        For now, we just hid the 3 dots, so they can't logout easily on tablet via sidebar.
@@ -625,7 +664,7 @@
     }
 
     .brand {
-       padding-left: 0;
+      padding-left: 0;
     }
 
     .brand,

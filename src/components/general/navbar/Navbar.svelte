@@ -212,19 +212,20 @@
     border-radius: 9999px;
     text-decoration: none;
     color: var(--text-color);
-    transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: background-color 0.2s, padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
     box-sizing: border-box;
-    background-color: #ffffff;
-    border: 1px solid rgb(239, 243, 244);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    background: none;
+    border: none;
     overflow: hidden; /* Hide overflow content during transition */
   }
 
   .profile-card:hover {
-    background-color: #f7f9f9;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border-color: transparent;
+    background-color: var(--hover-bg);
+    transform: scale(1.02);
+  }
+
+  .profile-card:active {
+    transform: scale(0.98);
   }
 
   .sidebar.collapsed .profile-card:hover {

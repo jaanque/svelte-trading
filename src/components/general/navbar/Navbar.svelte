@@ -369,7 +369,7 @@
   }
 
   /* Responsive adjustments */
-  @media (max-width: 1280px) {
+  @media (max-width: 1024px) {
     :root {
       --sidebar-width: 88px;
     }

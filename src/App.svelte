@@ -36,7 +36,7 @@
     transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  @media (max-width: 1280px) {
+  @media (max-width: 1024px) {
     .main-content {
       margin-left: 88px;
       width: calc(100% - 88px);

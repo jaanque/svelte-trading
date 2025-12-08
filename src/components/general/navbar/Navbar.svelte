@@ -9,6 +9,7 @@
     Settings,
     ChevronLeft,
     ChevronRight,
+    MoreHorizontal,
   } from "lucide-svelte";
 
   export let isCollapsed = false;
@@ -102,11 +103,15 @@
     </ul>
   </div>
 
-  <button class="collapse-toggle" on:click={toggleCollapse} aria-label="Toggle Menu">
+  <button
+    class="collapse-toggle"
+    on:click={toggleCollapse}
+    aria-label="Toggle Menu"
+  >
     {#if isCollapsed}
-        <ChevronRight size={24} />
+      <ChevronRight size={24} />
     {:else}
-        <ChevronLeft size={24} />
+      <ChevronLeft size={24} />
     {/if}
   </button>
 </nav>
@@ -135,7 +140,9 @@
     background-color: #ffffff;
     z-index: 1000;
     box-sizing: border-box;
-    transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition:
+      width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+      padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   /* Collapsed state styles - mimics tablet media query but via class */
@@ -158,7 +165,11 @@
     width: auto;
     margin-right: 16px;
     transform: translateX(0);
-    transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), margin-right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition:
+      opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+      width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+      margin-right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .sidebar.collapsed .text,
@@ -175,17 +186,16 @@
 
   .sidebar.collapsed .icon-container,
   .sidebar.collapsed .profile-avatar {
-     margin-right: 0;
+    margin-right: 0;
   }
 
   .sidebar.collapsed .profile-card {
-      justify-content: center;
-      padding: 12px;
+    justify-content: center;
+    padding: 12px;
   }
 
-  .sidebar.collapsed .nav-item,
-  .sidebar.collapsed .nav-item-button {
-      padding: 12px;
+  .sidebar.collapsed .nav-item {
+    padding: 12px;
   }
 
   .sidebar-container {
@@ -199,7 +209,7 @@
   }
 
   .sidebar.collapsed .sidebar-container {
-      align-items: center;
+    align-items: center;
   }
 
   /* Brand */
@@ -221,7 +231,10 @@
     border-radius: 9999px;
     text-decoration: none;
     color: var(--text-color);
-    transition: background-color 0.2s, padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition:
+      background-color 0.2s,
+      padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
     box-sizing: border-box;
     background: none;
     border: none;
@@ -238,7 +251,7 @@
   }
 
   .sidebar.collapsed .profile-card:hover {
-      transform: scale(1.1); /* Slightly more bounce when small */
+    transform: scale(1.1); /* Slightly more bounce when small */
   }
 
   .profile-avatar {
@@ -267,7 +280,6 @@
     /* Transition is handled by common rule above */
   }
 
-
   .profile-name {
     font-weight: 800;
     font-size: 17px;
@@ -279,10 +291,10 @@
   */
 
   .profile-more {
-      margin-left: auto;
-      color: #0f1419;
-      display: flex;
-      align-items: center;
+    margin-left: auto;
+    color: #0f1419;
+    display: flex;
+    align-items: center;
   }
 
   .profile-handle {
@@ -348,15 +360,17 @@
     display: flex;
   }
 
-  .nav-item,
-  .nav-item-button {
+  .nav-item {
     display: inline-flex;
     align-items: center;
     padding: 16px 24px 16px 16px;
     border-radius: 9999px;
     text-decoration: none;
     color: var(--text-color);
-    transition: background-color 0.2s, padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition:
+      background-color 0.2s,
+      padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
     cursor: pointer;
     background: none;
     border: none;
@@ -365,23 +379,21 @@
     overflow: hidden;
   }
 
-  .nav-item:hover,
-  .nav-item-button:hover {
+  .nav-item:hover {
     background-color: var(--hover-bg);
     transform: scale(1.02);
   }
 
-  .nav-item:active,
-  .nav-item-button:active {
+  .nav-item:active {
     transform: scale(0.98);
   }
 
   .nav-item.active {
-      background-color: rgba(29, 155, 240, 0.1); /* Subtle blue tint */
+    background-color: rgba(29, 155, 240, 0.1); /* Subtle blue tint */
   }
 
   .nav-item.active .text {
-      font-weight: 800;
+    font-weight: 800;
   }
 
   .icon-container {
@@ -447,10 +459,9 @@
       justify-content: center;
     }
 
-    .nav-item,
-    .nav-item-button {
-        padding: 12px;
-        margin: 4px 0;
+    .nav-item {
+      padding: 12px;
+      margin: 4px 0;
     }
 
     .text {
@@ -463,7 +474,7 @@
 
     /* Hide toggle on small screens where it's always collapsed anyway or controlled by system */
     .collapse-toggle {
-        display: none;
+      display: none;
     }
   }
 
@@ -507,8 +518,8 @@
     }
 
     .nav-item.active {
-        background: none; /* No background on mobile */
-        color: var(--primary-color);
+      background: none; /* No background on mobile */
+      color: var(--primary-color);
     }
 
     .nav-links li {
@@ -516,7 +527,6 @@
     }
 
     .nav-item,
-    .nav-item-button,
     .sidebar.collapsed .nav-item {
       padding: 8px;
       margin: 0;

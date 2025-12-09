@@ -10,20 +10,40 @@
   const dispatch = createEventDispatcher();
 
   let investAmount = "";
+  let sharesAmount = "";
+
   let loading = false;
   let errorMsg = "";
   let successMsg = "";
 
   // Derived values
-  $: amount = parseFloat(investAmount) || 0;
   $: price = targetUser.price || 50;
   $: availableShares = targetUser.available_shares !== undefined ? targetUser.available_shares : 1000000;
-  $: shares = amount > 0 ? (amount / price).toFixed(4) : "0";
   $: userBalance = $userProfile?.tokens || 0;
-  $: isSharesAvailable = parseFloat(shares) <= availableShares;
 
   // Validation
-  $: isValid = amount > 0 && amount <= userBalance && isSharesAvailable;
+  $: tokenVal = parseFloat(investAmount) || 0;
+  $: shareVal = parseFloat(sharesAmount) || 0;
+  $: isSharesAvailable = shareVal <= availableShares;
+  $: isValid = tokenVal > 0 && tokenVal <= userBalance && isSharesAvailable;
+
+  function updateFromTokens(e: Event) {
+      const val = parseFloat((e.target as HTMLInputElement).value);
+      if (!isNaN(val)) {
+          sharesAmount = (val / price).toFixed(4);
+      } else {
+          sharesAmount = "";
+      }
+  }
+
+  function updateFromShares(e: Event) {
+      const val = parseFloat((e.target as HTMLInputElement).value);
+      if (!isNaN(val)) {
+          investAmount = (val * price).toFixed(2);
+      } else {
+          investAmount = "";
+      }
+  }
 
   async function handleInvest() {
     if (!isValid) return;
@@ -34,12 +54,12 @@
     try {
       const { error } = await supabase.rpc("invest_in_user", {
         target_user_id: targetUser.id,
-        invest_amount: amount
+        invest_amount: tokenVal
       });
 
       if (error) throw error;
 
-      successMsg = `Successfully invested ${amount} tokens in ${targetUser.username}!`;
+      successMsg = `Successfully invested ${tokenVal} tokens in ${targetUser.username}!`;
       setTimeout(() => {
           onClose();
           dispatch("success");
@@ -84,29 +104,36 @@
             <span class="value">{userBalance} Tokens</span>
         </div>
 
-        <div class="input-group">
-            <label for="amount">Invest Amount (Tokens)</label>
-            <input
-                type="number"
-                id="amount"
-                bind:value={investAmount}
-                placeholder="0"
-                min="1"
-                max={userBalance}
-            />
-        </div>
-
-        <div class="calculation-box">
-            <div class="calc-row">
-                <span>Shares to Receive:</span>
-                <span class="shares-value">{shares}</span>
+        <div class="input-grid">
+            <div class="input-group">
+                <label for="amount">Tokens</label>
+                <input
+                    type="number"
+                    id="amount"
+                    bind:value={investAmount}
+                    on:input={updateFromTokens}
+                    placeholder="0"
+                    min="1"
+                    max={userBalance}
+                />
+            </div>
+            <div class="input-group">
+                <label for="shares">Shares</label>
+                <input
+                    type="number"
+                    id="shares"
+                    bind:value={sharesAmount}
+                    on:input={updateFromShares}
+                    placeholder="0"
+                    min="0"
+                />
             </div>
         </div>
 
         {#if errorMsg}
             <div class="error-message">{errorMsg}</div>
         {/if}
-        {#if amount > 0 && !isSharesAvailable}
+        {#if tokenVal > 0 && !isSharesAvailable}
             <div class="error-message">Not enough shares available for this purchase.</div>
         {/if}
       {/if}
@@ -196,8 +223,11 @@
     color: var(--text-main, #000);
   }
 
-  .input-group {
-    margin: 20px 0;
+  .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0;
   }
 
   .input-group label {
@@ -220,25 +250,6 @@
       outline: none;
       border-color: var(--primary-color, #1d9bf0);
       box-shadow: 0 0 0 1px var(--primary-color, #1d9bf0);
-  }
-
-  .calculation-box {
-    background-color: var(--bg-secondary, #f7f9f9);
-    padding: 16px;
-    border-radius: 12px;
-    margin-bottom: 16px;
-  }
-
-  .calc-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: 600;
-  }
-
-  .shares-value {
-    font-size: 18px;
-    color: var(--primary-color, #1d9bf0);
   }
 
   .error-message {

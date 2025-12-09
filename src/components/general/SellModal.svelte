@@ -10,18 +10,37 @@
 
   const dispatch = createEventDispatcher();
 
-  let sellAmount = "";
+  let sellShares = "";
+  let receiveTokens = "";
   let loading = false;
   let errorMsg = "";
   let successMsg = "";
 
   // Derived values
-  $: amount = parseFloat(sellAmount) || 0;
   $: price = targetUser.price || 50;
-  $: tokensToReceive = amount > 0 ? (amount * price).toFixed(2) : "0.00";
 
   // Validation
-  $: isValid = amount > 0 && amount <= userShares;
+  $: sharesVal = parseFloat(sellShares) || 0;
+  $: tokensVal = parseFloat(receiveTokens) || 0;
+  $: isValid = sharesVal > 0 && sharesVal <= userShares;
+
+  function updateFromShares(e: Event) {
+      const val = parseFloat((e.target as HTMLInputElement).value);
+      if (!isNaN(val)) {
+          receiveTokens = (val * price).toFixed(2);
+      } else {
+          receiveTokens = "";
+      }
+  }
+
+  function updateFromTokens(e: Event) {
+      const val = parseFloat((e.target as HTMLInputElement).value);
+      if (!isNaN(val)) {
+          sellShares = (val / price).toFixed(4);
+      } else {
+          sellShares = "";
+      }
+  }
 
   async function handleSell() {
     if (!isValid) return;
@@ -32,12 +51,12 @@
     try {
       const { error } = await supabase.rpc("sell_shares", {
         p_target_user_id: targetUser.id,
-        p_amount_shares: amount
+        p_amount_shares: sharesVal
       });
 
       if (error) throw error;
 
-      successMsg = `Successfully sold ${amount} shares for ${tokensToReceive} tokens!`;
+      successMsg = `Successfully sold ${sharesVal} shares for ${receiveTokens} tokens!`;
       setTimeout(() => {
           onClose();
           dispatch("success");
@@ -77,30 +96,38 @@
             <span class="value">{userShares.toFixed(4)}</span>
         </div>
 
-        <div class="input-group">
-            <label for="amount">Shares to Sell</label>
-            <input
-                type="number"
-                id="amount"
-                bind:value={sellAmount}
-                placeholder="0"
-                min="0.0001"
-                max={userShares}
-                step="any"
-            />
-        </div>
-
-        <div class="calculation-box">
-            <div class="calc-row">
-                <span>Tokens to Receive (approx):</span>
-                <span class="shares-value">{tokensToReceive}</span>
+        <div class="input-grid">
+            <div class="input-group">
+                <label for="shares">Shares to Sell</label>
+                <input
+                    type="number"
+                    id="shares"
+                    bind:value={sellShares}
+                    on:input={updateFromShares}
+                    placeholder="0"
+                    min="0.0001"
+                    max={userShares}
+                    step="any"
+                />
+            </div>
+            <div class="input-group">
+                <label for="tokens">Tokens (approx)</label>
+                <input
+                    type="number"
+                    id="tokens"
+                    bind:value={receiveTokens}
+                    on:input={updateFromTokens}
+                    placeholder="0"
+                    min="0"
+                    step="any"
+                />
             </div>
         </div>
 
         {#if errorMsg}
             <div class="error-message">{errorMsg}</div>
         {/if}
-        {#if amount > 0 && amount > userShares}
+        {#if sharesVal > 0 && sharesVal > userShares}
             <div class="error-message">You cannot sell more shares than you own.</div>
         {/if}
       {/if}
@@ -190,8 +217,11 @@
     color: var(--text-main, #000);
   }
 
-  .input-group {
-    margin: 20px 0;
+  .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0;
   }
 
   .input-group label {
@@ -214,25 +244,6 @@
       outline: none;
       border-color: var(--primary-color, #1d9bf0);
       box-shadow: 0 0 0 1px var(--primary-color, #1d9bf0);
-  }
-
-  .calculation-box {
-    background-color: var(--bg-secondary, #f7f9f9);
-    padding: 16px;
-    border-radius: 12px;
-    margin-bottom: 16px;
-  }
-
-  .calc-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: 600;
-  }
-
-  .shares-value {
-    font-size: 18px;
-    color: var(--primary-color, #1d9bf0);
   }
 
   .error-message {

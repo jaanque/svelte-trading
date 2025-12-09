@@ -16,6 +16,11 @@
     return urlParams.get(param);
   }
 
+  function formatNumber(num: number | undefined | null) {
+      if (num === undefined || num === null) return "0";
+      return num.toLocaleString();
+  }
+
   // Determine what to show
   // 1. u=username -> Fetch public profile
   // 2. No param -> Check Auth
@@ -185,11 +190,11 @@
              </div>
              <div class="stat">
                 <a href="/portfolio" class="stat-link">
-                    <span class="count">{profileData.price || 50}</span> <span class="label">Price</span>
+                    <span class="count">{formatNumber(profileData.price || 50)}</span> <span class="label">Price</span>
                 </a>
              </div>
              <div class="stat">
-               <span class="count">{profileData.shares || 1000000}</span> <span class="label">Shares</span>
+               <span class="count">{formatNumber(profileData.shares || 1000000)}</span> <span class="label">Shares</span>
              </div>
           </div>
         </div>
@@ -371,6 +376,7 @@
   .count {
     font-weight: 700;
     color: var(--text-main);
+    margin-right: 4px;
   }
 
   .stat-link .count {

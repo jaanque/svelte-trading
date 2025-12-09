@@ -55,22 +55,13 @@
 
     let fetchedData = data || [];
 
-    // Data Processing for Chart
-    // If no data in range, but we have current price
     if (fetchedData.length === 0) {
-        // Maybe user created recently? or price constant.
-        // We can synthesize a line if we want, or show empty.
-        // Let's show a flat line with current price.
         historyData = [
             { created_at: startDate.toISOString(), price: currentPrice },
             { created_at: new Date().toISOString(), price: currentPrice }
         ];
     } else {
-        // Ensure the chart ends at "now" with current price to look up-to-date
-        // and starts at "start date" if possible to fill the graph
         historyData = [...fetchedData];
-
-        // Add current point if last point is old
         const lastPt = historyData[historyData.length-1];
         if (new Date().getTime() - new Date(lastPt.created_at).getTime() > 60000) {
              historyData.push({ created_at: new Date().toISOString(), price: currentPrice });
@@ -100,14 +91,13 @@
 
     const labels = historyData.map(d => {
         const date = new Date(d.created_at);
-        if (timeRange === '24h') return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        return date; // Pass date objects for callback formatting
     });
 
     const dataPoints = historyData.map(d => d.price);
 
     const isPositive = percentageChange >= 0;
-    const lineColor = isPositive ? '#77DD77' : '#FF6961'; // Pastel Green / Red
+    const lineColor = isPositive ? '#77DD77' : '#FF6961';
     const fillColorStart = isPositive ? 'rgba(119, 221, 119, 0.2)' : 'rgba(255, 105, 97, 0.2)';
     const fillColorEnd = isPositive ? 'rgba(119, 221, 119, 0)' : 'rgba(255, 105, 97, 0)';
 
@@ -129,14 +119,14 @@
             data: dataPoints,
             borderColor: lineColor,
             backgroundColor: gradient,
-            borderWidth: 3,
+            borderWidth: 2,
             pointRadius: 0,
             pointHoverRadius: 6,
             pointBackgroundColor: lineColor,
             pointBorderColor: '#fff',
             pointBorderWidth: 2,
             fill: true,
-            tension: 0.4,
+            tension: 0.1, // Less smoothing for detail
           },
         ],
       },
@@ -155,18 +145,44 @@
              bodyColor: '#1F2937',
              borderColor: '#E5E7EB',
              borderWidth: 1,
-             padding: 10,
+             padding: 12,
              displayColors: false,
-             titleFont: { weight: 'bold', size: 13 },
+             titleFont: { weight: 'bold', size: 14 },
+             bodyFont: { size: 13 },
              callbacks: {
+                 title: (context) => {
+                     const date = new Date(context[0].label);
+                     return date.toLocaleDateString(undefined, {
+                         month: 'short', day: 'numeric', year: 'numeric',
+                         hour: '2-digit', minute: '2-digit'
+                     });
+                 },
                  label: (context) => 'Price: ' + parseFloat(context.parsed.y).toFixed(2)
              }
           }
         },
         scales: {
-          x: { display: false },
+          x: {
+              display: true,
+              type: 'category', // Chart.js 3+ might auto-detect time if adapter used, but we passed string/date objects.
+              // Since we passed Date objects in labels map, Chart.js standard might need strings for category axis unless time scale is used.
+              // Let's rely on formatted strings for labels to be safe without time adapter.
+              ticks: {
+                  maxTicksLimit: 6,
+                  color: '#8899A6',
+                  font: { size: 10 },
+                  callback: function(val, index) {
+                      // Labels are available via this.getLabelForValue(val)
+                      const label = this.getLabelForValue(val as number);
+                      // label is the Date object .toString() usually? No, we mapped to Date objects.
+                      // Actually, let's map labels to strings for the X axis to avoid adapter dependency if not installed.
+                      return ''; // We will override labels generation in data mapping
+                  }
+              },
+              grid: { display: false }
+          },
           y: {
-            display: true, // Show Y axis for detailed view
+            display: true,
             suggestedMin: minPrice - padding,
             suggestedMax: maxPrice + padding,
             grid: {
@@ -180,6 +196,14 @@
         },
       },
     });
+
+    // Fix X-axis labels to be strings for stability
+    chartInstance.data.labels = historyData.map(d => {
+        const date = new Date(d.created_at);
+        if (timeRange === '24h') return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    });
+    chartInstance.update();
   }
 
   function handleRangeChange(range: string) {
@@ -187,7 +211,6 @@
       fetchHistory();
   }
 
-  // Reload when userId changes
   $: if (userId) {
       fetchHistory();
   }

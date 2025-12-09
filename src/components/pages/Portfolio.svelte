@@ -277,8 +277,7 @@
     // Prepare Data
     const labels = historyData.map(d => {
         const date = new Date(d.created_at);
-        if (timeRange === '24h') return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        return date;
     });
 
     const dataPoints = historyData.map(d => d.price);
@@ -315,7 +314,7 @@
             pointBorderColor: '#fff',
             pointBorderWidth: 2,
             fill: true,
-            tension: 0.4,
+            tension: 0.2, // Smoother but detailed
             spanGaps: true,
           },
         ],
@@ -341,11 +340,18 @@
              bodyColor: '#1F2937',
              borderColor: '#E5E7EB',
              borderWidth: 1,
-             padding: 10,
+             padding: 12,
              displayColors: false,
-             titleFont: { weight: 'bold', size: 13 },
+             titleFont: { weight: 'bold', size: 14 },
              bodyFont: { size: 13 },
              callbacks: {
+                 title: (context) => {
+                     const date = new Date(context[0].label);
+                     return date.toLocaleDateString(undefined, {
+                         month: 'short', day: 'numeric', year: 'numeric',
+                         hour: '2-digit', minute: '2-digit'
+                     });
+                 },
                  label: function(context) {
                      return 'Value: ' + context.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2});
                  }
@@ -354,25 +360,45 @@
         },
         scales: {
           x: {
+            display: true,
+            ticks: {
+                maxTicksLimit: 6,
+                color: '#9CA3AF',
+                font: { size: 11 },
+                callback: function(val, index) {
+                    // Just return empty string if we rely on Tooltip for detail, or format simply
+                    return '';
+                }
+            },
             grid: {
               display: false,
               drawBorder: false,
             },
-            ticks: {
-                maxTicksLimit: 6,
-                color: '#9CA3AF',
-                font: { size: 11 }
-            },
             border: { display: false }
           },
           y: {
-            display: false,
+            display: true, // Enable Y axis
             suggestedMin: suggestedMin,
             suggestedMax: suggestedMax,
+            grid: {
+                color: 'rgba(0,0,0,0.05)'
+            },
+            ticks: {
+                font: { size: 11 },
+                color: '#8899A6'
+            }
           },
         },
       },
     });
+
+    // Fix X labels
+    chartInstance.data.labels = historyData.map(d => {
+        const date = new Date(d.created_at);
+        if (timeRange === '24h') return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    });
+    chartInstance.update();
   }
 
   function basePrice() {

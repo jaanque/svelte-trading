@@ -60,7 +60,7 @@
     <Navbar bind:isCollapsed {currentPath} onNavigate={handleNavigate} />
     <main class="main-content">
       <TopNavbar onNavigate={handleNavigate} />
-      <div class="page-container">
+      <div class="page-container {currentPath === '/profile' ? 'full-width' : ''}">
         {#if currentPath === "/" || currentPath === ""}
           <Home />
         {:else if currentPath === "/markets"}
@@ -126,6 +126,13 @@
     margin: 0;
   }
 
+  /* Full width modifier for Profile page */
+  .page-container.full-width {
+    padding: 0;
+    max-width: none;
+    width: 100%;
+  }
+
   @media (max-width: 768px) {
     .main-content {
       margin-left: 88px;
@@ -142,6 +149,10 @@
 
     .page-container {
       padding: 12px 16px;
+    }
+
+    .page-container.full-width {
+      padding: 0;
     }
   }
 </style>

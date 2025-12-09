@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { userProfile, userSession } from "../../lib/authStore";
   import { supabase } from "../../lib/supabase";
-  import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft } from "lucide-svelte";
+  import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft, MoreHorizontal, MessageSquare } from "lucide-svelte";
 
   let loading = true;
   let profileData: any = null;
@@ -86,20 +86,26 @@
     </div>
 
   {:else if profileData}
-    <div class="profile-header-section">
-      <!-- Back button header if viewing another profile -->
-      {#if !isOwnProfile && urlUsername}
-        <div class="sticky-header">
-           <a href="/" class="back-btn"><ArrowLeft size={20} /></a>
-           <div class="header-name">
-              <h3>{profileData.full_name}</h3>
-              <span class="post-count">0 posts</span>
-           </div>
-        </div>
-      {/if}
+    <!-- Sticky Header -->
+    <div class="sticky-header">
+       <div class="header-content">
+         {#if !isOwnProfile && urlUsername}
+             <a href="/" class="back-btn"><ArrowLeft size={20} /></a>
+         {/if}
+         <div class="header-name">
+            <h3>{profileData.full_name || profileData.username}</h3>
+            <span class="post-count">0 posts</span>
+         </div>
+       </div>
+    </div>
 
-      <div class="banner"></div>
+    <!-- Banner - Full Width -->
+    <div class="banner">
+      <!-- Could add image support here -->
+    </div>
 
+    <!-- Profile Content Container (Centered) -->
+    <div class="profile-content-wrapper">
       <div class="profile-info-container">
         <div class="top-row">
            <div class="avatar-wrapper">
@@ -114,7 +120,8 @@
             {#if isOwnProfile}
               <a href="/settings" class="btn-edit">Edit Profile</a>
             {:else}
-              <!-- Future: Follow Button -->
+              <button class="btn-icon"><MoreHorizontal size={20} /></button>
+              <button class="btn-icon"><MessageSquare size={20} /></button>
               <button class="btn-primary">Follow</button>
             {/if}
           </div>
@@ -141,37 +148,42 @@
              {/if}
           </div>
 
-          <div class="stats">
-             <div class="stat">
-               <span class="count">0</span> <span class="label">Following</span>
+          <div class="stats-row">
+             <div class="stat-item">
+               <span class="stat-value">0</span>
+               <span class="stat-label">Following</span>
              </div>
-             <div class="stat">
-               <span class="count">0</span> <span class="label">Followers</span>
+             <div class="stat-item">
+               <span class="stat-value">0</span>
+               <span class="stat-label">Followers</span>
              </div>
-             <div class="stat">
-                <a href="/portfolio" class="stat-link">
-                    <span class="count">{formatNumber(profileData.price || 50)}</span> <span class="label">Price</span>
-                </a>
-             </div>
-             <div class="stat">
-               <span class="count">{formatNumber(profileData.shares || 1000000)}</span> <span class="label">Shares</span>
+             <div class="stat-divider"></div>
+             <a href="/portfolio" class="stat-item link">
+                <span class="stat-value highlight">{formatNumber(profileData.price || 50)}</span>
+                <span class="stat-label">Price</span>
+             </a>
+             <div class="stat-item">
+               <span class="stat-value highlight">{formatNumber(profileData.shares || 1000000)}</span>
+               <span class="stat-label">Shares</span>
              </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="profile-tabs">
-       <div class="tab active">Posts</div>
-       <div class="tab">Replies</div>
-       <div class="tab">Media</div>
-       <div class="tab">Likes</div>
-    </div>
+      <!-- Tabs -->
+      <div class="profile-tabs">
+         <div class="tab active">Posts</div>
+         <div class="tab">Replies</div>
+         <div class="tab">Media</div>
+         <div class="tab">Likes</div>
+      </div>
 
-    <div class="profile-content">
-       <div class="empty-feed">
-          <p>@{profileData.username} hasn't posted anything yet.</p>
-       </div>
+      <!-- Feed Content -->
+      <div class="feed-content">
+         <div class="empty-feed">
+            <p>@{profileData.username} hasn't posted anything yet.</p>
+         </div>
+      </div>
     </div>
 
   {:else}
@@ -192,30 +204,10 @@
   .profile-page {
     width: 100%;
     min-height: 100vh;
-    border-left: 1px solid var(--border-color);
-    border-right: 1px solid var(--border-color);
     background-color: var(--bg-main);
-    /* In App.svelte, page-container has max-width: 1000px and padding.
-       If we want to fill that, we are good.
-       If we want to stretch to edges of that container, we might need negative margins
-       if the container has padding we want to ignore (like for the banner).
-
-       App.svelte: .page-container { padding: 16px 20px; }
-       To make the banner full width relative to this component's container, we can just use width: 100%.
-       But the page-container padding will leave whitespace around the banner.
-       Often profiles look better if the banner hits the edges.
-
-       Let's assume the user wants the profile to fill the "page-container" space fully.
-       Actually, standard Twitter/modern layout usually has the feed column as the main thing.
-
-       If we want "ocupe el width que se le permita" inside the existing padding, width: 100% is default.
-    */
     display: flex;
     flex-direction: column;
   }
-
-  /* To negate parent padding if desired, we would need to know exact padding values or use a different layout approach.
-     For now, we will work within the container. */
 
   .center-content {
     display: flex;
@@ -225,30 +217,49 @@
     min-height: 50vh;
   }
 
-  /* Sticky Header (optional, if we want that "scrolled down" effect) */
+  /* Sticky Header */
   .sticky-header {
       position: sticky;
       top: 0;
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.85); /* Use var? var(--bg-main) might be opaque */
+      /* Ideally use var(--bg-main) with opacity, but hex is easier for alpha */
       backdrop-filter: blur(12px);
-      z-index: 10;
-      padding: 0 16px;
+      z-index: 100; /* Higher than banner */
       height: 53px;
       display: flex;
       align-items: center;
-      gap: 20px;
       border-bottom: 1px solid var(--border-color);
+      width: 100%;
+  }
+
+  .header-content {
+      width: 100%;
+      max-width: 600px; /* Match content wrapper */
+      margin: 0 auto;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+  }
+  /* If screen is larger, header content centers or stays left?
+     Usually profile header stays aligned with the feed. */
+  @media (min-width: 600px) {
+      .header-content {
+          padding: 0 16px; /* Keep padding */
+      }
   }
 
   .header-name h3 {
       margin: 0;
       font-size: 20px;
       line-height: 24px;
+      color: var(--text-main);
   }
 
   .post-count {
       font-size: 13px;
       color: var(--text-secondary);
+      display: block;
   }
 
   .back-btn {
@@ -268,10 +279,30 @@
   /* Banner */
   .banner {
     height: 200px;
-    background-color: var(--bg-tertiary); /* Fallback */
-    /* background-image: url(...); */
+    background-color: var(--bg-tertiary); /* Soft gray/blue */
+    background: linear-gradient(to right, #cfd9df 0%, #e2ebf0 100%); /* Subtle gradient */
     width: 100%;
-    position: relative;
+  }
+
+  /* Content Wrapper - Controls width of the actual profile info and feed */
+  .profile-content-wrapper {
+      width: 100%;
+      max-width: 600px; /* Standard readable feed width */
+      margin: 0 auto;
+      background-color: var(--bg-main);
+      border-left: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      min-height: calc(100vh - 253px); /* approx */
+      position: relative;
+      top: 0; /* Stacking context */
+  }
+
+  /* If on mobile, remove borders */
+  @media (max-width: 640px) {
+      .profile-content-wrapper {
+          border-left: none;
+          border-right: none;
+      }
   }
 
   .profile-info-container {
@@ -286,21 +317,19 @@
       justify-content: space-between;
       align-items: flex-end;
       margin-bottom: 12px;
-      height: 40px; /* Space reserved for avatar overlap */
+      height: 45px; /* Space for avatar overlap */
   }
 
   .avatar-wrapper {
-    margin-top: -15%; /* Pull up into banner */
-    /* To keep it precise: width 134px -> radius 67. half is 67.
-       Usually on Twitter it overlaps by 50%. */
     width: 134px;
     height: 134px;
     border-radius: 50%;
     background-color: var(--bg-main);
     padding: 4px;
     position: absolute;
-    top: -67px; /* Half height */
+    top: -67px;
     left: 16px;
+    z-index: 10;
   }
 
   /* Responsive Avatar */
@@ -314,7 +343,7 @@
         top: -45px;
     }
     .top-row {
-        height: 30px;
+        height: 35px;
     }
   }
 
@@ -325,20 +354,20 @@
     object-fit: cover;
     background-color: var(--bg-tertiary);
     cursor: pointer;
-    transition: filter 0.2s;
-  }
-
-  .profile-avatar:hover {
-      filter: brightness(0.9);
+    border: 4px solid var(--bg-main); /* Ensure separation from banner/bg */
+    box-sizing: content-box; /* To account for border inside sizing if needed, or just let padding handle it */
+    margin: -4px; /* Counter padding */
   }
 
   .actions {
-    margin-left: auto; /* Push to right */
-    padding-bottom: 0; /* Align with bottom of avatar area conceptually */
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
   }
 
   .btn-edit {
-    padding: 8px 16px;
+    padding: 6px 16px;
     border: 1px solid var(--border-strong);
     border-radius: 9999px;
     font-weight: 700;
@@ -353,24 +382,46 @@
     background-color: var(--bg-hover);
   }
 
+  .btn-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border-strong);
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-main);
+      transition: background-color 0.2s;
+  }
+  .btn-icon:hover {
+      background-color: var(--bg-hover);
+  }
+
   .btn-primary {
     padding: 8px 20px;
-    background-color: var(--text-main); /* Black follow button often used */
-    color: var(--bg-main);
+    background-color: #0f1419; /* Twitter black */
+    color: white;
     border-radius: 9999px;
     font-weight: 700;
     font-size: 15px;
     text-decoration: none;
     transition: opacity 0.2s;
+    border: none;
   }
   .btn-primary:hover {
-      opacity: 0.8;
+      opacity: 0.9;
+  }
+
+  /* Text Info */
+  .info {
+      margin-top: 4px;
   }
 
   .fullname {
     font-size: 20px;
     font-weight: 800;
-    margin: 4px 0 0 0;
+    margin: 0;
     color: var(--text-main);
     line-height: 24px;
   }
@@ -386,12 +437,13 @@
     margin-bottom: 12px;
     white-space: pre-wrap;
     color: var(--text-main);
+    line-height: 1.4;
   }
 
   .meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 16px; /* More space */
     margin-bottom: 12px;
     color: var(--text-secondary);
     font-size: 15px;
@@ -403,31 +455,40 @@
     gap: 4px;
   }
 
-  .stats {
+  /* Stats Row */
+  .stats-row {
     display: flex;
     gap: 20px;
     font-size: 14px;
-    margin-top: 4px;
-  }
-
-  .stat {
-    color: var(--text-secondary);
-    display: flex;
+    margin-top: 8px;
     align-items: center;
   }
 
-  .stat-link {
-    color: inherit;
+  .stat-item {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
     text-decoration: none;
   }
-  .stat-link:hover {
+
+  .stat-item.link:hover {
       text-decoration: underline;
   }
 
-  .count {
+  .stat-value {
     font-weight: 700;
     color: var(--text-main);
-    margin-right: 4px;
+  }
+
+  .stat-value.highlight {
+      color: var(--text-main); /* Or primary color if desired */
+  }
+
+  .stat-divider {
+      width: 1px;
+      height: 16px;
+      background-color: var(--border-color);
   }
 
   /* Tabs */
@@ -435,6 +496,7 @@
     display: flex;
     border-bottom: 1px solid var(--border-color);
     margin-top: 8px;
+    width: 100%;
   }
 
   .tab {
@@ -470,8 +532,10 @@
     border-radius: 9999px;
   }
 
-  .profile-content {
+  /* Feed */
+  .feed-content {
     min-height: 200px;
+    background-color: var(--bg-main);
   }
 
   .empty-feed {
@@ -479,7 +543,7 @@
     text-align: center;
     color: var(--text-secondary);
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   /* CTA */
@@ -487,6 +551,7 @@
     display: flex;
     justify-content: center;
     padding-top: 60px;
+    width: 100%;
   }
 
   .cta-card {
@@ -496,6 +561,7 @@
     border: 1px solid var(--border-color);
     text-align: center;
     max-width: 400px;
+    box-shadow: var(--shadow-sm);
   }
 
   .cta-card h2 {

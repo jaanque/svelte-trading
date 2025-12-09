@@ -4,6 +4,9 @@
   import { userProfile, userSession } from "../../lib/authStore";
   import { supabase } from "../../lib/supabase";
   import { Loader2, ArrowUpRight, ArrowDownRight, Calendar } from "lucide-svelte";
+  import UserCard from "../general/UserCard.svelte";
+
+  export let onNavigate: (path: string) => void = (path) => { window.location.href = path; };
 
   let chartCanvas: HTMLCanvasElement;
   let chartInstance: Chart | null = null;
@@ -17,6 +20,9 @@
   let currentValue = 0;
   let startValue = 0;
   let percentageChange = 0;
+
+  let holdings: any[] = [];
+  let holdingsLoading = false;
 
   // Reactively update current value from profile store
   $: if ($userProfile) {
@@ -78,28 +84,13 @@
     }
 
     let fetchedData = data || [];
-    console.log("Fetched History:", fetchedData);
 
-    // If data is empty or sparse, generate fill data for a better chart visual
-    // This is common in financial apps: if no trades, price is flat.
-    // We will generate points from 'startDate' to 'now' based on the last known price.
-
-    // 1. Get the starting price. Either the first point in range, or current profile price if nothing.
-    // Actually, we need the price *before* the start date if possible, but we don't have it easily.
-    // We'll assume the first available point's price, or current price.
     let basePrice = currentValue;
     if (fetchedData.length > 0) {
-        basePrice = fetchedData[fetchedData.length - 1].price; // Use latest fetched price as anchor?
-        // No, using current is safer.
         basePrice = currentValue;
     }
 
-    // Logic: If no data in range, it means price has been flat at 'currentValue' (assuming no prior history lower/higher that we missed).
-    // Or it means user is new.
-
     if (fetchedData.length < 2) {
-        // Generate synthetic points for the chart range
-        // e.g. Start point and End point
         const now = new Date();
         const startPoint = {
             price: basePrice,
@@ -110,24 +101,17 @@
             created_at: now.toISOString()
         };
 
-        // If we have 1 point, keep it?
         if (fetchedData.length === 1) {
-            // If that point is in the middle, we connect start -> point -> end
-            // But usually we just want to show the trend.
-            // Let's just overwrite with a nice flat line for stability if data is insufficient.
              historyData = [startPoint, ...fetchedData, endPoint];
-             // Sort just in case
              historyData.sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         } else {
              historyData = [startPoint, endPoint];
         }
     } else {
         historyData = fetchedData;
-
-        // Optional: Add a "now" point if the last point is old?
         const lastTime = new Date(historyData[historyData.length-1].created_at).getTime();
         const nowTime = new Date().getTime();
-        if (nowTime - lastTime > 60000 * 5) { // If last point older than 5 mins
+        if (nowTime - lastTime > 60000 * 5) {
             historyData.push({
                 price: currentValue,
                 created_at: new Date().toISOString()
@@ -135,7 +119,6 @@
         }
     }
 
-    // Calculate change stats
     if (historyData.length > 0) {
         startValue = historyData[0].price;
         const endVal = historyData[historyData.length - 1].price;
@@ -145,6 +128,46 @@
 
     renderChart();
     loading = false;
+  }
+
+  async function fetchHoldings() {
+    if (!$userProfile) return;
+    holdingsLoading = true;
+
+    // Fetch investments made by the user
+    // We want to group by target_user_id and sum shares.
+    // However, Supabase doesn't support grouping directly in client SDK easily for this structure without a view or rpc.
+    // We'll fetch all and aggregate client-side for now (assuming not huge volume yet),
+    // OR fetch distinct target users and then shares.
+
+    // Better approach: fetch raw investments, then group by user.
+    const { data, error } = await supabase
+        .from("investments")
+        .select(`
+            amount_shares,
+            target_user:profiles!target_user_id(id, username, full_name, avatar_url, price)
+        `)
+        .eq("investor_id", $userProfile.id);
+
+    if (error) {
+        console.error("Error fetching holdings:", error);
+    } else {
+        const aggregated = new Map();
+
+        data.forEach((inv: any) => {
+            const user = inv.target_user;
+            if (!aggregated.has(user.id)) {
+                aggregated.set(user.id, {
+                    user: user,
+                    totalShares: 0
+                });
+            }
+            aggregated.get(user.id).totalShares += parseFloat(inv.amount_shares);
+        });
+
+        holdings = Array.from(aggregated.values());
+    }
+    holdingsLoading = false;
   }
 
   function renderChart() {
@@ -166,10 +189,8 @@
 
     const dataPoints = historyData.map(d => d.price);
 
-    // Styling based on positive/negative trend
     const isPositive = percentageChange >= 0;
-    // Use slightly more vibrant/modern colors
-    const lineColor = isPositive ? '#10B981' : '#EF4444'; // Emerald-500 or Red-500
+    const lineColor = isPositive ? '#10B981' : '#EF4444';
     const fillColorStart = isPositive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
     const fillColorEnd = isPositive ? 'rgba(16, 185, 129, 0)' : 'rgba(239, 68, 68, 0)';
 
@@ -177,10 +198,8 @@
     gradient.addColorStop(0, fillColorStart);
     gradient.addColorStop(1, fillColorEnd);
 
-    // Calculate nice Y axis bounds to avoid flat line looking weird
     const minPrice = Math.min(...dataPoints);
     const maxPrice = Math.max(...dataPoints);
-    // Add 5% padding
     const padding = (maxPrice - minPrice) * 0.1 || (basePrice() * 0.1) || 5;
     const suggestedMin = minPrice - padding;
     const suggestedMax = maxPrice + padding;
@@ -202,8 +221,8 @@
             pointBorderColor: '#fff',
             pointBorderWidth: 2,
             fill: true,
-            tension: 0.4, // Smooth curve
-            spanGaps: true, // Connect lines if gaps
+            tension: 0.4,
+            spanGaps: true,
           },
         ],
       },
@@ -253,7 +272,7 @@
             border: { display: false }
           },
           y: {
-            display: false, // Keep hidden for clean look
+            display: false,
             suggestedMin: suggestedMin,
             suggestedMax: suggestedMax,
           },
@@ -262,7 +281,6 @@
     });
   }
 
-  // Helper to get base price if everything is empty
   function basePrice() {
       return currentValue || 50;
   }
@@ -281,14 +299,22 @@
       fetchHistory();
   }
 
+  function handleUserClick(user: any) {
+      if (onNavigate) {
+          onNavigate(`/profile?u=${user.username}`);
+      }
+  }
+
   onMount(() => {
     if ($userProfile) {
         fetchHistory();
+        fetchHoldings();
     }
     const unsubscribe = userProfile.subscribe(val => {
         if (val) {
              currentValue = val.price || 50;
              if (historyData.length === 0) fetchHistory();
+             if (holdings.length === 0) fetchHoldings();
         }
     });
     return unsubscribe;
@@ -320,40 +346,80 @@
       </div>
   </div>
 
-  <!-- Chart Section -->
-  <div class="chart-section">
-      <div class="chart-controls">
-          {#each ranges as range}
-             <button
-                class="range-btn {timeRange === range.value ? 'active' : ''}"
-                on:click={() => handleRangeChange(range.value)}
-             >
-                {range.label}
-             </button>
-          {/each}
-      </div>
+  <div class="content-grid">
+      <!-- Left Column: Chart -->
+      <div class="chart-section">
+          <div class="chart-controls">
+              {#each ranges as range}
+                 <button
+                    class="range-btn {timeRange === range.value ? 'active' : ''}"
+                    on:click={() => handleRangeChange(range.value)}
+                 >
+                    {range.label}
+                 </button>
+              {/each}
+          </div>
 
-      {#if showCustomDate}
-         <div class="custom-date-picker">
-             <div class="date-input">
-                 <label>Start</label>
-                 <input type="date" bind:value={customStartDate} />
-             </div>
-             <div class="date-input">
-                 <label>End</label>
-                 <input type="date" bind:value={customEndDate} />
-             </div>
-             <button class="apply-btn" on:click={applyCustomDate}>Apply</button>
-         </div>
-      {/if}
-
-      <div class="chart-wrapper">
-          {#if loading}
-             <div class="loading-overlay">
-                 <Loader2 class="animate-spin" size={32} color="var(--primary-color)" />
+          {#if showCustomDate}
+             <div class="custom-date-picker">
+                 <div class="date-input">
+                     <label>Start</label>
+                     <input type="date" bind:value={customStartDate} />
+                 </div>
+                 <div class="date-input">
+                     <label>End</label>
+                     <input type="date" bind:value={customEndDate} />
+                 </div>
+                 <button class="apply-btn" on:click={applyCustomDate}>Apply</button>
              </div>
           {/if}
-          <canvas bind:this={chartCanvas}></canvas>
+
+          <div class="chart-wrapper">
+              {#if loading}
+                 <div class="loading-overlay">
+                     <Loader2 class="animate-spin" size={32} color="var(--primary-color)" />
+                 </div>
+              {/if}
+              <canvas bind:this={chartCanvas}></canvas>
+          </div>
+      </div>
+
+      <!-- Right Column: Holdings Table -->
+      <div class="holdings-section">
+          <h2>Holdings</h2>
+          {#if holdingsLoading}
+            <div class="loading-holdings">
+                <Loader2 class="animate-spin" size={24} color="var(--primary-color)" />
+            </div>
+          {:else if holdings.length === 0}
+            <div class="empty-holdings">
+                <p>You haven't invested in anyone yet.</p>
+                <a href="/markets" class="btn-explore" on:click|preventDefault={() => onNavigate('/markets')}>Explore Markets</a>
+            </div>
+          {:else}
+            <div class="holdings-list">
+                {#each holdings as item}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <div class="holding-card" role="button" tabindex="0" on:click={() => handleUserClick(item.user)}>
+                        <div class="user-cell">
+                            <img
+                                src={item.user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${item.user.username}`}
+                                alt={item.user.username}
+                                class="avatar"
+                            />
+                            <div class="user-meta">
+                                <span class="username">${item.user.username.toUpperCase()}</span>
+                                <span class="price-info">{item.user.price.toFixed(2)} / share</span>
+                            </div>
+                        </div>
+                        <div class="shares-cell">
+                            <span class="shares-amount">{item.totalShares.toFixed(4)}</span>
+                            <span class="shares-label">Shares</span>
+                        </div>
+                    </div>
+                {/each}
+            </div>
+          {/if}
       </div>
   </div>
 </div>
@@ -415,9 +481,22 @@
       color: #EF4444;
   }
 
+  /* Layout Grid */
+  .content-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+  }
+
+  @media (max-width: 900px) {
+      .content-grid {
+          grid-template-columns: 1fr;
+      }
+  }
+
   /* Chart Section */
   .chart-section {
-      background-color: var(--bg-main); /* or white if needed */
+      background-color: var(--bg-main);
       border-radius: 24px;
       position: relative;
   }
@@ -428,7 +507,6 @@
       margin-bottom: 24px;
       overflow-x: auto;
       padding-bottom: 4px;
-      /* Scrollbar hiding */
       scrollbar-width: none;
   }
   .chart-controls::-webkit-scrollbar {
@@ -454,12 +532,11 @@
   }
 
   .range-btn.active {
-      background-color: var(--text-main); /* Dark active state like standard apps */
+      background-color: var(--text-main);
       color: var(--bg-main);
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   }
 
-  /* Custom Date */
   .custom-date-picker {
       display: flex;
       gap: 12px;
@@ -522,5 +599,112 @@
       z-index: 2;
       border-radius: 24px;
       backdrop-filter: blur(4px);
+  }
+
+  /* Holdings Section */
+  .holdings-section {
+      background-color: var(--bg-secondary);
+      border-radius: 24px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      max-height: 450px;
+      overflow-y: auto;
+  }
+
+  .holdings-section h2 {
+      font-size: 20px;
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: var(--text-main);
+  }
+
+  .loading-holdings {
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+  }
+
+  .empty-holdings {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 20px 0;
+  }
+
+  .btn-explore {
+      display: inline-block;
+      margin-top: 12px;
+      color: var(--primary-color);
+      font-weight: 600;
+      text-decoration: none;
+  }
+
+  .holdings-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+  }
+
+  .holding-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--bg-main);
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.1s, background-color 0.2s;
+  }
+
+  .holding-card:hover {
+      transform: translateY(-2px);
+      background-color: var(--bg-hover);
+  }
+
+  .user-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+  }
+
+  .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      background-color: var(--bg-tertiary);
+  }
+
+  .user-meta {
+      display: flex;
+      flex-direction: column;
+  }
+
+  .username {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text-main);
+  }
+
+  .price-info {
+      font-size: 12px;
+      color: var(--text-secondary);
+  }
+
+  .shares-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+  }
+
+  .shares-amount {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text-main);
+  }
+
+  .shares-label {
+      font-size: 11px;
+      color: var(--text-secondary);
   }
 </style>

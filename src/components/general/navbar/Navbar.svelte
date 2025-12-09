@@ -372,15 +372,13 @@
     color: white;
     border-radius: 9999px;
     padding: 16px;
-    margin: 24px 0 12px 0;
+    margin: 32px 0 12px 0;
     width: 90%;
-    max-width: 225px;
-    font-weight: 700;
-    font-size: 17px;
+    font-weight: 800;
+    font-size: 18px;
     cursor: pointer;
     transition: background-color 0.2s, width 0.3s, padding 0.3s, transform 0.2s;
     text-decoration: none;
-    box-shadow: var(--shadow-sm);
     border: none;
     align-self: center; /* Center in sidebar */
   }

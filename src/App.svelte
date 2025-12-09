@@ -61,7 +61,7 @@
     <Navbar bind:isCollapsed {currentPath} onNavigate={handleNavigate} />
     <main class="main-content">
       <TopNavbar onNavigate={handleNavigate} />
-      <div class="page-container {route === '/profile' ? 'full-width' : ''}">
+      <div class="page-container {route === '/profile' || route === '/portfolio' ? 'full-width' : ''}">
         {#if route === "/" || route === ""}
           <Home />
         {:else if route === "/markets"}

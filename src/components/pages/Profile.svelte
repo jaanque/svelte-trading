@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { userProfile, userSession } from "../../lib/authStore";
   import { supabase } from "../../lib/supabase";
-  import { Loader2, Calendar, Link as LinkIcon, MapPin } from "lucide-svelte";
+  import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft } from "lucide-svelte";
 
   let loading = true;
   let profileData: any = null;
@@ -21,12 +21,6 @@
       return num.toLocaleString();
   }
 
-  // Determine what to show
-  // 1. u=username -> Fetch public profile
-  // 2. No param -> Check Auth
-  //    a. Auth -> Show own profile
-  //    b. No Auth -> Show CTA
-
   async function loadProfile() {
     loading = true;
     error = null;
@@ -35,7 +29,6 @@
     urlUsername = getQueryParam("u");
 
     if (urlUsername) {
-      // Fetch public profile
       try {
         const { data, error: err } = await supabase
           .from("profiles")
@@ -46,7 +39,6 @@
         if (err) throw err;
         profileData = data;
 
-        // Check if this is actually the logged in user viewing their own public link
         if ($userProfile && $userProfile.username === urlUsername) {
             isOwnProfile = true;
         } else {
@@ -58,77 +50,32 @@
         error = "User not found";
       }
     } else {
-      // Viewing own profile route /profile
       if ($userSession) {
-        // Logged in
         isOwnProfile = true;
         profileData = $userProfile;
-        // If userProfile isn't fully loaded yet, we might wait or it reacts automatically since it's a store
-        // But usually $userProfile is populated if $userSession is true (handled in authStore)
       } else {
-        // Not logged in
         isOwnProfile = false;
         profileData = null;
-        // We stay in a state where we show CTA
       }
     }
     loading = false;
   }
 
-  // React to URL changes (popstate is handled in App, but we need to re-run logic if we navigate from /profile to /profile?u=xyz)
-  // Since App.svelte mounts this component, purely changing query params might not unmount/remount it if the component stays the same?
-  // Svelte's key block in App or reactive statements here help.
-  // Let's watch window location or use a reactive statement if we can get the current path passed down, but query params change might not trigger path change prop in App.
-
-  // A simple way is to subscribe to navigation events or just poll/watch.
-  // For now, let's rely on onMount. If the user navigates *within* the app using pushState,
-  // we might need a way to reload.
-
-  // Quick fix: Use a reactive statement on a variable that changes on nav, or hook into the `onNavigate` prop if we passed it.
-  // We didn't pass onNavigate to pages in App.svelte.
-
-  // Let's add a mechanism to detect URL changes if the component is already mounted.
-
   onMount(() => {
     loadProfile();
-
-    const handlePopState = () => {
-        loadProfile();
-    };
+    const handlePopState = () => { loadProfile(); };
     window.addEventListener('popstate', handlePopState);
-
-    // Custom event dispatch from App.svelte or Navbar could help, but for now assuming full re-renders or popstate.
-    // If clicking a link in Svelte SPA updates history state but doesn't unmount component, we need to know.
-    // In App.svelte: `{#if currentPath === "/profile"} <Profile /> {/if}`.
-    // If we go from /profile to /profile?u=x, currentPath is likely still /profile (depending on how we parsed it).
-    // In App.svelte: `currentPath = window.location.pathname`. Query params are ignored in that matching logic.
-    // So <Profile> remains mounted. We need to watch the URL.
-
-    // We can use a MutationObserver or just patch pushState (overkill).
-    // Or simply, we can export a function or variable that App updates.
-    // OR, simpler: use a reactive block with a hacky timer or just rely on the fact that `App.svelte` `handleNavigate`
-    // updates `currentPath`. If `currentPath` doesn't change, App doesn't re-render.
-    // BUT `window.location.search` changes.
-
-    // Let's hook into the global navigation function if possible, or simple setInterval check for URL change? No.
-    // Let's assume for this iteration that links trigger a full nav or we add a listener for a custom event.
-    // The `Navbar` calls `onNavigate`, which does `pushState`.
-    // We can listen to that if we emit an event.
   });
 
-  // Re-run loadProfile if $userSession changes (login/logout)
   $: $userSession, loadProfile();
-
 </script>
 
 <div class="profile-page">
-  <!-- Loading State -->
   {#if loading}
     <div class="center-content">
       <Loader2 class="animate-spin" size={32} color="var(--primary-color)" />
     </div>
 
-  <!-- Error State (e.g. User not found) -->
   {:else if error}
     <div class="center-content">
       <div class="error-container">
@@ -138,25 +85,39 @@
       </div>
     </div>
 
-  <!-- Case: Show Profile (Own or Other) -->
   {:else if profileData}
-    <div class="profile-header">
-      <div class="banner"></div> <!-- Placeholder for banner -->
-      <div class="profile-info-container">
-        <div class="avatar-wrapper">
-           <img
-            src={profileData.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${profileData.username}`}
-            alt={profileData.username}
-            class="profile-avatar"
-          />
+    <div class="profile-header-section">
+      <!-- Back button header if viewing another profile -->
+      {#if !isOwnProfile && urlUsername}
+        <div class="sticky-header">
+           <a href="/" class="back-btn"><ArrowLeft size={20} /></a>
+           <div class="header-name">
+              <h3>{profileData.full_name}</h3>
+              <span class="post-count">0 posts</span>
+           </div>
         </div>
+      {/if}
 
-        <div class="actions">
-          {#if isOwnProfile}
-            <a href="/settings" class="btn-edit">Edit Profile</a>
-          {:else}
-            <!-- Follow/Message buttons could go here -->
-          {/if}
+      <div class="banner"></div>
+
+      <div class="profile-info-container">
+        <div class="top-row">
+           <div class="avatar-wrapper">
+             <img
+              src={profileData.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${profileData.username}`}
+              alt={profileData.username}
+              class="profile-avatar"
+            />
+           </div>
+
+           <div class="actions">
+            {#if isOwnProfile}
+              <a href="/settings" class="btn-edit">Edit Profile</a>
+            {:else}
+              <!-- Future: Follow Button -->
+              <button class="btn-primary">Follow</button>
+            {/if}
+          </div>
         </div>
 
         <div class="info">
@@ -170,7 +131,7 @@
           <div class="meta">
              <div class="meta-item">
                 <Calendar size={16} />
-                <span>Joined recently</span> <!-- We assume joined_at isn't in table yet or we default -->
+                <span>Joined recently</span>
              </div>
              {#if profileData.website}
                <div class="meta-item">
@@ -181,7 +142,6 @@
           </div>
 
           <div class="stats">
-             <!-- Example stats -->
              <div class="stat">
                <span class="count">0</span> <span class="label">Following</span>
              </div>
@@ -201,7 +161,6 @@
       </div>
     </div>
 
-    <!-- Profile Tabs/Content -->
     <div class="profile-tabs">
        <div class="tab active">Posts</div>
        <div class="tab">Replies</div>
@@ -215,14 +174,12 @@
        </div>
     </div>
 
-  <!-- Case: CTA (Not logged in, no 'u' param) -->
   {:else}
     <div class="cta-container">
       <div class="cta-card">
          <h2>Join to see your profile</h2>
          <p>Sign up now to create your own profile, follow others, and start trading.</p>
          <div class="cta-actions">
-           <!-- Note: These should trigger navigation. Using href for simplicity, assuming App intercepts or standard link nav. -->
            <a href="/login" class="btn-primary">Log in</a>
            <a href="/register" class="btn-secondary">Sign up</a>
          </div>
@@ -234,50 +191,130 @@
 <style>
   .profile-page {
     width: 100%;
-    min-height: 100%;
-    position: relative;
+    min-height: 100vh;
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    background-color: var(--bg-main);
+    /* In App.svelte, page-container has max-width: 1000px and padding.
+       If we want to fill that, we are good.
+       If we want to stretch to edges of that container, we might need negative margins
+       if the container has padding we want to ignore (like for the banner).
+
+       App.svelte: .page-container { padding: 16px 20px; }
+       To make the banner full width relative to this component's container, we can just use width: 100%.
+       But the page-container padding will leave whitespace around the banner.
+       Often profiles look better if the banner hits the edges.
+
+       Let's assume the user wants the profile to fill the "page-container" space fully.
+       Actually, standard Twitter/modern layout usually has the feed column as the main thing.
+
+       If we want "ocupe el width que se le permita" inside the existing padding, width: 100% is default.
+    */
+    display: flex;
+    flex-direction: column;
   }
+
+  /* To negate parent padding if desired, we would need to know exact padding values or use a different layout approach.
+     For now, we will work within the container. */
 
   .center-content {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 50vh;
+    flex-grow: 1;
+    min-height: 50vh;
+  }
+
+  /* Sticky Header (optional, if we want that "scrolled down" effect) */
+  .sticky-header {
+      position: sticky;
+      top: 0;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+      padding: 0 16px;
+      height: 53px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      border-bottom: 1px solid var(--border-color);
+  }
+
+  .header-name h3 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 24px;
+  }
+
+  .post-count {
+      font-size: 13px;
+      color: var(--text-secondary);
+  }
+
+  .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      color: var(--text-main);
+      transition: background-color 0.2s;
+  }
+  .back-btn:hover {
+      background-color: var(--bg-tertiary);
   }
 
   /* Banner */
   .banner {
     height: 200px;
-    background-color: var(--bg-tertiary);
+    background-color: var(--bg-tertiary); /* Fallback */
+    /* background-image: url(...); */
     width: 100%;
-    /* Could add background image support later */
-  }
-
-  /* Info Header */
-  .profile-info-container {
-    padding: 12px 16px;
     position: relative;
   }
 
+  .profile-info-container {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 12px;
+      height: 40px; /* Space reserved for avatar overlap */
+  }
+
   .avatar-wrapper {
-    margin-top: -15%; /* Overlap banner */
-    margin-bottom: 12px;
+    margin-top: -15%; /* Pull up into banner */
+    /* To keep it precise: width 134px -> radius 67. half is 67.
+       Usually on Twitter it overlaps by 50%. */
     width: 134px;
     height: 134px;
     border-radius: 50%;
     background-color: var(--bg-main);
     padding: 4px;
-    display: inline-block;
+    position: absolute;
+    top: -67px; /* Half height */
+    left: 16px;
   }
 
+  /* Responsive Avatar */
   @media (max-width: 640px) {
+    .banner {
+        height: 120px;
+    }
     .avatar-wrapper {
         width: 90px;
         height: 90px;
-        margin-top: -45px;
+        top: -45px;
     }
-    .banner {
-        height: 120px;
+    .top-row {
+        height: 30px;
     }
   }
 
@@ -287,17 +324,21 @@
     border-radius: 50%;
     object-fit: cover;
     background-color: var(--bg-tertiary);
+    cursor: pointer;
+    transition: filter 0.2s;
+  }
+
+  .profile-avatar:hover {
+      filter: brightness(0.9);
   }
 
   .actions {
-    position: absolute;
-    top: 12px;
-    right: 16px;
+    margin-left: auto; /* Push to right */
+    padding-bottom: 0; /* Align with bottom of avatar area conceptually */
   }
 
   .btn-edit {
-    display: inline-block;
-    padding: 6px 16px;
+    padding: 8px 16px;
     border: 1px solid var(--border-strong);
     border-radius: 9999px;
     font-weight: 700;
@@ -312,11 +353,26 @@
     background-color: var(--bg-hover);
   }
 
+  .btn-primary {
+    padding: 8px 20px;
+    background-color: var(--text-main); /* Black follow button often used */
+    color: var(--bg-main);
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover {
+      opacity: 0.8;
+  }
+
   .fullname {
     font-size: 20px;
     font-weight: 800;
-    margin: 0;
+    margin: 4px 0 0 0;
     color: var(--text-main);
+    line-height: 24px;
   }
 
   .handle {
@@ -329,6 +385,7 @@
     font-size: 15px;
     margin-bottom: 12px;
     white-space: pre-wrap;
+    color: var(--text-main);
   }
 
   .meta {
@@ -346,14 +403,11 @@
     gap: 4px;
   }
 
-  .meta-item a {
-    color: var(--primary-color);
-  }
-
   .stats {
     display: flex;
     gap: 20px;
     font-size: 14px;
+    margin-top: 4px;
   }
 
   .stat {
@@ -365,12 +419,9 @@
   .stat-link {
     color: inherit;
     text-decoration: none;
-    transition: color 0.2s;
   }
-
   .stat-link:hover {
-    color: var(--primary-color);
-    text-decoration: underline;
+      text-decoration: underline;
   }
 
   .count {
@@ -379,15 +430,11 @@
     margin-right: 4px;
   }
 
-  .stat-link .count {
-      color: inherit;
-  }
-
   /* Tabs */
   .profile-tabs {
     display: flex;
     border-bottom: 1px solid var(--border-color);
-    margin-top: 16px;
+    margin-top: 8px;
   }
 
   .tab {
@@ -399,6 +446,7 @@
     cursor: pointer;
     position: relative;
     transition: background-color 0.2s;
+    font-size: 15px;
   }
 
   .tab:hover {
@@ -416,7 +464,7 @@
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 56px; /* Approx width of text */
+    width: 56px;
     height: 4px;
     background-color: var(--primary-color);
     border-radius: 9999px;
@@ -430,6 +478,8 @@
     padding: 40px;
     text-align: center;
     color: var(--text-secondary);
+    font-size: 15px;
+    font-weight: 600;
   }
 
   /* CTA */
@@ -464,21 +514,6 @@
     gap: 12px;
   }
 
-  .btn-primary {
-    display: block;
-    padding: 12px;
-    background-color: var(--primary-color);
-    color: white;
-    border-radius: 9999px;
-    font-weight: 700;
-    text-decoration: none;
-    transition: background-color 0.2s;
-  }
-
-  .btn-primary:hover {
-    background-color: var(--primary-hover);
-  }
-
   .btn-secondary {
     display: block;
     padding: 12px;
@@ -490,7 +525,6 @@
     text-decoration: none;
     transition: background-color 0.2s;
   }
-
   .btn-secondary:hover {
     background-color: var(--bg-hover);
   }

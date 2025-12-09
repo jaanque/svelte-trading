@@ -184,9 +184,6 @@
                <span class="count">0</span> <span class="label">Followers</span>
              </div>
              <div class="stat">
-                <span class="count">{profileData.tokens || 0}</span> <span class="label">Tokens</span>
-             </div>
-             <div class="stat">
                 <a href="/portfolio" class="stat-link">
                     <span class="count">{profileData.price || 50}</span> <span class="label">Price</span>
                 </a>

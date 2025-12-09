@@ -12,6 +12,7 @@
     MoreHorizontal,
     LogOut,
     Plus,
+    Coins,
   } from "lucide-svelte";
   import { onMount } from "svelte";
   import { userProfile } from "../../../lib/authStore";
@@ -96,6 +97,15 @@
       <a href="/" aria-label="Home" on:click={(e) => handleLinkClick(e, "/")}>
         <img src={svelteLogo} class="brand-icon" alt="Svelte Logo" />
       </a>
+
+      {#if $userProfile}
+        <div class="tokens-pill" title="Your Tokens">
+          <div class="coin-icon">
+            <Coins size={16} strokeWidth={2.5} />
+          </div>
+          <span class="tokens-amount">{$userProfile.tokens}</span>
+        </div>
+      {/if}
     </div>
 
     <ul class="nav-links">
@@ -226,6 +236,7 @@
     width: 100%;
     display: flex;
     justify-content: flex-start;
+    align-items: center;
     transition: justify-content 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
@@ -242,6 +253,7 @@
     border-radius: 50%;
     transition: background-color 0.2s;
     color: var(--text-main);
+    flex-shrink: 0;
   }
 
   .brand a:hover {
@@ -252,6 +264,38 @@
     height: 28px;
     width: 28px;
     object-fit: contain;
+  }
+
+  /* Tokens Pill */
+  .tokens-pill {
+    display: flex;
+    align-items: center;
+    background-color: #FFF9C4; /* Pastel yellow bg */
+    color: #FBC02D; /* Darker yellow/gold text */
+    padding: 6px 12px;
+    border-radius: 9999px;
+    margin-left: 12px;
+    font-weight: 700;
+    font-size: 15px;
+    border: 1px solid #FFF59D;
+    transition: opacity 0.3s, width 0.3s, margin 0.3s;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .sidebar.collapsed .tokens-pill {
+    opacity: 0;
+    width: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
+  }
+
+  .coin-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 6px;
   }
 
   /* Nav Links */
@@ -634,6 +678,10 @@
     .profile-card {
         justify-content: center;
         padding: 12px;
+    }
+    /* Hide tokens pill in tablet/mobile for now if no space, or let it collapse naturally */
+    .tokens-pill {
+       display: none;
     }
   }
 

@@ -11,7 +11,7 @@
     ChevronRight,
     MoreHorizontal,
     LogOut,
-    Feather,
+    Plus,
   } from "lucide-svelte";
   import { onMount } from "svelte";
   import { userProfile } from "../../../lib/authStore";
@@ -125,7 +125,7 @@
       on:click={(e) => handleLinkClick(e, "/post")}
     >
       <div class="post-icon-container">
-        <Feather size={24} strokeWidth={2} />
+        <Plus size={24} strokeWidth={3} />
       </div>
       <span class="text post-text">Post</span>
     </a>
@@ -396,26 +396,40 @@
   }
 
   .post-icon-container {
-    display: none; /* Hidden by default in expanded */
+    display: flex; /* Always flex to center icon */
+    align-items: center;
+    justify-content: center;
   }
 
   /* Collapsed Post Button */
   .sidebar.collapsed .post-btn {
-    width: 48px;
-    height: 48px;
+    width: 50px;
+    height: 50px;
     padding: 0;
     border-radius: 50%;
     margin: 24px 0 12px 0;
+    box-shadow: var(--shadow-md);
   }
 
   .sidebar.collapsed .post-text {
     display: none;
+    opacity: 0;
+    width: 0;
   }
 
-  .sidebar.collapsed .post-icon-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  /* When expanded, we show text and hide icon? No, user wants icon ("icona quiero que sea un simbolo de mas")
+     Ideally on expanded: Icon + "Post" text, or just "Post"?
+     Twitter does "Post" text only on expanded large screens, but feather icon on smaller.
+     Let's do Icon + Text for clarity or Text only?
+     "perfeccionalo y la icona quiero que sea un simbolo de mas" implies the icon is important.
+     Let's show Icon + Text on expanded.
+  */
+  .post-btn .post-icon-container {
+     margin-right: 8px;
+  }
+
+  .sidebar.collapsed .post-btn .post-icon-container {
+     margin-right: 0;
   }
 
   /* Spacer to push profile down */
@@ -672,16 +686,28 @@
         margin-right: 0;
     }
 
-    /* Hide post button on mobile bottom nav if space is tight,
-       or turn it into a floating action button (FAB).
-       For now, let's hide it from the bottom bar structure
-       as it might break the flow, or make it a FAB.
-       User didn't specify mobile behavior, but "opcion al menu" usually implies visibility.
-       On mobile twitter, the post button is a FAB.
-    */
+    /* Floating Action Button (FAB) for Mobile */
     .post-btn {
+        display: flex;
+        position: fixed;
+        bottom: 70px; /* Above bottom nav */
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        padding: 0;
+        border-radius: 50%;
+        margin: 0;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        z-index: 2100;
+        align-self: auto;
+    }
+
+    .post-text {
         display: none;
-        /* Ideally: position fixed bottom right as FAB */
+    }
+
+    .post-btn .post-icon-container {
+        margin-right: 0;
     }
   }
 </style>

@@ -18,10 +18,9 @@ begin
   return query
   with price_24h_ago as (
     -- Get the price closest to 24h ago for each user
-    -- We use distinct on (user_id) to get the single closest record
     select distinct on (user_id)
       user_id,
-      price as old_price
+      price::numeric as old_price
     from public.price_history
     where created_at >= now() - interval '24 hours'
     order by user_id, created_at asc
@@ -32,7 +31,7 @@ begin
       p.username,
       p.full_name,
       p.avatar_url,
-      p.price
+      p.price::numeric as price
     from public.profiles p
   )
   select
@@ -47,8 +46,6 @@ begin
     end as change_pct
   from current_prices cp
   left join price_24h_ago ph on cp.id = ph.user_id
-  -- Filter out users with 0 change if desired, or keep them.
-  -- For movers, we usually want non-zero change, but if new users have 0 change they just won't be top/bottom
   where cp.price is not null
   order by change_pct desc;
 end;

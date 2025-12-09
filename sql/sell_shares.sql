@@ -16,47 +16,30 @@ declare
   current_investment public.investments%ROWTYPE;
   tokens_to_receive numeric;
   new_price numeric;
+  total_shares_owned numeric;
 begin
   current_user_id := auth.uid();
 
   -- Get target user details (lock for update)
   select * into target_profile
-  from public.profiles
-  where id = target_user_id
+  from public.profiles p
+  where p.id = sell_shares.target_user_id
   for update;
 
   if target_profile.id is null then
     raise exception 'Target user not found';
   end if;
 
-  -- Check if user has enough shares
-  -- We need to sum up all investments or find the aggregate.
-  -- Simpler: Check if we have an investment record or aggregate.
-  -- Since we insert a new row for every investment, we need to sum them up OR we should have aggregated them.
-  -- The current system inserts new rows. This makes partial selling hard if we don't aggregate.
-  -- "Portfolio.svelte" aggregates client-side.
-  -- Ideally, we should have a "holdings" table or aggregate query.
-  -- For now, we will verify the user has enough shares by summing their investments.
-
   -- Calculate total shares owned
-  declare
-    total_shares_owned numeric;
-  begin
-    select coalesce(sum(amount_shares), 0) into total_shares_owned
-    from public.investments
-    where investor_id = current_user_id
-      and target_user_id = target_user_id; -- wait, target_user_id param vs column
+  -- Use table alias 'i' to avoid ambiguity with function param 'amount_shares'
+  select coalesce(sum(i.amount_shares), 0) into total_shares_owned
+  from public.investments i
+  where i.investor_id = current_user_id
+    and i.target_user_id = sell_shares.target_user_id;
 
-    -- Fix variable scope collision
-    select coalesce(sum(i.amount_shares), 0) into total_shares_owned
-    from public.investments i
-    where i.investor_id = current_user_id
-      and i.target_user_id = sell_shares.target_user_id;
-
-    if total_shares_owned < amount_shares then
-       raise exception 'Insufficient shares. You own % but tried to sell %', total_shares_owned, amount_shares;
-    end if;
-  end;
+  if total_shares_owned < amount_shares then
+     raise exception 'Insufficient shares. You own % but tried to sell %', total_shares_owned, amount_shares;
+  end if;
 
   -- Calculate tokens to receive based on current price
   -- Tokens = Shares * Price
@@ -80,15 +63,11 @@ begin
   set
     available_shares = available_shares + amount_shares,
     price = new_price
-  where id = target_user_id;
+  where id = sell_shares.target_user_id;
 
-  -- Record the "Sale"
-  -- We can record it as a negative investment?
-  -- Or strictly speaking, we should have a "transactions" table.
-  -- But to keep compatible with "investments" table acting as ledger:
-  -- insert negative values.
+  -- Record the "Sale" (Negative investment)
   insert into public.investments (investor_id, target_user_id, amount_tokens, amount_shares)
-  values (current_user_id, target_user_id, -tokens_to_receive, -amount_shares);
+  values (current_user_id, sell_shares.target_user_id, -tokens_to_receive, -amount_shares);
 
 end;
 $$;

@@ -9,6 +9,7 @@ export interface Profile {
   avatar_url: string;
   website?: string;
   tokens: number;
+  price: number;
 }
 
 export const userSession = writable<Session | null>(null);
@@ -46,6 +47,7 @@ async function handleSession(session: Session | null) {
         full_name: session.user.user_metadata?.full_name || 'User',
         avatar_url: session.user.user_metadata?.avatar_url || '',
         tokens: 250,
+        price: 50,
       });
     }
   } else {

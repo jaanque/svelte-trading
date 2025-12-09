@@ -186,6 +186,11 @@
              <div class="stat">
                 <span class="count">{profileData.tokens || 0}</span> <span class="label">Tokens</span>
              </div>
+             <div class="stat">
+                <a href="/portfolio" class="stat-link">
+                    <span class="count">{profileData.price || 50}</span> <span class="label">Price</span>
+                </a>
+             </div>
           </div>
         </div>
       </div>
@@ -348,11 +353,28 @@
 
   .stat {
     color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+  }
+
+  .stat-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .stat-link:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
   }
 
   .count {
     font-weight: 700;
     color: var(--text-main);
+  }
+
+  .stat-link .count {
+      color: inherit;
   }
 
   /* Tabs */

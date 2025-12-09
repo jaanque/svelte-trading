@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { Image, Smile, Calendar, BarChart2, MapPin } from "lucide-svelte";
+  import { Image, Smile, Calendar, BarChart2, MapPin, X } from "lucide-svelte";
   import { userProfile } from "../../lib/authStore";
+
+  export let onClose: () => void = () => {};
 
   let content = "";
   let isFocused = false;
@@ -12,6 +14,13 @@
     console.log("Posting:", content);
     // Logic to submit post would go here
     content = "";
+    onClose();
+  }
+
+  function handleBackdropClick(e: MouseEvent) {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
   }
 
   function autoResize(e: Event) {
@@ -21,12 +30,20 @@
   }
 </script>
 
-<div class="post-page">
-  <header class="page-header">
-    <h1>New Post</h1>
-  </header>
+<!-- Backdrop -->
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<div class="modal-overlay" on:click={handleBackdropClick}>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <button class="close-btn" on:click={onClose} aria-label="Close">
+        <X size={20} />
+      </button>
+      <div class="header-actions">
+        <button class="btn-text">Drafts</button>
+      </div>
+    </div>
 
-  <div class="card editor-card">
     <div class="editor-layout">
       <div class="avatar-column">
         {#if $userProfile}
@@ -49,6 +66,7 @@
                   on:focus={() => isFocused = true}
                   on:blur={() => isFocused = false}
                   rows="3"
+                  autofocus
               ></textarea>
           </div>
 
@@ -83,33 +101,79 @@
 </div>
 
 <style>
-  .post-page {
-    /* Container style matches other pages */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 5%;
   }
 
-  .page-header {
-    margin-bottom: 24px;
-  }
-
-  .page-header h1 {
-    font-size: 24px;
-    font-weight: 700;
-    margin: 0;
-    line-height: 28px;
-    color: var(--text-main);
-  }
-
-  .editor-card {
-    /* Uses global .card style implicitly if applied, or we define specific here */
+  .modal-content {
     background-color: var(--bg-main);
-    border: 1px solid var(--border-color);
+    width: 100%;
+    max-width: 600px;
     border-radius: 16px;
-    padding: 16px;
+    padding: 0 16px 16px 16px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 53px;
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-main);
+    z-index: 10;
+  }
+
+  .close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-left: -8px; /* Align slightly to left */
+  }
+
+  .close-btn:hover {
+    background-color: var(--bg-hover);
+  }
+
+  .btn-text {
+      background: none;
+      color: var(--primary-color);
+      font-weight: 700;
+      font-size: 14px;
+      padding: 8px 16px;
+      border-radius: 9999px;
+  }
+
+  .btn-text:hover {
+      background-color: var(--bg-hover);
   }
 
   .editor-layout {
     display: flex;
     gap: 12px;
+    margin-top: 4px;
   }
 
   .avatar-column {
@@ -259,5 +323,16 @@
       border-radius: 50%;
       border-top-color: transparent; /* Indicate progress roughly */
       transform: rotate(45deg);
+  }
+
+  @media (max-width: 640px) {
+      .modal-overlay {
+          padding-top: 0;
+      }
+      .modal-content {
+          height: 100%;
+          max-height: 100%;
+          border-radius: 0;
+      }
   }
 </style>

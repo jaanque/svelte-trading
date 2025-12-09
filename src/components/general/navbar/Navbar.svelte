@@ -118,17 +118,17 @@
       {/each}
     </ul>
 
-    <a
-      href="/post"
+    <!-- Use a button instead of a link for modal action -->
+    <button
       class="post-btn"
       aria-label="Post"
-      on:click={(e) => handleLinkClick(e, "/post")}
+      on:click={() => onNavigate("/post")}
     >
       <div class="post-icon-container">
         <Plus size={24} strokeWidth={3} />
       </div>
       <span class="text post-text">Post</span>
-    </a>
+    </button>
 
     <div class="spacer"></div>
 

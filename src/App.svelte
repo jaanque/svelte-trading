@@ -16,10 +16,20 @@
 
   let isCollapsed = false;
   let currentPath = window.location.pathname;
+  let showPostModal = false;
 
   function handleNavigate(path: string) {
+    if (path === "/post") {
+      showPostModal = true;
+      // Do not update history or currentPath for modal interactions
+      return;
+    }
     currentPath = path;
     window.history.pushState({}, "", path);
+  }
+
+  function closePostModal() {
+    showPostModal = false;
   }
 
   onMount(() => {
@@ -65,13 +75,15 @@
           <Settings />
         {:else if currentPath === "/profile"}
           <Profile />
-        {:else if currentPath === "/post"}
-          <Post />
         {:else}
           <Home />
         {/if}
       </div>
     </main>
+
+    {#if showPostModal}
+      <Post onClose={closePostModal} />
+    {/if}
   </div>
 {/if}
 

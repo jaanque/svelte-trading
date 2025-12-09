@@ -1,16 +1,101 @@
 <script lang="ts">
-  import { Search } from "lucide-svelte";
+  import { Search, Clock, Trash2 } from "lucide-svelte";
   import { supabase } from "../../lib/supabase";
   import { onMount } from "svelte";
+  import UserCard from "../../components/general/UserCard.svelte";
+
+  export let onNavigate: (path: string) => void = (path) => { window.location.href = path; };
 
   let searchQuery = "";
   let searchResults: any[] = [];
   let isLoading = false;
   let debounceTimer: any;
+  let searchHistory: any[] = [];
+  let historyLoading = false;
+
+  async function fetchHistory() {
+    historyLoading = true;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("search_history")
+        .select(`
+          created_at,
+          searched_profile:profiles!inner(id, username, full_name, avatar_url)
+        `)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (error) {
+        // If table doesn't exist yet, we might get an error.
+        // We'll ignore it for now or log it.
+        console.warn("Could not fetch history:", error.message);
+      } else {
+        // Map data to flat profile structure
+        searchHistory = data.map((item: any) => item.searched_profile).filter((p: any) => p);
+
+        // Remove duplicates client-side just in case, though unique constraint should handle it
+        const uniqueHistory = [];
+        const seenIds = new Set();
+        for (const profile of searchHistory) {
+            if (!seenIds.has(profile.id)) {
+                uniqueHistory.push(profile);
+                seenIds.add(profile.id);
+            }
+        }
+        searchHistory = uniqueHistory;
+      }
+    } catch (err) {
+      console.error("Error fetching history:", err);
+    } finally {
+      historyLoading = false;
+    }
+  }
+
+  async function addToHistory(profile: any) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // We want to upsert to update the created_at timestamp if it already exists
+      // However, Supabase upsert requires primary key or unique constraint.
+      // We assume (user_id, searched_profile_id) is unique.
+
+      // First, let's try to delete existing entry for this profile to ensure "recent" behavior
+      // (Putting it at the top by re-inserting)
+      await supabase
+        .from("search_history")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("searched_profile_id", profile.id);
+
+      const { error } = await supabase
+        .from("search_history")
+        .insert({
+          user_id: user.id,
+          searched_profile_id: profile.id
+        });
+
+      if (error) throw error;
+
+      // Refresh history if we were on the history view (empty query)
+      if (searchQuery.trim() === "") {
+        // Optimistically update UI
+        searchHistory = [profile, ...searchHistory.filter(p => p.id !== profile.id)];
+      }
+
+    } catch (err) {
+      console.error("Error adding to history:", err);
+    }
+  }
 
   async function performSearch() {
     if (!searchQuery.trim()) {
       searchResults = [];
+      fetchHistory(); // Refresh history when clearing search
       return;
     }
 
@@ -38,7 +123,14 @@
     }, 300);
   }
 
-  // Initial fetch or specific logic if needed on mount, but usually search is user-driven.
+  function handleProfileClick(profile: any) {
+      addToHistory(profile);
+      onNavigate(`/profile?u=${profile.username}`);
+  }
+
+  onMount(() => {
+    fetchHistory();
+  });
 </script>
 
 <div class="explore-container">
@@ -64,17 +156,47 @@
         <div class="spinner"></div>
       </div>
     {:else if searchQuery.trim() === ""}
-      <div class="empty-state">
-        <p>Try searching for people, lists, or keywords</p>
+      <!-- History View -->
+      <div class="history-section">
+        <div class="section-header">
+           <h2>
+             <Clock size={20} class="icon-inline" />
+             Recent Searches
+           </h2>
+        </div>
+
+        {#if historyLoading}
+           <div class="loading-state">
+             <div class="spinner"></div>
+           </div>
+        {:else if searchHistory.length === 0}
+           <div class="empty-state">
+             <p>Your search history will appear here.</p>
+           </div>
+        {:else}
+           <div class="history-grid">
+             {#each searchHistory as user (user.id)}
+                  <div role="button" tabindex="0" class="card-wrapper">
+                      <!-- We pass an onClick handler that intercepts the link navigation -->
+                      <UserCard
+                        {user}
+                        onClick={() => handleProfileClick(user)}
+                      />
+                </div>
+             {/each}
+           </div>
+        {/if}
       </div>
+
     {:else if searchResults.length === 0}
       <div class="no-results">
         <p>No results for "{searchQuery}"</p>
       </div>
     {:else}
+      <!-- Search Results List -->
       <div class="users-list">
         {#each searchResults as user}
-          <a href={`/profile?u=${user.username}`} class="user-card">
+          <a href={`/profile?u=${user.username}`} class="user-list-item" on:click|preventDefault={() => handleProfileClick(user)}>
             <div class="avatar">
               <img
                 src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`}
@@ -95,24 +217,24 @@
 <style>
   .explore-container {
     width: 100%;
-    /* Replicating the "Twitter" style explore header which is often sticky or part of the flow */
+    padding-bottom: 80px; /* Space for bottom nav on mobile if needed */
   }
 
   .search-header {
     margin-bottom: 24px;
     position: sticky;
     top: 0;
-    background-color: rgba(255, 255, 255, 0.85); /* fallback */
-    background-color: var(--bg-main); /* Ensure it matches bg */
+    background-color: var(--bg-main, #ffffff);
     z-index: 10;
-    padding-bottom: 8px; /* Spacing */
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 
   /* Twitter-like Search Bar */
   .search-bar {
     display: flex;
     align-items: center;
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-secondary, #eff3f4);
     border-radius: 9999px;
     padding: 0 12px;
     height: 44px;
@@ -121,9 +243,9 @@
   }
 
   .search-bar:focus-within {
-    background-color: var(--bg-main);
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 1px var(--primary-color);
+    background-color: var(--bg-main, #ffffff);
+    border-color: var(--primary-color, #1d9bf0);
+    box-shadow: 0 0 0 1px var(--primary-color, #1d9bf0);
   }
 
   .search-icon {
@@ -139,12 +261,12 @@
     border: none;
     outline: none;
     font-size: 15px;
-    color: var(--text-main);
+    color: var(--text-main, #0f1419);
     height: 100%;
   }
 
   .search-bar input::placeholder {
-    color: var(--text-secondary);
+    color: var(--text-secondary, #536471);
   }
 
   /* Results */
@@ -155,28 +277,62 @@
   .empty-state, .no-results {
     padding: 40px 20px;
     text-align: center;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #536471);
     font-size: 15px;
   }
 
-  /* User List */
+  /* History Section */
+  .section-header {
+    margin-bottom: 16px;
+    padding: 0 4px;
+  }
+
+  .section-header h2 {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-main, #0f1419);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+
+  /* Lucide icon global style usually needs specific targeting or usage of global class if available.
+     Here we scope it. */
+  :global(.icon-inline) {
+      margin-bottom: -2px;
+  }
+
+  .history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+    padding-bottom: 20px;
+  }
+
+  .card-wrapper {
+      height: 100%;
+      cursor: pointer;
+  }
+
+  /* User List Item (Search Results) */
   .users-list {
     display: flex;
     flex-direction: column;
   }
 
-  .user-card {
+  .user-list-item {
     display: flex;
     align-items: center;
     padding: 12px 16px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color, #eff3f4);
     text-decoration: none;
     transition: background-color 0.2s;
     cursor: pointer;
   }
 
-  .user-card:hover {
-    background-color: var(--bg-hover);
+  .user-list-item:hover {
+    background-color: var(--bg-hover, #f7f9f9);
   }
 
   .avatar {
@@ -191,7 +347,7 @@
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    background-color: var(--bg-tertiary);
+    background-color: var(--bg-tertiary, #cfd9de);
   }
 
   .user-info {
@@ -203,12 +359,12 @@
   .fullname {
     font-weight: 700;
     font-size: 15px;
-    color: var(--text-main);
+    color: var(--text-main, #0f1419);
   }
 
   .username {
     font-size: 14px;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #536471);
   }
 
   /* Loading Spinner */
@@ -219,8 +375,8 @@
   }
 
   .spinner {
-    border: 3px solid var(--bg-tertiary);
-    border-top: 3px solid var(--primary-color);
+    border: 3px solid var(--bg-tertiary, #cfd9de);
+    border-top: 3px solid var(--primary-color, #1d9bf0);
     border-radius: 50%;
     width: 24px;
     height: 24px;

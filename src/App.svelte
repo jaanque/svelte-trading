@@ -64,7 +64,7 @@
         {#if currentPath === "/" || currentPath === ""}
           <Home />
         {:else if currentPath === "/markets"}
-          <Markets />
+          <Markets onNavigate={handleNavigate} />
         {:else if currentPath === "/messages"}
           <Messages />
         {:else if currentPath === "/portfolio"}

@@ -23,6 +23,11 @@
       return num.toLocaleString();
   }
 
+  function formatPrice(num: number | undefined | null) {
+      if (num === undefined || num === null) return "0.00";
+      return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
   async function loadProfile() {
     loading = true;
     error = null;
@@ -166,7 +171,7 @@
              </div>
              <div class="stat-divider"></div>
              <a href="/portfolio" class="stat-item link">
-                <span class="stat-value highlight">{formatNumber(profileData.price || 50)}</span>
+                <span class="stat-value highlight">{formatPrice(profileData.price || 50)}</span>
                 <span class="stat-label">Price</span>
              </a>
              <div class="stat-item">

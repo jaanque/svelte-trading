@@ -22,7 +22,7 @@ declare
   target_profile public.profiles%ROWTYPE;
   shares_to_buy numeric;
   new_price numeric;
-  price_sensitivity constant numeric := 0.0001; -- Price increases by 0.0001 tokens per share bought
+  price_sensitivity constant numeric := 0.005; -- Increased sensitivity: 1000 shares buys = +5 price impact
 begin
   current_user_id := auth.uid();
 

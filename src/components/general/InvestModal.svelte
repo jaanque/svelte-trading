@@ -71,7 +71,7 @@
       {:else}
         <div class="info-row">
             <span class="label">Current Price</span>
-            <span class="value">{price} Tokens/Share</span>
+            <span class="value">{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Tokens/Share</span>
         </div>
 
         <div class="info-row">

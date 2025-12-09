@@ -17,11 +17,13 @@
   // Derived values
   $: amount = parseFloat(investAmount) || 0;
   $: price = targetUser.price || 50;
+  $: availableShares = targetUser.available_shares !== undefined ? targetUser.available_shares : 1000000;
   $: shares = amount > 0 ? (amount / price).toFixed(4) : "0";
   $: userBalance = $userProfile?.tokens || 0;
+  $: isSharesAvailable = parseFloat(shares) <= availableShares;
 
   // Validation
-  $: isValid = amount > 0 && amount <= userBalance;
+  $: isValid = amount > 0 && amount <= userBalance && isSharesAvailable;
 
   async function handleInvest() {
     if (!isValid) return;
@@ -73,6 +75,11 @@
         </div>
 
         <div class="info-row">
+            <span class="label">Available Shares</span>
+            <span class="value">{Math.floor(availableShares)}</span>
+        </div>
+
+        <div class="info-row">
             <span class="label">Your Balance</span>
             <span class="value">{userBalance} Tokens</span>
         </div>
@@ -98,6 +105,9 @@
 
         {#if errorMsg}
             <div class="error-message">{errorMsg}</div>
+        {/if}
+        {#if amount > 0 && !isSharesAvailable}
+            <div class="error-message">Not enough shares available for this purchase.</div>
         {/if}
       {/if}
     </div>

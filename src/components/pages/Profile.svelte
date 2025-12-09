@@ -173,6 +173,12 @@
                <span class="stat-value highlight">{formatNumber(profileData.shares || 1000000)}</span>
                <span class="stat-label">Shares</span>
              </div>
+             {#if profileData.available_shares !== undefined}
+                <div class="stat-item">
+                  <span class="stat-value">{formatNumber(Math.floor(profileData.available_shares))}</span>
+                  <span class="stat-label">Available</span>
+                </div>
+             {/if}
           </div>
         </div>
       </div>

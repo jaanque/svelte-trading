@@ -22,7 +22,6 @@ declare
   target_profile public.profiles%ROWTYPE;
   shares_to_buy numeric;
   new_price numeric;
-  price_sensitivity constant numeric := 0.005; -- Increased sensitivity: 1000 shares buys = +5 price impact
 begin
   current_user_id := auth.uid();
 
@@ -64,8 +63,9 @@ begin
   where id = current_user_id;
 
   -- Calculate new price
-  -- Linear Price Impact: NewPrice = OldPrice + (SharesBought * Sensitivity)
-  new_price := target_profile.price + (shares_to_buy * price_sensitivity);
+  -- Dynamic Price Impact: 0.5% increase per token invested
+  -- NewPrice = CurrentPrice * (1 + (0.005 * InvestAmount))
+  new_price := target_profile.price * (1 + (0.005 * invest_amount));
 
   -- Update target user stats
   update public.profiles

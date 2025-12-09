@@ -28,9 +28,8 @@
   let transactionsLoading = false;
 
   // Reactively update current value from profile store
-  $: if ($userProfile) {
-      currentValue = $userProfile.price || 50;
-  }
+  // NOTE: We don't want $userProfile.price anymore, we want Portfolio Value.
+  // We will update currentValue when holdings change.
 
   const ranges = [
     { label: "24H", value: "24h" },
@@ -45,8 +44,8 @@
     if (!$userProfile) return;
     loading = true;
 
+    // 1. Determine Time Range
     let startDate = new Date();
-    // Default start date logic
     if (timeRange === "24h") {
       startDate.setHours(startDate.getHours() - 24);
     } else if (timeRange === "7d") {
@@ -65,85 +64,146 @@
         }
     }
 
-    let query = supabase
-      .from("price_history")
-      .select("price, created_at")
-      .eq("user_id", $userProfile.id)
-      .gte("created_at", startDate.toISOString())
-      .order("created_at", { ascending: true });
-
-    if (timeRange === "custom" && customEndDate) {
-        const end = new Date(customEndDate);
-        end.setHours(23, 59, 59);
-        query = query.lte("created_at", end.toISOString());
+    // 2. Determine involved users (my holdings)
+    // If we have no holdings, history is flat 0?
+    if (holdings.length === 0) {
+        historyData = [];
+        currentValue = 0;
+        startValue = 0;
+        percentageChange = 0;
+        loading = false;
+        renderChart();
+        return;
     }
 
-    const { data, error } = await query;
+    const targetUserIds = holdings.map(h => h.user.id);
 
-    if (error) {
-      console.error("Error fetching history:", error);
-      loading = false;
-      return;
-    }
+    try {
+        // 3. Get Baseline Prices (snapshot before startDate)
+        const { data: startPricesData, error: startError } = await supabase.rpc(
+            "get_snapshot_prices",
+            { p_user_ids: targetUserIds, p_time: startDate }
+        );
 
-    let fetchedData = data || [];
+        if (startError) throw startError;
 
-    let basePrice = currentValue;
-    if (fetchedData.length > 0) {
-        basePrice = currentValue;
-    }
+        // Initialize price map with baselines
+        // If baseline missing, check if we have data later?
+        // Fallback to holding.user.price if absolutely no history found later?
+        // For now initialize with map.
+        let currentPrices = new Map<string, number>();
 
-    if (fetchedData.length < 2) {
-        const now = new Date();
-        const startPoint = {
-            price: basePrice,
-            created_at: startDate.toISOString()
-        };
-        const endPoint = {
-            price: basePrice,
-            created_at: now.toISOString()
-        };
+        // Fill defaults from Current Prices (fallback)
+        // This ensures if a user has no history at all, we assume price is constant
+        holdings.forEach(h => {
+             currentPrices.set(h.user.id, h.user.price);
+        });
 
-        if (fetchedData.length === 1) {
-             historyData = [startPoint, ...fetchedData, endPoint];
-             historyData.sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-        } else {
-             historyData = [startPoint, endPoint];
+        // Override with baseline from DB if exists
+        startPricesData?.forEach((row: any) => {
+            currentPrices.set(row.user_id, row.price);
+        });
+
+        // 4. Get Price History Stream (changes in window)
+        let query = supabase
+          .from("price_history")
+          .select("user_id, price, created_at")
+          .in("user_id", targetUserIds)
+          .gte("created_at", startDate.toISOString())
+          .order("created_at", { ascending: true });
+
+        if (timeRange === "custom" && customEndDate) {
+            const end = new Date(customEndDate);
+            end.setHours(23, 59, 59);
+            query = query.lte("created_at", end.toISOString());
         }
-    } else {
-        historyData = fetchedData;
-        const lastTime = new Date(historyData[historyData.length-1].created_at).getTime();
-        const nowTime = new Date().getTime();
-        if (nowTime - lastTime > 60000 * 5) {
-            historyData.push({
-                price: currentValue,
-                created_at: new Date().toISOString()
+
+        const { data: priceChanges, error: historyError } = await query;
+        if (historyError) throw historyError;
+
+        // 5. Reconstruct Portfolio Value Stream
+        // We want a timeseries.
+        // Events: priceChanges.
+        // We can sample at intervals OR just record every change.
+        // Recording every change is most accurate but might be jagged.
+        // Let's record every change event as a datapoint.
+
+        let timePoints: any[] = [];
+
+        // Add Start Point
+        let startTotal = 0;
+        holdings.forEach(h => {
+            const p = currentPrices.get(h.user.id) || 0;
+            startTotal += h.totalShares * p;
+        });
+
+        timePoints.push({
+            created_at: startDate.toISOString(),
+            price: startTotal
+        });
+
+        // Process changes
+        if (priceChanges && priceChanges.length > 0) {
+            priceChanges.forEach((change: any) => {
+                // Update price for this user
+                currentPrices.set(change.user_id, change.price);
+
+                // Recalculate Total
+                let total = 0;
+                holdings.forEach(h => {
+                    const p = currentPrices.get(h.user.id) || 0;
+                    total += h.totalShares * p;
+                });
+
+                timePoints.push({
+                    created_at: change.created_at,
+                    price: total
+                });
             });
         }
-    }
 
-    if (historyData.length > 0) {
-        startValue = historyData[0].price;
-        const endVal = historyData[historyData.length - 1].price;
-        const diff = endVal - startValue;
+        // Add End Point (Now)
+        // Ensure we capture current state if not covered
+        let endTotal = 0;
+        holdings.forEach(h => {
+             // currentPrices should now hold latest from history stream
+             // BUT `price_history` might lag behind `profiles.price` slightly if realtime?
+             // Let's use the actual current `holdings.user.price` for the "Now" point to be precise with UI.
+             endTotal += h.totalShares * h.user.price;
+        });
+
+        const now = new Date();
+        timePoints.push({
+            created_at: now.toISOString(),
+            price: endTotal
+        });
+
+        // Sort just in case
+        timePoints.sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+        historyData = timePoints;
+
+        // Calculate Stats
+        startValue = timePoints[0].price;
+        let endVal = timePoints[timePoints.length - 1].price;
+        let diff = endVal - startValue;
         percentageChange = startValue === 0 ? 0 : (diff / startValue) * 100;
-    }
 
-    renderChart();
-    loading = false;
+        // Update display value to the latest calculated portfolio value
+        currentValue = endVal;
+
+    } catch (err) {
+        console.error("Error reconstructing portfolio history:", err);
+    } finally {
+        renderChart();
+        loading = false;
+    }
   }
 
   async function fetchHoldings() {
     if (!$userProfile) return;
     holdingsLoading = true;
 
-    // Fetch investments made by the user
-    // We want to group by target_user_id and sum shares.
-    // However, Supabase doesn't support grouping directly in client SDK easily for this structure without a view or rpc.
-    // We'll fetch all and aggregate client-side for now (assuming not huge volume yet),
-    // OR fetch distinct target users and then shares.
-
-    // Better approach: fetch raw investments, then group by user.
     const { data, error } = await supabase
         .from("investments")
         .select(`
@@ -169,6 +229,12 @@
         });
 
         holdings = Array.from(aggregated.values());
+
+        // Initial current value based on holdings
+        currentValue = holdings.reduce((sum, h) => sum + (h.totalShares * h.user.price), 0);
+
+        // Now fetch history based on these holdings
+        fetchHistory();
     }
     holdingsLoading = false;
   }
@@ -218,8 +284,6 @@
     const dataPoints = historyData.map(d => d.price);
 
     const isPositive = percentageChange >= 0;
-    // Updated to use pastel colors directly or from computed style if feasible, but hardcoding hex is safer for canvas
-    // Pastel Green: #77DD77, Pastel Red: #FF6961
     const lineColor = isPositive ? '#77DD77' : '#FF6961';
     const fillColorStart = isPositive ? 'rgba(119, 221, 119, 0.2)' : 'rgba(255, 105, 97, 0.2)';
     const fillColorEnd = isPositive ? 'rgba(119, 221, 119, 0)' : 'rgba(255, 105, 97, 0)';
@@ -240,7 +304,7 @@
         labels: labels,
         datasets: [
           {
-            label: "Price",
+            label: "Value",
             data: dataPoints,
             borderColor: lineColor,
             backgroundColor: gradient,
@@ -283,7 +347,7 @@
              bodyFont: { size: 13 },
              callbacks: {
                  label: function(context) {
-                     return 'Price: ' + context.parsed.y;
+                     return 'Value: ' + context.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2});
                  }
              }
           }
@@ -337,14 +401,13 @@
 
   onMount(() => {
     if ($userProfile) {
-        fetchHistory();
+        // We trigger holdings first, history will be triggered after holdings load
         fetchHoldings();
         fetchTransactions();
     }
     const unsubscribe = userProfile.subscribe(val => {
         if (val) {
-             currentValue = val.price || 50;
-             if (historyData.length === 0) fetchHistory();
+             // If profile updates, refresh holdings (which refreshes history)
              if (holdings.length === 0) fetchHoldings();
              if (transactions.length === 0) fetchTransactions();
         }
@@ -359,12 +422,12 @@
 
 <div class="portfolio-container">
   <div class="header">
-      <h1>VALOR DE {$userProfile?.username ? $userProfile.username.toUpperCase() : 'USUARIO'}</h1>
+      <h1>VALOR DE CARTERA</h1>
 
       <!-- Value Display -->
       <div class="value-card">
           <div class="current-value">
-              {currentValue}
+              {currentValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
               <span class="currency-label">Credits</span>
           </div>
           <div class="change-indicator {percentageChange >= 0 ? 'positive' : 'negative'}">

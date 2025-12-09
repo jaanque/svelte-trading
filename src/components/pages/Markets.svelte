@@ -201,56 +201,72 @@
       </div>
 
       <!-- Top Gainers Section -->
-      {#if !moversLoading && topGainers.length > 0}
-        <div class="history-section">
-          <div class="section-header">
-             <h2>
-               <TrendingUp size={20} class="icon-inline positive" />
-               Top Gainers (24h)
-             </h2>
-          </div>
-          <div class="history-grid">
-             {#each topGainers as user (user.id)}
-                  <div role="button" tabindex="0" class="card-wrapper">
-                      <UserCard
-                        {user}
-                        onClick={() => handleProfileClick(user)}
-                      >
-                         <div class="trend-badge positive">
-                             +{user.change_pct.toFixed(2)}%
-                         </div>
-                      </UserCard>
-                </div>
-             {/each}
-          </div>
+      <div class="history-section">
+        <div class="section-header">
+            <h2>
+              <TrendingUp size={20} class="icon-inline positive" />
+              Top Gainers (24h)
+            </h2>
         </div>
-      {/if}
+        {#if moversLoading}
+            <div class="loading-state-mini">
+                <div class="spinner-small"></div>
+            </div>
+        {:else if topGainers.length > 0}
+            <div class="history-grid">
+                {#each topGainers as user (user.id)}
+                    <div role="button" tabindex="0" class="card-wrapper">
+                        <UserCard
+                            {user}
+                            onClick={() => handleProfileClick(user)}
+                        >
+                            <div class="trend-badge positive">
+                                +{user.change_pct.toFixed(2)}%
+                            </div>
+                        </UserCard>
+                    </div>
+                {/each}
+            </div>
+        {:else}
+            <div class="empty-list-state">
+                <p>No gainers in the last 24h</p>
+            </div>
+        {/if}
+      </div>
 
       <!-- Top Losers Section -->
-      {#if !moversLoading && topLosers.length > 0}
-        <div class="history-section">
-          <div class="section-header">
-             <h2>
-               <TrendingDown size={20} class="icon-inline negative" />
-               Top Losers (24h)
-             </h2>
-          </div>
-          <div class="history-grid">
-             {#each topLosers as user (user.id)}
-                  <div role="button" tabindex="0" class="card-wrapper">
-                      <UserCard
-                        {user}
-                        onClick={() => handleProfileClick(user)}
-                      >
-                         <div class="trend-badge negative">
-                             {user.change_pct.toFixed(2)}%
-                         </div>
-                      </UserCard>
-                </div>
-             {/each}
-          </div>
+      <div class="history-section">
+        <div class="section-header">
+            <h2>
+              <TrendingDown size={20} class="icon-inline negative" />
+              Top Losers (24h)
+            </h2>
         </div>
-      {/if}
+        {#if moversLoading}
+            <div class="loading-state-mini">
+                <div class="spinner-small"></div>
+            </div>
+        {:else if topLosers.length > 0}
+            <div class="history-grid">
+                {#each topLosers as user (user.id)}
+                    <div role="button" tabindex="0" class="card-wrapper">
+                        <UserCard
+                            {user}
+                            onClick={() => handleProfileClick(user)}
+                        >
+                            <div class="trend-badge negative">
+                                {user.change_pct.toFixed(2)}%
+                            </div>
+                        </UserCard>
+                    </div>
+                {/each}
+            </div>
+        {:else}
+            <div class="empty-list-state">
+                <p>No losers in the last 24h</p>
+            </div>
+        {/if}
+      </div>
 
     {:else if searchResults.length === 0}
       <div class="no-results">
@@ -469,6 +485,30 @@
     width: 24px;
     height: 24px;
     animation: spin 1s linear infinite;
+  }
+
+  .loading-state-mini {
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+  }
+
+  .spinner-small {
+      border: 2px solid var(--bg-tertiary, #cfd9de);
+      border-top: 2px solid var(--primary-color, #1d9bf0);
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      animation: spin 1s linear infinite;
+  }
+
+  .empty-list-state {
+      padding: 20px;
+      text-align: center;
+      color: var(--text-secondary);
+      background-color: var(--bg-secondary);
+      border-radius: 12px;
+      font-size: 14px;
   }
 
   @keyframes spin {

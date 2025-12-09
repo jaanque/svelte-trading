@@ -190,9 +190,11 @@
     const dataPoints = historyData.map(d => d.price);
 
     const isPositive = percentageChange >= 0;
-    const lineColor = isPositive ? '#10B981' : '#EF4444';
-    const fillColorStart = isPositive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
-    const fillColorEnd = isPositive ? 'rgba(16, 185, 129, 0)' : 'rgba(239, 68, 68, 0)';
+    // Updated to use pastel colors directly or from computed style if feasible, but hardcoding hex is safer for canvas
+    // Pastel Green: #77DD77, Pastel Red: #FF6961
+    const lineColor = isPositive ? '#77DD77' : '#FF6961';
+    const fillColorStart = isPositive ? 'rgba(119, 221, 119, 0.2)' : 'rgba(255, 105, 97, 0.2)';
+    const fillColorEnd = isPositive ? 'rgba(119, 221, 119, 0)' : 'rgba(255, 105, 97, 0)';
 
     const gradient = ctx.createLinearGradient(0, 0, 0, 400);
     gradient.addColorStop(0, fillColorStart);
@@ -432,13 +434,14 @@
   }
 
   .header {
-      margin-bottom: 24px;
+      margin-bottom: 32px;
   }
 
   h1 {
-      margin-bottom: 12px;
-      font-size: 24px;
+      margin-bottom: 16px;
+      font-size: 28px;
       font-weight: 800;
+      color: var(--text-main);
   }
 
   .value-card {
@@ -447,20 +450,20 @@
   }
 
   .current-value {
-      font-size: 48px;
+      font-size: 56px;
       font-weight: 900;
       color: var(--text-main);
       line-height: 1;
-      margin-bottom: 8px;
-      letter-spacing: -1px;
+      margin-bottom: 12px;
+      letter-spacing: -1.5px;
       display: flex;
       align-items: baseline;
-      gap: 8px;
+      gap: 12px;
   }
 
   .currency-label {
-      font-size: 16px;
-      font-weight: 500;
+      font-size: 18px;
+      font-weight: 600;
       color: var(--text-secondary);
       letter-spacing: normal;
   }
@@ -468,24 +471,29 @@
   .change-indicator {
       display: flex;
       align-items: center;
-      font-size: 15px;
-      font-weight: 600;
-      gap: 4px;
+      font-size: 16px;
+      font-weight: 700;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      width: fit-content;
   }
 
   .change-indicator.positive {
-      color: #10B981;
+      color: var(--success-color); /* Pastel Green */
+      background-color: rgba(119, 221, 119, 0.1);
   }
 
   .change-indicator.negative {
-      color: #EF4444;
+      color: var(--danger-color); /* Pastel Red */
+      background-color: rgba(255, 105, 97, 0.1);
   }
 
   /* Layout Grid */
   .content-grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
-      gap: 24px;
+      gap: 32px;
   }
 
   @media (max-width: 900px) {
@@ -499,15 +507,19 @@
       background-color: var(--bg-main);
       border-radius: 24px;
       position: relative;
+      /* removed box-shadow to be cleaner */
   }
 
   .chart-controls {
       display: flex;
-      gap: 6px;
+      gap: 12px; /* Increased gap */
       margin-bottom: 24px;
       overflow-x: auto;
-      padding-bottom: 4px;
+      padding: 8px 12px; /* Added padding to container */
       scrollbar-width: none;
+      background-color: var(--bg-secondary); /* Background for the control bar */
+      border-radius: 16px; /* Rounded pill shape for the bar */
+      width: fit-content;
   }
   .chart-controls::-webkit-scrollbar {
       display: none;
@@ -515,74 +527,89 @@
 
   .range-btn {
       padding: 8px 16px;
-      border-radius: 9999px;
-      background: var(--bg-secondary);
+      border-radius: 12px; /* Slightly softer radius */
+      background: transparent;
       border: none;
       font-weight: 600;
       color: var(--text-secondary);
-      font-size: 13px;
+      font-size: 14px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
       white-space: nowrap;
   }
 
   .range-btn:hover {
-      background-color: var(--bg-hover);
-      color: var(--text-main);
+      color: var(--primary-color);
+      background-color: rgba(255, 255, 255, 0.5);
   }
 
   .range-btn.active {
-      background-color: var(--text-main);
-      color: var(--bg-main);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background-color: var(--primary-color); /* Pastel Blue */
+      color: white;
+      box-shadow: 0 4px 10px rgba(119, 158, 203, 0.3);
   }
 
   .custom-date-picker {
       display: flex;
       gap: 12px;
       align-items: flex-end;
-      margin-bottom: 16px;
+      margin-bottom: 24px;
       background-color: var(--bg-secondary);
-      padding: 16px;
-      border-radius: 16px;
+      padding: 20px;
+      border-radius: 20px;
       flex-wrap: wrap;
   }
 
   .date-input {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
   }
 
   .date-input label {
       font-size: 13px;
       color: var(--text-secondary);
       font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
   }
 
   .date-input input {
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid transparent;
       font-family: inherit;
-      background-color: var(--bg-main);
+      background-color: white;
       color: var(--text-main);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      transition: border-color 0.2s;
+  }
+
+  .date-input input:focus {
+      outline: none;
+      border-color: var(--primary-color);
   }
 
   .apply-btn {
-      padding: 10px 20px;
+      padding: 12px 24px;
       background-color: var(--primary-color);
       color: white;
-      border-radius: 8px;
+      border-radius: 12px;
       font-weight: 700;
       border: none;
       cursor: pointer;
       margin-top: auto;
+      box-shadow: 0 4px 10px rgba(119, 158, 203, 0.3);
+      transition: transform 0.1s;
+  }
+
+  .apply-btn:active {
+      transform: scale(0.98);
   }
 
   .chart-wrapper {
       position: relative;
-      height: 350px;
+      height: 400px; /* Increased height */
       width: 100%;
   }
 
@@ -595,7 +622,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: rgba(255,255,255,0.8);
+      background-color: rgba(255,255,255,0.6);
       z-index: 2;
       border-radius: 24px;
       backdrop-filter: blur(4px);
@@ -604,107 +631,118 @@
   /* Holdings Section */
   .holdings-section {
       background-color: var(--bg-secondary);
-      border-radius: 24px;
-      padding: 24px;
+      border-radius: 32px; /* More rounded */
+      padding: 32px;
       display: flex;
       flex-direction: column;
-      max-height: 450px;
+      max-height: 600px; /* Taller */
       overflow-y: auto;
   }
 
   .holdings-section h2 {
-      font-size: 20px;
+      font-size: 22px;
       margin-top: 0;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
       color: var(--text-main);
+      letter-spacing: -0.5px;
   }
 
   .loading-holdings {
       display: flex;
       justify-content: center;
-      padding: 20px;
+      padding: 40px;
   }
 
   .empty-holdings {
       text-align: center;
       color: var(--text-secondary);
-      padding: 20px 0;
+      padding: 40px 0;
   }
 
   .btn-explore {
       display: inline-block;
-      margin-top: 12px;
+      margin-top: 16px;
       color: var(--primary-color);
-      font-weight: 600;
+      font-weight: 700;
       text-decoration: none;
   }
 
   .holdings-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
   }
 
   .holding-card {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background-color: var(--bg-main);
-      padding: 12px;
-      border-radius: 12px;
+      background-color: white; /* Card on secondary bg */
+      padding: 16px 20px;
+      border-radius: 20px;
       cursor: pointer;
-      transition: transform 0.1s, background-color 0.2s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
   }
 
   .holding-card:hover {
-      transform: translateY(-2px);
-      background-color: var(--bg-hover);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 20px rgba(0,0,0,0.05);
+      border-color: var(--primary-color);
   }
 
   .user-cell {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
   }
 
   .avatar {
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       object-fit: cover;
       background-color: var(--bg-tertiary);
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
 
   .user-meta {
       display: flex;
       flex-direction: column;
+      gap: 2px;
   }
 
   .username {
-      font-weight: 700;
-      font-size: 14px;
+      font-weight: 800;
+      font-size: 15px;
       color: var(--text-main);
   }
 
   .price-info {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--text-secondary);
+      font-weight: 500;
   }
 
   .shares-cell {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
+      gap: 2px;
   }
 
   .shares-amount {
-      font-weight: 700;
-      font-size: 15px;
+      font-weight: 800;
+      font-size: 16px;
       color: var(--text-main);
   }
 
   .shares-label {
-      font-size: 11px;
-      color: var(--text-secondary);
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-weight: 600;
+      text-transform: uppercase;
   }
 </style>

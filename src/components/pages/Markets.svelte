@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Search, Clock } from "lucide-svelte";
+  import { Search, Clock, TrendingUp, TrendingDown } from "lucide-svelte";
   import { supabase } from "../../lib/supabase";
   import { onMount } from "svelte";
   import UserCard from "../../components/general/UserCard.svelte";
@@ -12,6 +12,10 @@
   let debounceTimer: any;
   let searchHistory: any[] = [];
   let historyLoading = false;
+
+  let topGainers: any[] = [];
+  let topLosers: any[] = [];
+  let moversLoading = false;
 
   async function fetchHistory() {
     historyLoading = true;
@@ -30,14 +34,9 @@
         .limit(10);
 
       if (error) {
-        // If table doesn't exist yet, we might get an error.
-        // We'll ignore it for now or log it.
         console.warn("Could not fetch history:", error.message);
       } else {
-        // Map data to flat profile structure
         searchHistory = data.map((item: any) => item.searched_profile).filter((p: any) => p);
-
-        // Remove duplicates client-side just in case, though unique constraint should handle it
         const uniqueHistory = [];
         const seenIds = new Set();
         for (const profile of searchHistory) {
@@ -55,17 +54,31 @@
     }
   }
 
+  async function fetchTopMovers() {
+    moversLoading = true;
+    try {
+      const { data, error } = await supabase.rpc("get_top_movers");
+      if (error) throw error;
+
+      // Filter out users with 0% change if desired, or keep them.
+      // Sort desc for gainers
+      const sorted = [...data].sort((a, b) => b.change_pct - a.change_pct);
+
+      topGainers = sorted.filter(u => u.change_pct > 0).slice(0, 5);
+      topLosers = sorted.filter(u => u.change_pct < 0).reverse().slice(0, 5);
+
+    } catch (err) {
+      console.error("Error fetching movers:", err);
+    } finally {
+      moversLoading = false;
+    }
+  }
+
   async function addToHistory(profile: any) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // We want to upsert to update the created_at timestamp if it already exists
-      // However, Supabase upsert requires primary key or unique constraint.
-      // We assume (user_id, searched_profile_id) is unique.
-
-      // First, let's try to delete existing entry for this profile to ensure "recent" behavior
-      // (Putting it at the top by re-inserting)
       await supabase
         .from("search_history")
         .delete()
@@ -81,9 +94,7 @@
 
       if (error) throw error;
 
-      // Refresh history if we were on the history view (empty query)
       if (searchQuery.trim() === "") {
-        // Optimistically update UI
         searchHistory = [profile, ...searchHistory.filter(p => p.id !== profile.id)];
       }
 
@@ -95,7 +106,7 @@
   async function performSearch() {
     if (!searchQuery.trim()) {
       searchResults = [];
-      fetchHistory(); // Refresh history when clearing search
+      fetchHistory();
       return;
     }
 
@@ -130,6 +141,7 @@
 
   onMount(() => {
     fetchHistory();
+    fetchTopMovers();
   });
 </script>
 
@@ -156,6 +168,59 @@
         <div class="spinner"></div>
       </div>
     {:else if searchQuery.trim() === ""}
+
+      <!-- Top Gainers Section -->
+      {#if !moversLoading && topGainers.length > 0}
+        <div class="history-section">
+          <div class="section-header">
+             <h2>
+               <TrendingUp size={20} class="icon-inline positive" />
+               Top Gainers (24h)
+             </h2>
+          </div>
+          <div class="history-grid">
+             {#each topGainers as user (user.id)}
+                  <div role="button" tabindex="0" class="card-wrapper">
+                      <UserCard
+                        {user}
+                        onClick={() => handleProfileClick(user)}
+                      >
+                         <div class="trend-badge positive">
+                             +{user.change_pct.toFixed(2)}%
+                         </div>
+                      </UserCard>
+                </div>
+             {/each}
+          </div>
+        </div>
+      {/if}
+
+      <!-- Top Losers Section -->
+      {#if !moversLoading && topLosers.length > 0}
+        <div class="history-section">
+          <div class="section-header">
+             <h2>
+               <TrendingDown size={20} class="icon-inline negative" />
+               Top Losers (24h)
+             </h2>
+          </div>
+          <div class="history-grid">
+             {#each topLosers as user (user.id)}
+                  <div role="button" tabindex="0" class="card-wrapper">
+                      <UserCard
+                        {user}
+                        onClick={() => handleProfileClick(user)}
+                      >
+                         <div class="trend-badge negative">
+                             {user.change_pct.toFixed(2)}%
+                         </div>
+                      </UserCard>
+                </div>
+             {/each}
+          </div>
+        </div>
+      {/if}
+
       <!-- History View -->
       <div class="history-section">
         <div class="section-header">
@@ -177,7 +242,6 @@
            <div class="history-grid">
              {#each searchHistory as user (user.id)}
                   <div role="button" tabindex="0" class="card-wrapper">
-                      <!-- We pass an onClick handler that intercepts the link navigation -->
                       <UserCard
                         {user}
                         onClick={() => handleProfileClick(user)}
@@ -217,7 +281,7 @@
 <style>
   .explore-container {
     width: 100%;
-    padding-bottom: 80px; /* Space for bottom nav on mobile if needed */
+    padding-bottom: 80px;
   }
 
   .search-header {
@@ -230,7 +294,6 @@
     padding-bottom: 10px;
   }
 
-  /* Twitter-like Search Bar */
   .search-bar {
     display: flex;
     align-items: center;
@@ -269,7 +332,6 @@
     color: var(--text-secondary, #536471);
   }
 
-  /* Results */
   .results-container {
     min-height: 200px;
   }
@@ -281,7 +343,10 @@
     font-size: 15px;
   }
 
-  /* History Section */
+  .history-section {
+    margin-bottom: 32px;
+  }
+
   .section-header {
     margin-bottom: 16px;
     padding: 0 4px;
@@ -297,10 +362,16 @@
     margin: 0;
   }
 
-  /* Lucide icon global style usually needs specific targeting or usage of global class if available.
-     Here we scope it. */
   :global(.icon-inline) {
       margin-bottom: -2px;
+  }
+
+  :global(.icon-inline.positive) {
+      color: var(--success-color, #10B981);
+  }
+
+  :global(.icon-inline.negative) {
+      color: var(--danger-color, #EF4444);
   }
 
   .history-grid {
@@ -315,7 +386,25 @@
       cursor: pointer;
   }
 
-  /* User List Item (Search Results) */
+  .trend-badge {
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 999px;
+      display: inline-block;
+  }
+
+  .trend-badge.positive {
+      color: var(--success-color, #10B981);
+      background-color: rgba(16, 185, 129, 0.1);
+  }
+
+  .trend-badge.negative {
+      color: var(--danger-color, #EF4444);
+      background-color: rgba(239, 68, 68, 0.1);
+  }
+
   .users-list {
     display: flex;
     flex-direction: column;
@@ -367,7 +456,6 @@
     color: var(--text-secondary, #536471);
   }
 
-  /* Loading Spinner */
   .loading-state {
     display: flex;
     justify-content: center;

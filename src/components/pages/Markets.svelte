@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Search, Clock, Trash2 } from "lucide-svelte";
+  import { Search, Clock } from "lucide-svelte";
   import { supabase } from "../../lib/supabase";
   import { onMount } from "svelte";
   import UserCard from "../../components/general/UserCard.svelte";
@@ -123,8 +123,8 @@
     }, 300);
   }
 
-  function handleProfileClick(profile: any) {
-      addToHistory(profile);
+  async function handleProfileClick(profile: any) {
+      await addToHistory(profile);
       onNavigate(`/profile?u=${profile.username}`);
   }
 

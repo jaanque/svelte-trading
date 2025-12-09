@@ -426,7 +426,7 @@
 
 <style>
   .portfolio-container {
-      padding: 0;
+      padding: 24px;
       max-width: 100%;
       color: var(--text-main);
   }

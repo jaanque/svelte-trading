@@ -169,6 +169,37 @@
       </div>
     {:else if searchQuery.trim() === ""}
 
+      <!-- History View -->
+      <div class="history-section">
+        <div class="section-header">
+           <h2>
+             <Clock size={20} class="icon-inline" />
+             Recent Searches
+           </h2>
+        </div>
+
+        {#if historyLoading}
+           <div class="loading-state">
+             <div class="spinner"></div>
+           </div>
+        {:else if searchHistory.length === 0}
+           <div class="empty-state">
+             <p>Your search history will appear here.</p>
+           </div>
+        {:else}
+           <div class="history-grid">
+             {#each searchHistory as user (user.id)}
+                  <div role="button" tabindex="0" class="card-wrapper">
+                      <UserCard
+                        {user}
+                        onClick={() => handleProfileClick(user)}
+                      />
+                </div>
+             {/each}
+           </div>
+        {/if}
+      </div>
+
       <!-- Top Gainers Section -->
       {#if !moversLoading && topGainers.length > 0}
         <div class="history-section">
@@ -220,37 +251,6 @@
           </div>
         </div>
       {/if}
-
-      <!-- History View -->
-      <div class="history-section">
-        <div class="section-header">
-           <h2>
-             <Clock size={20} class="icon-inline" />
-             Recent Searches
-           </h2>
-        </div>
-
-        {#if historyLoading}
-           <div class="loading-state">
-             <div class="spinner"></div>
-           </div>
-        {:else if searchHistory.length === 0}
-           <div class="empty-state">
-             <p>Your search history will appear here.</p>
-           </div>
-        {:else}
-           <div class="history-grid">
-             {#each searchHistory as user (user.id)}
-                  <div role="button" tabindex="0" class="card-wrapper">
-                      <UserCard
-                        {user}
-                        onClick={() => handleProfileClick(user)}
-                      />
-                </div>
-             {/each}
-           </div>
-        {/if}
-      </div>
 
     {:else if searchResults.length === 0}
       <div class="no-results">

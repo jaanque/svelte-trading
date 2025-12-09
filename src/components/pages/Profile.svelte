@@ -16,8 +16,8 @@
   let showSellModal = false;
   let userShares = 0;
 
-  let activeTab = "Posts";
-  const tabs = ["Posts", "Replies", "Media", "Likes", "Chart"];
+  let activeTab = "Chart";
+  const tabs = ["Chart", "Posts", "Replies", "Media", "Likes"];
 
   // Helpers
   function getQueryParam(param: string) {

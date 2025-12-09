@@ -26,6 +26,20 @@
 
   function toggleCollapse() {
     isCollapsed = !isCollapsed;
+    // Animate indicator during transition
+    const startTime = Date.now();
+    const duration = 550; // slightly longer than CSS transition (0.5s)
+
+    function animate() {
+        const now = Date.now();
+        if (now - startTime < duration) {
+            updateIndicator();
+            requestAnimationFrame(animate);
+        } else {
+            updateIndicator(); // Ensure final position is correct
+        }
+    }
+    requestAnimationFrame(animate);
   }
 
   function handleLinkClick(event: MouseEvent, path: string) {

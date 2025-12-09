@@ -1,26 +1,42 @@
 :root {
-  /* Color Palette - Professional/Twitter-esque */
-  --primary-color: #1d9bf0;
-  --primary-hover: #1a8cd8;
-  --success-color: #00ba7c;
-  --danger-color: #f4212e;
-  --warning-color: #ffd400;
+  /* Color Palette - Pastel Tones */
+  /* Blue: Soft, calming blue */
+  --primary-color: #779ECB;
+  /* Hover: Slightly deeper pastel blue */
+  --primary-hover: #6589B5;
+
+  /* Success: Pastel Green */
+  --success-color: #77DD77;
+
+  /* Danger: Pastel Red/Salmon */
+  --danger-color: #FF6961;
+
+  /* Warning: Pastel Yellow */
+  --warning-color: #FDFD96;
 
   /* Backgrounds */
-  --bg-main: #ffffff;
-  --bg-secondary: #f7f9f9;
-  --bg-tertiary: #eff3f4;
-  --bg-hover: rgba(15, 20, 25, 0.1);
+  /* Main BG: Very light cream/off-white */
+  --bg-main: #FAF9F6;
+  /* Secondary BG: Soft lavender/gray */
+  --bg-secondary: #F0F4F8;
+  /* Tertiary BG: Slightly darker for borders/separators */
+  --bg-tertiary: #E3E8EE;
+  /* Hover BG: Very transparent primary */
+  --bg-hover: rgba(119, 158, 203, 0.15);
 
   /* Text */
-  --text-main: #0f1419;
-  --text-secondary: #536471;
-  --text-tertiary: #8b98a5;
-  --text-on-primary: #ffffff;
+  /* Main Text: Dark Gray (softer than pure black) */
+  --text-main: #4A4A4A;
+  /* Secondary Text: Muted Gray */
+  --text-secondary: #8899A6;
+  /* Tertiary Text: Lighter Gray */
+  --text-tertiary: #B0B8C1;
+  /* Text on Primary: White remains fine, or a very dark gray if contrast is needed. White usually works with #779ECB */
+  --text-on-primary: #FFFFFF;
 
   /* Borders */
-  --border-color: #eff3f4;
-  --border-strong: #cfd9de;
+  --border-color: #E1E8ED;
+  --border-strong: #C4CFD6;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -37,9 +53,9 @@
   --font-size-xl: 24px;
 
   /* Shadows */
-  --shadow-sm: 0 0 5px rgba(101, 119, 134, 0.15);
-  --shadow-md: 0 0 15px rgba(101, 119, 134, 0.2);
-  --shadow-float: rgba(101, 119, 134, 0.2) 0px 0px 15px, rgba(101, 119, 134, 0.15) 0px 0px 3px 1px;
+  --shadow-sm: 0 2px 8px rgba(119, 158, 203, 0.15);
+  --shadow-md: 0 4px 12px rgba(119, 158, 203, 0.2);
+  --shadow-float: 0 8px 24px rgba(119, 158, 203, 0.25);
 
   /* Layout */
   --sidebar-width: 275px;
@@ -47,20 +63,28 @@
   --max-content-width: 990px;
 }
 
-/* Dark Mode Support (Basic Preparation) */
+/* Dark Mode Support - "Dark Pastel" */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-main: #000000;
-    --bg-secondary: #16181c;
-    --bg-tertiary: #202327;
-    --bg-hover: rgba(239, 243, 244, 0.1);
+    /* Muted Pastel Blue for Dark Mode */
+    --primary-color: #8AB4F8;
+    --primary-hover: #AECBFA;
 
-    --text-main: #e7e9ea;
-    --text-secondary: #71767b;
-    --text-tertiary: #536471;
+    --bg-main: #15202B; /* Dark Blue-Gray */
+    --bg-secondary: #192734;
+    --bg-tertiary: #22303C;
+    --bg-hover: rgba(138, 180, 248, 0.1);
 
-    --border-color: #2f3336;
-    --border-strong: #3e4144;
+    --text-main: #E8F0FE;
+    --text-secondary: #8899A6;
+    --text-tertiary: #586776;
+
+    --border-color: #38444D;
+    --border-strong: #586776;
+
+    --success-color: #81C995;
+    --danger-color: #F28B82;
+    --warning-color: #FDD663;
   }
 }
 

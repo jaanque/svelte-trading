@@ -59,7 +59,7 @@
 
       if (error) throw error;
 
-      successMsg = `Successfully invested ${tokenVal} tokens in ${targetUser.username}!`;
+      successMsg = `Successfully invested ${tokenVal.toLocaleString(undefined, {minimumFractionDigits: 2})} tokens in ${targetUser.username}!`;
       setTimeout(() => {
           onClose();
           dispatch("success");
@@ -96,12 +96,12 @@
 
         <div class="info-row">
             <span class="label">Available Shares</span>
-            <span class="value">{Math.floor(availableShares)}</span>
+            <span class="value">{Math.floor(availableShares).toLocaleString()}</span>
         </div>
 
         <div class="info-row">
             <span class="label">Your Balance</span>
-            <span class="value">{userBalance} Tokens</span>
+            <span class="value">{userBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} Tokens</span>
         </div>
 
         <div class="input-grid">

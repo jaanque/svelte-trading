@@ -56,7 +56,7 @@
 
       if (error) throw error;
 
-      successMsg = `Successfully sold ${sharesVal} shares for ${receiveTokens} tokens!`;
+      successMsg = `Successfully sold ${sharesVal} shares for ${parseFloat(receiveTokens).toLocaleString(undefined, {minimumFractionDigits: 2})} tokens!`;
       setTimeout(() => {
           onClose();
           dispatch("success");
@@ -93,7 +93,7 @@
 
         <div class="info-row">
             <span class="label">Your Shares</span>
-            <span class="value">{userShares.toFixed(4)}</span>
+            <span class="value">{userShares.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4})}</span>
         </div>
 
         <div class="input-grid">

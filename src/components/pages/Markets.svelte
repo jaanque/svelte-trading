@@ -221,7 +221,7 @@
                             onClick={() => handleProfileClick(user)}
                         >
                             <div class="trend-badge positive">
-                                +{user.change_pct.toFixed(2)}%
+                                +{user.change_pct.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%
                             </div>
                         </UserCard>
                     </div>
@@ -255,7 +255,7 @@
                             onClick={() => handleProfileClick(user)}
                         >
                             <div class="trend-badge negative">
-                                {user.change_pct.toFixed(2)}%
+                                {user.change_pct.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%
                             </div>
                         </UserCard>
                     </div>

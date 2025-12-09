@@ -353,7 +353,7 @@
                      });
                  },
                  label: function(context) {
-                     return 'Value: ' + context.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2});
+                     return 'Value: ' + context.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
                  }
              }
           }
@@ -462,7 +462,7 @@
               {:else}
                  <ArrowDownRight size={20} />
               {/if}
-              <span>{Math.abs(percentageChange).toFixed(2)}% ({timeRange.toUpperCase()})</span>
+              <span>{Math.abs(percentageChange).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}% ({timeRange.toUpperCase()})</span>
           </div>
       </div>
   </div>
@@ -530,11 +530,11 @@
                             />
                             <div class="user-meta">
                                 <span class="username">${item.user.username.toUpperCase()}</span>
-                                <span class="price-info">{item.user.price.toFixed(2)} / share</span>
+                                <span class="price-info">{item.user.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} / share</span>
                             </div>
                         </div>
                         <div class="shares-cell">
-                            <span class="shares-amount">{item.totalShares.toFixed(4)}</span>
+                            <span class="shares-amount">{item.totalShares.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4})}</span>
                             <span class="shares-label">Shares</span>
                         </div>
                     </div>
@@ -575,11 +575,11 @@
                             {tx.amount_shares > 0 ? 'BUY' : 'SELL'}
                         </div>
                         <div class="tx-amount">
-                            <span class="tx-shares">{Math.abs(tx.amount_shares).toFixed(4)} Shares</span>
-                            <span class="tx-price">@ {Math.abs(tx.amount_tokens / tx.amount_shares).toFixed(2)} / share</span>
+                            <span class="tx-shares">{Math.abs(tx.amount_shares).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4})} Shares</span>
+                            <span class="tx-price">@ {Math.abs(tx.amount_tokens / tx.amount_shares).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} / share</span>
                         </div>
                         <div class="tx-total">
-                            {Math.abs(tx.amount_tokens).toFixed(2)} Credits
+                            {Math.abs(tx.amount_tokens).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} Credits
                         </div>
                     </div>
                 </div>

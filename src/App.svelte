@@ -7,6 +7,7 @@
   import Notifications from "./components/pages/Notifications.svelte";
   import Settings from "./components/pages/Settings.svelte";
   import Profile from "./components/pages/Profile.svelte";
+  import Post from "./components/pages/Post.svelte";
   import Login from "./components/pages/Login.svelte";
   import Register from "./components/pages/Register.svelte";
   import TopNavbar from "./components/general/navbar/TopNavbar.svelte";
@@ -64,6 +65,8 @@
           <Settings />
         {:else if currentPath === "/profile"}
           <Profile />
+        {:else if currentPath === "/post"}
+          <Post />
         {:else}
           <Home />
         {/if}

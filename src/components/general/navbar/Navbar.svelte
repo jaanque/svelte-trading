@@ -11,6 +11,7 @@
     ChevronRight,
     MoreHorizontal,
     LogOut,
+    Feather,
   } from "lucide-svelte";
   import { onMount } from "svelte";
   import { userProfile } from "../../../lib/authStore";
@@ -116,6 +117,20 @@
         </li>
       {/each}
     </ul>
+
+    <a
+      href="/post"
+      class="post-btn"
+      aria-label="Post"
+      on:click={(e) => handleLinkClick(e, "/post")}
+    >
+      <div class="post-icon-container">
+        <Feather size={24} strokeWidth={2} />
+      </div>
+      <span class="text post-text">Post</span>
+    </a>
+
+    <div class="spacer"></div>
 
     {#if $userProfile}
       <div class="profile-section">
@@ -249,7 +264,7 @@
     flex-direction: column;
     align-items: flex-start;
     position: relative;
-    flex-grow: 1; /* Push profile down */
+    /* Removed flex-grow to insert items below */
   }
 
   .nav-links li {
@@ -346,6 +361,67 @@
 
   .nav-item.active {
       color: var(--text-main); /* Ensure text stays main color */
+  }
+
+  /* Post Button */
+  .post-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 9999px;
+    padding: 16px;
+    margin: 24px 0 12px 0;
+    width: 90%;
+    max-width: 225px;
+    font-weight: 700;
+    font-size: 17px;
+    cursor: pointer;
+    transition: background-color 0.2s, width 0.3s, padding 0.3s, transform 0.2s;
+    text-decoration: none;
+    box-shadow: var(--shadow-sm);
+    border: none;
+    align-self: center; /* Center in sidebar */
+  }
+
+  .post-btn:hover {
+    background-color: var(--primary-hover);
+    transform: scale(1.02);
+    text-decoration: none;
+  }
+
+  .post-btn:active {
+    transform: scale(0.98);
+  }
+
+  .post-icon-container {
+    display: none; /* Hidden by default in expanded */
+  }
+
+  /* Collapsed Post Button */
+  .sidebar.collapsed .post-btn {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 50%;
+    margin: 24px 0 12px 0;
+  }
+
+  .sidebar.collapsed .post-text {
+    display: none;
+  }
+
+  .sidebar.collapsed .post-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Spacer to push profile down */
+  .spacer {
+    flex-grow: 1;
+    width: 100%;
   }
 
   /* Profile Section */
@@ -594,6 +670,18 @@
 
     .icon-container {
         margin-right: 0;
+    }
+
+    /* Hide post button on mobile bottom nav if space is tight,
+       or turn it into a floating action button (FAB).
+       For now, let's hide it from the bottom bar structure
+       as it might break the flow, or make it a FAB.
+       User didn't specify mobile behavior, but "opcion al menu" usually implies visibility.
+       On mobile twitter, the post button is a FAB.
+    */
+    .post-btn {
+        display: none;
+        /* Ideally: position fixed bottom right as FAB */
     }
   }
 </style>

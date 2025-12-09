@@ -205,7 +205,7 @@
             </div>
             <div class="user-info">
               <span class="fullname">{user.full_name || "Unknown"}</span>
-              <span class="username">@{user.username}</span>
+              <span class="username">${user.username.toUpperCase()}</span>
             </div>
           </a>
         {/each}

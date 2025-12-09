@@ -129,7 +129,7 @@
 
         <div class="info">
           <h1 class="fullname">{profileData.full_name || profileData.username}</h1>
-          <div class="handle">@{profileData.username}</div>
+          <div class="handle">${profileData.username.toUpperCase()}</div>
 
           {#if profileData.bio}
             <p class="bio">{profileData.bio}</p>
@@ -181,7 +181,7 @@
       <!-- Feed Content -->
       <div class="feed-content">
          <div class="empty-feed">
-            <p>@{profileData.username} hasn't posted anything yet.</p>
+            <p>${profileData.username.toUpperCase()} hasn't posted anything yet.</p>
          </div>
       </div>
     </div>

@@ -29,7 +29,7 @@
     </div>
     <div class="card-body">
         <h3 class="fullname">{user.full_name || "Unknown"}</h3>
-        <p class="username">@{user.username}</p>
+        <p class="username">${user.username.toUpperCase()}</p>
     </div>
 </a>
 

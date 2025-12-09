@@ -5,6 +5,7 @@
   import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft, MoreHorizontal, MessageSquare } from "lucide-svelte";
   import InvestModal from "../../components/general/InvestModal.svelte";
   import SellModal from "../../components/general/SellModal.svelte";
+  import PriceChart from "../../components/general/PriceChart.svelte";
 
   let loading = true;
   let profileData: any = null;
@@ -14,6 +15,9 @@
   let showInvestModal = false;
   let showSellModal = false;
   let userShares = 0;
+
+  let activeTab = "Posts";
+  const tabs = ["Posts", "Replies", "Media", "Likes", "Chart"];
 
   // Helpers
   function getQueryParam(param: string) {
@@ -83,6 +87,10 @@
     }
 
     loading = false;
+  }
+
+  function setActiveTab(tab: string) {
+      activeTab = tab;
   }
 
   onMount(() => {
@@ -222,17 +230,37 @@
 
       <!-- Tabs -->
       <div class="profile-tabs">
-         <div class="tab active">Posts</div>
-         <div class="tab">Replies</div>
-         <div class="tab">Media</div>
-         <div class="tab">Likes</div>
+         {#each tabs as tab}
+             <div
+                class="tab {activeTab === tab ? 'active' : ''}"
+                on:click={() => setActiveTab(tab)}
+                on:keydown={() => setActiveTab(tab)}
+                role="button"
+                tabindex="0"
+             >
+                {tab}
+             </div>
+         {/each}
       </div>
 
       <!-- Feed Content -->
       <div class="feed-content">
-         <div class="empty-feed">
-            <p>${profileData.username.toUpperCase()} hasn't posted anything yet.</p>
-         </div>
+         {#if activeTab === "Posts"}
+             <div class="empty-feed">
+                <p>${profileData.username.toUpperCase()} hasn't posted anything yet.</p>
+             </div>
+         {:else if activeTab === "Chart"}
+             <div class="chart-tab-content">
+                 <PriceChart
+                    userId={profileData.id}
+                    currentPrice={profileData.price || 50}
+                 />
+             </div>
+         {:else}
+             <div class="empty-feed">
+                <p>No {activeTab.toLowerCase()} yet.</p>
+             </div>
+         {/if}
       </div>
     </div>
 
@@ -571,10 +599,12 @@
     border-bottom: 1px solid var(--border-color);
     margin-top: 8px;
     width: 100%;
+    overflow-x: auto; /* Handle many tabs on mobile */
   }
 
   .tab {
     flex: 1;
+    min-width: 80px; /* Min width for chart tab */
     text-align: center;
     padding: 16px 0;
     font-weight: 500;
@@ -610,6 +640,10 @@
   .feed-content {
     min-height: 200px;
     background-color: var(--bg-main);
+  }
+
+  .chart-tab-content {
+      padding: 16px;
   }
 
   .empty-feed {

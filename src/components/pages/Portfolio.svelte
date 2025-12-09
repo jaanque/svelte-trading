@@ -24,6 +24,9 @@
   let holdings: any[] = [];
   let holdingsLoading = false;
 
+  let transactions: any[] = [];
+  let transactionsLoading = false;
+
   // Reactively update current value from profile store
   $: if ($userProfile) {
       currentValue = $userProfile.price || 50;
@@ -170,6 +173,31 @@
     holdingsLoading = false;
   }
 
+  async function fetchTransactions() {
+    if (!$userProfile) return;
+    transactionsLoading = true;
+
+    const { data, error } = await supabase
+        .from("investments")
+        .select(`
+            id,
+            amount_shares,
+            amount_tokens,
+            created_at,
+            target_user:profiles!target_user_id(id, username, full_name, avatar_url)
+        `)
+        .eq("investor_id", $userProfile.id)
+        .order("created_at", { ascending: false })
+        .limit(20); // Limit to recent 20 for now
+
+    if (error) {
+        console.error("Error fetching transactions:", error);
+    } else {
+        transactions = data;
+    }
+    transactionsLoading = false;
+  }
+
   function renderChart() {
     if (!chartCanvas) return;
 
@@ -311,12 +339,14 @@
     if ($userProfile) {
         fetchHistory();
         fetchHoldings();
+        fetchTransactions();
     }
     const unsubscribe = userProfile.subscribe(val => {
         if (val) {
              currentValue = val.price || 50;
              if (historyData.length === 0) fetchHistory();
              if (holdings.length === 0) fetchHoldings();
+             if (transactions.length === 0) fetchTransactions();
         }
     });
     return unsubscribe;
@@ -424,6 +454,50 @@
           {/if}
       </div>
   </div>
+
+  <!-- Transaction History Section -->
+  <div class="history-section">
+      <h2>Transaction History</h2>
+      {#if transactionsLoading}
+        <div class="loading-history">
+            <Loader2 class="animate-spin" size={24} color="var(--primary-color)" />
+        </div>
+      {:else if transactions.length === 0}
+        <div class="empty-history">
+            <p>No transactions found.</p>
+        </div>
+      {:else}
+        <div class="transactions-list">
+            {#each transactions as tx}
+                <div class="tx-card">
+                    <div class="tx-user-info" role="button" tabindex="0" on:click={() => handleUserClick(tx.target_user)}>
+                        <img
+                            src={tx.target_user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${tx.target_user.username}`}
+                            alt={tx.target_user.username}
+                            class="tx-avatar"
+                        />
+                        <div class="tx-details">
+                            <span class="tx-username">${tx.target_user.username.toUpperCase()}</span>
+                            <span class="tx-date">{new Date(tx.created_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    <div class="tx-financials">
+                        <div class="tx-type {tx.amount_shares > 0 ? 'buy' : 'sell'}">
+                            {tx.amount_shares > 0 ? 'BUY' : 'SELL'}
+                        </div>
+                        <div class="tx-amount">
+                            <span class="tx-shares">{Math.abs(tx.amount_shares).toFixed(4)} Shares</span>
+                            <span class="tx-price">@ {Math.abs(tx.amount_tokens / tx.amount_shares).toFixed(2)} / share</span>
+                        </div>
+                        <div class="tx-total">
+                            {Math.abs(tx.amount_tokens).toFixed(2)} Credits
+                        </div>
+                    </div>
+                </div>
+            {/each}
+        </div>
+      {/if}
+  </div>
 </div>
 
 <style>
@@ -494,6 +568,7 @@
       display: grid;
       grid-template-columns: 2fr 1fr;
       gap: 32px;
+      margin-bottom: 32px;
   }
 
   @media (max-width: 900px) {
@@ -744,5 +819,134 @@
       color: var(--text-tertiary);
       font-weight: 600;
       text-transform: uppercase;
+  }
+
+  /* Transaction History */
+  .history-section {
+      background-color: var(--bg-secondary);
+      border-radius: 32px;
+      padding: 32px;
+  }
+
+  .history-section h2 {
+      font-size: 22px;
+      margin-top: 0;
+      margin-bottom: 24px;
+      color: var(--text-main);
+  }
+
+  .loading-history {
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+  }
+
+  .empty-history {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 40px 0;
+  }
+
+  .transactions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+  }
+
+  .tx-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: white;
+      padding: 16px 20px;
+      border-radius: 16px;
+  }
+
+  .tx-user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+  }
+
+  .tx-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: var(--bg-tertiary);
+      object-fit: cover;
+  }
+
+  .tx-details {
+      display: flex;
+      flex-direction: column;
+  }
+
+  .tx-username {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text-main);
+  }
+
+  .tx-date {
+      font-size: 12px;
+      color: var(--text-secondary);
+  }
+
+  .tx-financials {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      text-align: right;
+  }
+
+  .tx-type {
+      font-weight: 800;
+      font-size: 13px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+  }
+  .tx-type.buy {
+      background-color: rgba(119, 221, 119, 0.2);
+      color: var(--success-color);
+  }
+  .tx-type.sell {
+      background-color: rgba(255, 105, 97, 0.2);
+      color: var(--danger-color);
+  }
+
+  .tx-amount {
+      display: flex;
+      flex-direction: column;
+  }
+
+  .tx-shares {
+      font-weight: 700;
+      font-size: 14px;
+  }
+
+  .tx-price {
+      font-size: 12px;
+      color: var(--text-secondary);
+  }
+
+  .tx-total {
+      font-weight: 800;
+      font-size: 15px;
+      color: var(--text-main);
+      min-width: 80px;
+  }
+
+  @media (max-width: 600px) {
+      .tx-card {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 16px;
+      }
+      .tx-financials {
+          width: 100%;
+          justify-content: space-between;
+      }
   }
 </style>

@@ -329,7 +329,7 @@
 
 <div class="portfolio-container">
   <div class="header">
-      <h1>VALOR DE {$userProfile?.username ? $userProfile.username.toUpperCase() : 'USUARIO'}</h1>
+      <h1>VALOR DE ${$userProfile?.username ? $userProfile.username.toUpperCase() : 'USUARIO'}</h1>
 
       <!-- Value Display -->
       <div class="value-card">

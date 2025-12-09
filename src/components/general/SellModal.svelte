@@ -31,8 +31,8 @@
 
     try {
       const { error } = await supabase.rpc("sell_shares", {
-        target_user_id: targetUser.id,
-        amount_shares: amount
+        p_target_user_id: targetUser.id,
+        p_amount_shares: amount
       });
 
       if (error) throw error;

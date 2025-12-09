@@ -4,6 +4,7 @@
   import { supabase } from "../../lib/supabase";
   import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft, MoreHorizontal, MessageSquare } from "lucide-svelte";
   import InvestModal from "../../components/general/InvestModal.svelte";
+  import SellModal from "../../components/general/SellModal.svelte";
 
   let loading = true;
   let profileData: any = null;
@@ -11,6 +12,8 @@
   let isOwnProfile = false;
   let urlUsername: string | null = null;
   let showInvestModal = false;
+  let showSellModal = false;
+  let userShares = 0;
 
   // Helpers
   function getQueryParam(param: string) {
@@ -32,6 +35,7 @@
     loading = true;
     error = null;
     profileData = null;
+    userShares = 0;
 
     urlUsername = getQueryParam("u");
 
@@ -65,6 +69,19 @@
         profileData = null;
       }
     }
+    // Fetch holdings if not own profile
+    if (!isOwnProfile && profileData && $userProfile) {
+        const { data: investments, error: invError } = await supabase
+            .from("investments")
+            .select("amount_shares")
+            .eq("investor_id", $userProfile.id)
+            .eq("target_user_id", profileData.id);
+
+        if (!invError && investments) {
+            userShares = investments.reduce((acc, curr) => acc + parseFloat(curr.amount_shares), 0);
+        }
+    }
+
     loading = false;
   }
 
@@ -129,12 +146,27 @@
             {:else}
               <button class="btn-icon"><MoreHorizontal size={20} /></button>
               <button class="btn-icon"><MessageSquare size={20} /></button>
-              <button
-                class="btn-primary"
-                on:click={() => showInvestModal = true}
-              >
-                Invertir
-              </button>
+              {#if userShares > 0}
+                  <button
+                    class="btn-secondary-action"
+                    on:click={() => showSellModal = true}
+                  >
+                    Vender
+                  </button>
+                  <button
+                    class="btn-primary"
+                    on:click={() => showInvestModal = true}
+                  >
+                    Invertir más
+                  </button>
+              {:else}
+                  <button
+                    class="btn-primary"
+                    on:click={() => showInvestModal = true}
+                  >
+                    Invertir
+                  </button>
+              {/if}
             {/if}
           </div>
         </div>
@@ -221,6 +253,15 @@
     <InvestModal
         targetUser={profileData}
         onClose={() => showInvestModal = false}
+        on:success={loadProfile}
+    />
+  {/if}
+
+  {#if showSellModal}
+    <SellModal
+        targetUser={profileData}
+        userShares={userShares}
+        onClose={() => showSellModal = false}
         on:success={loadProfile}
     />
   {/if}
@@ -429,6 +470,21 @@
   }
   .btn-primary:hover {
       opacity: 0.9;
+  }
+
+  .btn-secondary-action {
+    padding: 8px 20px;
+    background-color: transparent;
+    color: var(--text-main);
+    border: 1px solid var(--border-strong);
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .btn-secondary-action:hover {
+      background-color: var(--bg-hover);
   }
 
   /* Text Info */

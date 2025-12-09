@@ -13,6 +13,8 @@
     LogOut,
     Plus,
     Coins,
+    LogIn,
+    UserPlus,
   } from "lucide-svelte";
   import { onMount } from "svelte";
   import { userProfile } from "../../../lib/authStore";
@@ -108,41 +110,41 @@
       {/if}
     </div>
 
-    <ul class="nav-links">
-      <div class="active-indicator" style={indicatorStyle}></div>
-      {#each navItems as item, i}
-        <li>
-          <a
-            href={item.path}
-            class="nav-item {currentPath === item.path ? 'active' : ''}"
-            title={item.label}
-            on:click={(e) => handleLinkClick(e, item.path)}
-            bind:this={navElements[i]}
-          >
-            <div class="icon-container">
-              <svelte:component this={item.icon} size={item.size} strokeWidth={item.strokeWidth} />
-            </div>
-            <span class="text" data-text={item.label}>{item.label}</span>
-          </a>
-        </li>
-      {/each}
-    </ul>
-
-    <!-- Use a button instead of a link for modal action -->
-    <button
-      class="post-btn"
-      aria-label="Post"
-      on:click={() => onNavigate("/post")}
-    >
-      <div class="post-icon-container">
-        <Plus size={24} strokeWidth={3} />
-      </div>
-      <span class="text post-text">Post</span>
-    </button>
-
-    <div class="spacer"></div>
-
     {#if $userProfile}
+      <ul class="nav-links">
+        <div class="active-indicator" style={indicatorStyle}></div>
+        {#each navItems as item, i}
+          <li>
+            <a
+              href={item.path}
+              class="nav-item {currentPath === item.path ? 'active' : ''}"
+              title={item.label}
+              on:click={(e) => handleLinkClick(e, item.path)}
+              bind:this={navElements[i]}
+            >
+              <div class="icon-container">
+                <svelte:component this={item.icon} size={item.size} strokeWidth={item.strokeWidth} />
+              </div>
+              <span class="text" data-text={item.label}>{item.label}</span>
+            </a>
+          </li>
+        {/each}
+      </ul>
+
+      <!-- Use a button instead of a link for modal action -->
+      <button
+        class="post-btn"
+        aria-label="Post"
+        on:click={() => onNavigate("/post")}
+      >
+        <div class="post-icon-container">
+          <Plus size={24} strokeWidth={3} />
+        </div>
+        <span class="text post-text">Post</span>
+      </button>
+
+      <div class="spacer"></div>
+
       <div class="profile-section">
         <div class="profile-card-container">
           <!-- Main profile click area navigates to profile -->
@@ -173,6 +175,40 @@
             </div>
           {/if}
         </div>
+      </div>
+    {:else}
+      <!-- Guest Navigation -->
+      <ul class="nav-links">
+        <li>
+          <a
+            href="/"
+            class="nav-item {currentPath === '/' ? 'active' : ''}"
+            title="Home"
+            on:click={(e) => handleLinkClick(e, "/")}
+          >
+            <div class="icon-container">
+              <Home size={28} strokeWidth={2} />
+            </div>
+            <span class="text">Home</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="spacer"></div>
+
+      <div class="auth-buttons">
+        <button class="auth-btn login" on:click={() => onNavigate("/login")}>
+          <div class="icon-container">
+             <LogIn size={24} strokeWidth={2} />
+          </div>
+          <span class="text">Log in</span>
+        </button>
+        <button class="auth-btn register" on:click={() => onNavigate("/register")}>
+          <div class="icon-container">
+             <UserPlus size={24} strokeWidth={2} />
+          </div>
+          <span class="text">Sign up</span>
+        </button>
       </div>
     {/if}
   </div>
@@ -475,6 +511,74 @@
 
   .sidebar.collapsed .post-btn .post-icon-container {
      margin-right: 0;
+  }
+
+  /* Auth Buttons */
+  .auth-buttons {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+  }
+
+  .auth-btn {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start; /* Left align like nav items */
+      width: 100%;
+      padding: 12px;
+      border-radius: 9999px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      border: 1px solid transparent;
+      text-decoration: none;
+  }
+
+  .sidebar.collapsed .auth-buttons {
+      align-items: center;
+  }
+
+  .sidebar.collapsed .auth-btn {
+      justify-content: center;
+      padding: 12px;
+      width: auto;
+      border-radius: 50%;
+  }
+
+  .auth-btn .text {
+      font-size: 18px;
+      font-weight: 700;
+  }
+
+  .auth-btn.login {
+      background-color: transparent;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+  }
+  .auth-btn.login:hover {
+      background-color: var(--bg-hover);
+  }
+
+  .auth-btn.register {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+  }
+  .auth-btn.register:hover {
+      background-color: var(--primary-hover);
+  }
+
+  .auth-btn .icon-container {
+      margin-right: 12px;
+      width: 24px;
+      height: 24px;
+  }
+
+  .sidebar.collapsed .auth-btn .icon-container {
+      margin-right: 0;
   }
 
   /* Spacer to push profile down */

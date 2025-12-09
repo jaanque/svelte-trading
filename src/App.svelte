@@ -10,7 +10,6 @@
   import Post from "./components/pages/Post.svelte";
   import Login from "./components/pages/Login.svelte";
   import Register from "./components/pages/Register.svelte";
-  import TopNavbar from "./components/general/navbar/TopNavbar.svelte";
   import { onMount } from "svelte";
   import { initAuth } from "./lib/authStore";
 
@@ -60,7 +59,6 @@
   <div class="app-layout" style="--sidebar-width: {isCollapsed ? '88px' : '275px'}">
     <Navbar bind:isCollapsed {currentPath} onNavigate={handleNavigate} />
     <main class="main-content">
-      <TopNavbar onNavigate={handleNavigate} />
       <div class="page-container {route === '/profile' || route === '/portfolio' ? 'full-width' : ''}">
         {#if route === "/" || route === ""}
           <Home />

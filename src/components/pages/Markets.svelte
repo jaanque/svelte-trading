@@ -297,7 +297,7 @@
 <style>
   .explore-container {
     width: 100%;
-    padding-bottom: 80px;
+    /* removed fixed padding bottom as App.svelte handles mobile safe area */
   }
 
   .search-header {

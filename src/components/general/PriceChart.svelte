@@ -157,7 +157,7 @@
                          hour: '2-digit', minute: '2-digit'
                      });
                  },
-                 label: (context) => 'Price: ' + parseFloat(context.parsed.y).toFixed(2)
+                 label: (context) => 'Price: ' + (context.parsed.y || 0).toFixed(2)
              }
           }
         },

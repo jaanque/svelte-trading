@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { userProfile, userSession } from "../../lib/authStore";
   import { supabase } from "../../lib/supabase";
-  import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft, MoreHorizontal, MessageSquare } from "lucide-svelte";
+  import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft, MoreHorizontal, MessageSquare, LogOut } from "lucide-svelte";
   import InvestModal from "../../components/general/InvestModal.svelte";
   import SellModal from "../../components/general/SellModal.svelte";
   import PriceChart from "../../components/general/PriceChart.svelte";
@@ -14,6 +14,7 @@
   let urlUsername: string | null = null;
   let showInvestModal = false;
   let showSellModal = false;
+  let showMoreMenu = false;
   let userShares = 0;
 
   let activeTab = "Chart";
@@ -93,10 +94,27 @@
       activeTab = tab;
   }
 
+  async function handleLogout() {
+      await supabase.auth.signOut();
+      window.location.href = '/login';
+  }
+
+  function toggleMoreMenu(e: Event) {
+      e.stopPropagation();
+      showMoreMenu = !showMoreMenu;
+  }
+
   onMount(() => {
     loadProfile();
+    const closeMenu = () => showMoreMenu = false;
+    window.addEventListener('click', closeMenu);
     const handlePopState = () => { loadProfile(); };
     window.addEventListener('popstate', handlePopState);
+
+    return () => {
+        window.removeEventListener('click', closeMenu);
+        window.removeEventListener('popstate', handlePopState);
+    };
   });
 
   $: $userSession, loadProfile();
@@ -151,8 +169,24 @@
            <div class="actions">
             {#if isOwnProfile}
               <a href="/settings" class="btn-edit">Edit Profile</a>
+              <div class="more-menu-container">
+                  <button class="btn-icon" on:click={toggleMoreMenu}><MoreHorizontal size={20} /></button>
+                  {#if showMoreMenu}
+                      <div class="dropdown-menu">
+                          <button class="menu-item logout" on:click={handleLogout}>
+                              <LogOut size={16} />
+                              <span>Log out</span>
+                          </button>
+                      </div>
+                  {/if}
+              </div>
             {:else}
-              <button class="btn-icon"><MoreHorizontal size={20} /></button>
+              <div class="more-menu-container">
+                  <button class="btn-icon" on:click={toggleMoreMenu}><MoreHorizontal size={20} /></button>
+                  {#if showMoreMenu}
+                       <!-- Generic actions for other profiles if needed -->
+                  {/if}
+              </div>
               <button class="btn-icon"><MessageSquare size={20} /></button>
               {#if userShares > 0}
                   <button
@@ -483,6 +517,50 @@
   }
   .btn-icon:hover {
       background-color: var(--bg-hover);
+  }
+
+  .more-menu-container {
+      position: relative;
+  }
+
+  .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 8px;
+      background-color: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+      min-width: 150px;
+      z-index: 1000;
+      overflow: hidden;
+      padding: 4px;
+  }
+
+  .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 10px 12px;
+      border: none;
+      background: none;
+      text-align: left;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-main);
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background-color 0.2s;
+  }
+
+  .menu-item:hover {
+      background-color: var(--bg-hover);
+  }
+
+  .menu-item.logout {
+      color: var(--danger-color, #FF6961);
   }
 
   .btn-primary {

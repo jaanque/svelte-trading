@@ -12,7 +12,7 @@
   import Register from "./components/pages/Register.svelte";
   import TopNavbar from "./components/general/navbar/TopNavbar.svelte";
   import { onMount } from "svelte";
-  import { initAuth } from "./lib/authStore";
+  import { initAuth, userSession } from "./lib/authStore";
 
   let isCollapsed = false;
   let currentPath = window.location.pathname;
@@ -60,7 +60,9 @@
   <div class="app-layout" style="--sidebar-width: {isCollapsed ? '88px' : '275px'}">
     <Navbar bind:isCollapsed {currentPath} onNavigate={handleNavigate} />
     <main class="main-content">
-      <TopNavbar onNavigate={handleNavigate} />
+      {#if !$userSession}
+        <TopNavbar onNavigate={handleNavigate} />
+      {/if}
       <div class="page-container {route === '/profile' || route === '/portfolio' ? 'full-width' : ''}">
         {#if route === "/" || route === ""}
           <Home />

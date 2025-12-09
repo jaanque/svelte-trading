@@ -39,7 +39,9 @@
     { path: "/messages", label: "Messages", icon: Mail, size: 28, strokeWidth: 2 },
     { path: "/portfolio", label: "Portfolio", icon: BarChart3, size: 28, strokeWidth: 2 },
     { path: "/notifications", label: "Notifications", icon: Bell, size: 28, strokeWidth: 2 },
-    { path: "/settings", label: "Settings", icon: Settings, size: 28, strokeWidth: 2 },
+    { path: "/settings", label: "Settings", icon: Settings, size: 28, strokeWidth: 2, isDesktopOnly: true },
+    // Mobile only Profile item (hidden on desktop via CSS)
+    { path: "/profile", label: "Profile", icon: svelteLogo, size: 28, strokeWidth: 2, isMobileOnly: true },
   ];
 
   let navElements: HTMLAnchorElement[] = [];
@@ -114,13 +116,23 @@
         <li>
           <a
             href={item.path}
-            class="nav-item {currentPath === item.path ? 'active' : ''}"
+            class="nav-item {currentPath === item.path ? 'active' : ''} {item.isMobileOnly ? 'mobile-only' : ''} {item.isDesktopOnly ? 'desktop-only' : ''}"
             title={item.label}
             on:click={(e) => handleLinkClick(e, item.path)}
             bind:this={navElements[i]}
           >
             <div class="icon-container">
-              <svelte:component this={item.icon} size={item.size} strokeWidth={item.strokeWidth} />
+              {#if item.icon === svelteLogo}
+                 <div class="mobile-profile-icon">
+                    {#if $userProfile}
+                        <img src={$userProfile.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${$userProfile.username}`} alt="Profile" />
+                    {:else}
+                         <img src={svelteLogo} alt="Profile" />
+                    {/if}
+                 </div>
+              {:else}
+                <svelte:component this={item.icon} size={item.size} strokeWidth={item.strokeWidth} />
+              {/if}
             </div>
             <span class="text" data-text={item.label}>{item.label}</span>
           </a>
@@ -563,14 +575,14 @@
     .post-btn {
         display: flex;
         position: fixed;
-        bottom: 70px; /* Above bottom nav */
+        bottom: 80px; /* Above bottom nav with more clearance */
         right: 20px;
-        width: 56px;
-        height: 56px;
+        width: 60px; /* Slightly larger */
+        height: 60px;
         padding: 0;
         border-radius: 50%;
         margin: 0;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        box-shadow: 0 8px 16px rgba(119, 158, 203, 0.4); /* Enhanced shadow */
         z-index: 2100;
         align-self: auto;
     }
@@ -863,5 +875,35 @@
     .post-btn .post-icon-container {
         margin-right: 0;
     }
+
+    .mobile-only {
+        display: inline-flex;
+    }
+
+    .desktop-only {
+        display: none !important;
+    }
+  }
+
+  /* Desktop/Tablet - Hide mobile only items */
+  @media (min-width: 641px) {
+      .mobile-only {
+          display: none !important;
+      }
+  }
+
+  .mobile-profile-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+  }
+  .mobile-profile-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
   }
 </style>

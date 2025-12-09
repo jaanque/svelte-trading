@@ -10,6 +10,7 @@ export interface Profile {
   website?: string;
   tokens: number;
   price: number;
+  shares: number;
 }
 
 export const userSession = writable<Session | null>(null);
@@ -48,6 +49,7 @@ async function handleSession(session: Session | null) {
         avatar_url: session.user.user_metadata?.avatar_url || '',
         tokens: 250,
         price: 50,
+        shares: 1000000,
       });
     }
   } else {

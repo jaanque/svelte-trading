@@ -188,6 +188,9 @@
                     <span class="count">{profileData.price || 50}</span> <span class="label">Price</span>
                 </a>
              </div>
+             <div class="stat">
+               <span class="count">{profileData.shares || 1000000}</span> <span class="label">Shares</span>
+             </div>
           </div>
         </div>
       </div>

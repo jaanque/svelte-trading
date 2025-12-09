@@ -8,6 +8,7 @@ create table public.profiles (
   website text,
   tokens integer default 250,
   price integer default 50,
+  shares bigint default 1000000,
 
   primary key (id),
   constraint username_length check (char_length(username) >= 3)
@@ -80,14 +81,15 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.profiles (id, full_name, username, avatar_url, tokens, price)
+  insert into public.profiles (id, full_name, username, avatar_url, tokens, price, shares)
   values (
     new.id,
     new.raw_user_meta_data->>'full_name',
     new.raw_user_meta_data->>'username',
     new.raw_user_meta_data->>'avatar_url',
     250,
-    50
+    50,
+    1000000
   );
   return new;
 end;

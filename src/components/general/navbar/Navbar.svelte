@@ -270,14 +270,15 @@
   .tokens-pill {
     display: flex;
     align-items: center;
-    background-color: #FFF9C4; /* Pastel yellow bg */
-    color: #FBC02D; /* Darker yellow/gold text */
+    background-color: #FFECB3; /* Richer pastel gold */
+    color: #4E342E; /* Dark Brown/Bronze for contrast */
     padding: 6px 12px;
     border-radius: 9999px;
     margin-left: 12px;
-    font-weight: 700;
+    font-weight: 800; /* Extra bold */
     font-size: 15px;
-    border: 1px solid #FFF59D;
+    border: 1px solid #FFD54F; /* Stronger border */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle depth */
     transition: opacity 0.3s, width 0.3s, margin 0.3s;
     white-space: nowrap;
     overflow: hidden;
@@ -289,6 +290,7 @@
     padding: 0;
     margin: 0;
     border: none;
+    box-shadow: none;
   }
 
   .coin-icon {
@@ -296,6 +298,7 @@
     align-items: center;
     justify-content: center;
     margin-right: 6px;
+    color: #F57F17; /* Darker amber icon */
   }
 
   /* Nav Links */

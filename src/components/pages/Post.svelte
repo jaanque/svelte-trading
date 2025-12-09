@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Image, Smile, Calendar, BarChart2, MapPin, X } from "lucide-svelte";
+  import { Image, Smile, Calendar, BarChart2, MapPin } from "lucide-svelte";
   import { userProfile } from "../../lib/authStore";
 
   let content = "";
@@ -22,112 +22,89 @@
 </script>
 
 <div class="post-page">
-  <div class="header">
-    <div class="close-btn">
-       <a href="/" aria-label="Close"><X size={24} /></a>
-    </div>
-    <div class="actions-header">
-       <button class="btn-text">Drafts</button>
-    </div>
-  </div>
+  <header class="page-header">
+    <h1>New Post</h1>
+  </header>
 
-  <div class="editor-layout">
-    <div class="avatar-column">
-      {#if $userProfile}
-        <img
-          src={$userProfile.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${$userProfile.username}`}
-          alt="Profile"
-          class="avatar"
-        />
-      {:else}
-        <div class="avatar-placeholder"></div>
-      {/if}
-    </div>
+  <div class="card editor-card">
+    <div class="editor-layout">
+      <div class="avatar-column">
+        {#if $userProfile}
+          <img
+            src={$userProfile.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${$userProfile.username}`}
+            alt="Profile"
+            class="avatar"
+          />
+        {:else}
+          <div class="avatar-placeholder"></div>
+        {/if}
+      </div>
 
-    <div class="content-column">
-        <div class="input-area">
-            <textarea
-                placeholder="What is happening?!"
-                bind:value={content}
-                on:input={autoResize}
-                on:focus={() => isFocused = true}
-                on:blur={() => isFocused = false}
-                rows="3"
-            ></textarea>
-        </div>
+      <div class="content-column">
+          <div class="input-area">
+              <textarea
+                  placeholder="What is happening?!"
+                  bind:value={content}
+                  on:input={autoResize}
+                  on:focus={() => isFocused = true}
+                  on:blur={() => isFocused = false}
+                  rows="3"
+              ></textarea>
+          </div>
 
-        <div class="visibility-control">
-            <span class="globe-icon">🌎</span>
-            <span class="visibility-text">Everyone can reply</span>
-        </div>
+          <div class="visibility-control">
+              <span class="globe-icon">🌎</span>
+              <span class="visibility-text">Everyone can reply</span>
+          </div>
 
-        <div class="toolbar">
-            <div class="media-actions">
-                <button class="icon-btn" aria-label="Media"><Image size={20} /></button>
-                <button class="icon-btn" aria-label="GIF"><div class="gif-badge">GIF</div></button>
-                <button class="icon-btn" aria-label="Poll"><BarChart2 size={20} transform="rotate(90)" /></button>
-                <button class="icon-btn" aria-label="Emoji"><Smile size={20} /></button>
-                <button class="icon-btn" aria-label="Schedule"><Calendar size={20} /></button>
-                <button class="icon-btn disabled" aria-label="Location"><MapPin size={20} /></button>
-            </div>
+          <div class="toolbar">
+              <div class="media-actions">
+                  <button class="icon-btn" aria-label="Media"><Image size={20} /></button>
+                  <button class="icon-btn" aria-label="GIF"><div class="gif-badge">GIF</div></button>
+                  <button class="icon-btn" aria-label="Poll"><BarChart2 size={20} transform="rotate(90)" /></button>
+                  <button class="icon-btn" aria-label="Emoji"><Smile size={20} /></button>
+                  <button class="icon-btn" aria-label="Schedule"><Calendar size={20} /></button>
+                  <button class="icon-btn disabled" aria-label="Location"><MapPin size={20} /></button>
+              </div>
 
-            <div class="submit-action">
-                {#if content.length > 0}
-                    <div class="character-count-ring">
-                        <!-- Simplified visual for progress -->
-                        <div class="ring-circle"></div>
-                    </div>
-                {/if}
-                <button class="btn-primary" disabled={!isValid} on:click={handlePost}>Post</button>
-            </div>
-        </div>
+              <div class="submit-action">
+                  {#if content.length > 0}
+                      <div class="character-count-ring">
+                          <!-- Simplified visual for progress -->
+                          <div class="ring-circle"></div>
+                      </div>
+                  {/if}
+                  <button class="btn-primary" disabled={!isValid} on:click={handlePost}>Post</button>
+              </div>
+          </div>
+      </div>
     </div>
   </div>
 </div>
 
 <style>
   .post-page {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 0 16px;
-    min-height: 100vh;
+    /* Container style matches other pages */
   }
 
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    margin-bottom: 12px;
+  .page-header {
+    margin-bottom: 24px;
   }
 
-  .close-btn a {
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      transition: background-color 0.2s;
+  .page-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 28px;
+    color: var(--text-main);
   }
 
-  .close-btn a:hover {
-      background-color: var(--bg-hover);
-      text-decoration: none;
-  }
-
-  .btn-text {
-      background: none;
-      color: var(--primary-color);
-      font-weight: 700;
-      font-size: 14px;
-      padding: 8px 16px;
-      border-radius: 9999px;
-  }
-
-  .btn-text:hover {
-      background-color: var(--bg-hover);
+  .editor-card {
+    /* Uses global .card style implicitly if applied, or we define specific here */
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 16px;
   }
 
   .editor-layout {
@@ -141,15 +118,15 @@
   }
 
   .avatar {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     object-fit: cover;
   }
 
   .avatar-placeholder {
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background-color: var(--bg-tertiary);
   }
@@ -196,7 +173,7 @@
   }
 
   .visibility-control:hover {
-      background-color: rgba(29, 155, 240, 0.05); /* Very light highlight */
+      background-color: var(--bg-hover);
       border-radius: 12px;
       padding-left: 8px;
       margin-left: -8px;

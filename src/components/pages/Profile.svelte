@@ -3,12 +3,14 @@
   import { userProfile, userSession } from "../../lib/authStore";
   import { supabase } from "../../lib/supabase";
   import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft, MoreHorizontal, MessageSquare } from "lucide-svelte";
+  import InvestModal from "../../components/general/InvestModal.svelte";
 
   let loading = true;
   let profileData: any = null;
   let error: string | null = null;
   let isOwnProfile = false;
   let urlUsername: string | null = null;
+  let showInvestModal = false;
 
   // Helpers
   function getQueryParam(param: string) {
@@ -122,7 +124,12 @@
             {:else}
               <button class="btn-icon"><MoreHorizontal size={20} /></button>
               <button class="btn-icon"><MessageSquare size={20} /></button>
-              <button class="btn-primary">Follow</button>
+              <button
+                class="btn-primary"
+                on:click={() => showInvestModal = true}
+              >
+                Invertir
+              </button>
             {/if}
           </div>
         </div>
@@ -197,6 +204,14 @@
          </div>
       </div>
     </div>
+  {/if}
+
+  {#if showInvestModal}
+    <InvestModal
+        targetUser={profileData}
+        onClose={() => showInvestModal = false}
+        on:success={loadProfile}
+    />
   {/if}
 </div>
 

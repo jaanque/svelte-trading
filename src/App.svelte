@@ -47,7 +47,6 @@
   });
 
   $: isAuthPage = currentPath === "/login" || currentPath === "/register";
-  $: route = currentPath.split("?")[0];
 </script>
 
 {#if isAuthPage}
@@ -61,20 +60,20 @@
     <Navbar bind:isCollapsed {currentPath} onNavigate={handleNavigate} />
     <main class="main-content">
       <TopNavbar onNavigate={handleNavigate} />
-      <div class="page-container {route === '/profile' ? 'full-width' : ''}">
-        {#if route === "/" || route === ""}
+      <div class="page-container {currentPath === '/profile' ? 'full-width' : ''}">
+        {#if currentPath === "/" || currentPath === ""}
           <Home />
-        {:else if route === "/markets"}
-          <Markets onNavigate={handleNavigate} />
-        {:else if route === "/messages"}
+        {:else if currentPath === "/markets"}
+          <Markets />
+        {:else if currentPath === "/messages"}
           <Messages />
-        {:else if route === "/portfolio"}
+        {:else if currentPath === "/portfolio"}
           <Portfolio />
-        {:else if route === "/notifications"}
+        {:else if currentPath === "/notifications"}
           <Notifications />
-        {:else if route === "/settings"}
+        {:else if currentPath === "/settings"}
           <Settings />
-        {:else if route === "/profile"}
+        {:else if currentPath === "/profile"}
           <Profile />
         {:else}
           <Home />

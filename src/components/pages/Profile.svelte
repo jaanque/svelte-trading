@@ -3,14 +3,12 @@
   import { userProfile, userSession } from "../../lib/authStore";
   import { supabase } from "../../lib/supabase";
   import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft, MoreHorizontal, MessageSquare } from "lucide-svelte";
-  import InvestModal from "../../components/general/InvestModal.svelte";
 
   let loading = true;
   let profileData: any = null;
   let error: string | null = null;
   let isOwnProfile = false;
   let urlUsername: string | null = null;
-  let showInvestModal = false;
 
   // Helpers
   function getQueryParam(param: string) {
@@ -21,11 +19,6 @@
   function formatNumber(num: number | undefined | null) {
       if (num === undefined || num === null) return "0";
       return num.toLocaleString();
-  }
-
-  function formatPrice(num: number | undefined | null) {
-      if (num === undefined || num === null) return "0.00";
-      return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   async function loadProfile() {
@@ -129,19 +122,14 @@
             {:else}
               <button class="btn-icon"><MoreHorizontal size={20} /></button>
               <button class="btn-icon"><MessageSquare size={20} /></button>
-              <button
-                class="btn-primary"
-                on:click={() => showInvestModal = true}
-              >
-                Invertir
-              </button>
+              <button class="btn-primary">Follow</button>
             {/if}
           </div>
         </div>
 
         <div class="info">
           <h1 class="fullname">{profileData.full_name || profileData.username}</h1>
-          <div class="handle">${profileData.username.toUpperCase()}</div>
+          <div class="handle">@{profileData.username}</div>
 
           {#if profileData.bio}
             <p class="bio">{profileData.bio}</p>
@@ -171,19 +159,13 @@
              </div>
              <div class="stat-divider"></div>
              <a href="/portfolio" class="stat-item link">
-                <span class="stat-value highlight">{formatPrice(profileData.price || 50)}</span>
+                <span class="stat-value highlight">{formatNumber(profileData.price || 50)}</span>
                 <span class="stat-label">Price</span>
              </a>
              <div class="stat-item">
                <span class="stat-value highlight">{formatNumber(profileData.shares || 1000000)}</span>
                <span class="stat-label">Shares</span>
              </div>
-             {#if profileData.available_shares !== undefined}
-                <div class="stat-item">
-                  <span class="stat-value">{formatNumber(Math.floor(profileData.available_shares))}</span>
-                  <span class="stat-label">Available</span>
-                </div>
-             {/if}
           </div>
         </div>
       </div>
@@ -199,7 +181,7 @@
       <!-- Feed Content -->
       <div class="feed-content">
          <div class="empty-feed">
-            <p>${profileData.username.toUpperCase()} hasn't posted anything yet.</p>
+            <p>@{profileData.username} hasn't posted anything yet.</p>
          </div>
       </div>
     </div>
@@ -215,14 +197,6 @@
          </div>
       </div>
     </div>
-  {/if}
-
-  {#if showInvestModal}
-    <InvestModal
-        targetUser={profileData}
-        onClose={() => showInvestModal = false}
-        on:success={loadProfile}
-    />
   {/if}
 </div>
 

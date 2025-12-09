@@ -587,6 +587,139 @@
     width: 100%;
   }
 
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .sidebar {
+      padding: 0 12px;
+      align-items: center;
+    }
+    .sidebar-container {
+       align-items: center;
+    }
+    .brand, .nav-links li {
+       justify-content: center;
+    }
+    .text, .profile-details, .profile-more-btn, .collapse-toggle, .auth-btn .text {
+       display: none;
+    }
+    .icon-container, .profile-avatar, .auth-btn .icon-container {
+       margin-right: 0;
+    }
+    .profile-card {
+        justify-content: center;
+        padding: 12px;
+    }
+    .auth-btn {
+        justify-content: center;
+        padding: 12px;
+        width: auto;
+        border-radius: 50%;
+    }
+    /* Hide tokens pill in tablet/mobile for now if no space, or let it collapse naturally */
+    .tokens-pill {
+       display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .sidebar, .sidebar.collapsed {
+      width: 100%;
+      height: 53px; /* Fixed height for bottom bar */
+      top: auto;
+      bottom: 0;
+      flex-direction: row;
+      border-right: none;
+      border-top: 1px solid var(--border-color);
+      padding: 0;
+      z-index: 2000;
+      overflow-y: visible;
+    }
+
+    .sidebar-container {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-around;
+      width: 100%;
+      height: 100%;
+    }
+
+    .brand, .profile-section, .collapse-toggle {
+      display: none;
+    }
+
+    .nav-links {
+      flex-direction: row;
+      justify-content: space-around;
+      align-items: center;
+      width: auto; /* Let it shrink */
+      flex-grow: 1;
+      height: 100%;
+    }
+
+    .nav-links li {
+       width: auto;
+    }
+
+    .nav-item {
+      padding: 8px;
+      margin: 0;
+    }
+
+    .icon-container {
+        margin-right: 0;
+    }
+
+    /* Auth Buttons Mobile */
+    .auth-buttons {
+        flex-direction: row;
+        width: auto;
+        margin-bottom: 0;
+        gap: 8px;
+        padding-right: 12px;
+    }
+
+    .auth-btn {
+        padding: 8px;
+        border-radius: 9999px; /* Restore pill shape if space permits, or circle */
+    }
+
+    .auth-btn .text {
+        display: none; /* Icon only on mobile */
+    }
+
+    .auth-btn .icon-container {
+        margin: 0;
+    }
+
+    /* Floating Action Button (FAB) for Mobile */
+    .post-btn {
+        display: flex;
+        position: fixed;
+        bottom: 70px; /* Above bottom nav */
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        padding: 0;
+        border-radius: 50%;
+        margin: 0;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        z-index: 2100;
+        align-self: auto;
+    }
+
+    .post-text {
+        display: none;
+    }
+
+    .post-btn .post-icon-container {
+        margin-right: 0;
+    }
+  }
+  .spacer {
+    flex-grow: 1;
+    width: 100%;
+  }
+
   /* Profile Section */
   .profile-section {
     width: 100%;

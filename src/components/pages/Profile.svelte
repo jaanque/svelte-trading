@@ -234,19 +234,12 @@
 
   .header-content {
       width: 100%;
-      max-width: 600px; /* Match content wrapper */
-      margin: 0 auto;
+      /* Removed max-width to allow full width alignment */
       padding: 0 16px;
       display: flex;
       align-items: center;
       gap: 20px;
-  }
-  /* If screen is larger, header content centers or stays left?
-     Usually profile header stays aligned with the feed. */
-  @media (min-width: 600px) {
-      .header-content {
-          padding: 0 16px; /* Keep padding */
-      }
+      box-sizing: border-box;
   }
 
   .header-name h3 {
@@ -287,14 +280,13 @@
   /* Content Wrapper - Controls width of the actual profile info and feed */
   .profile-content-wrapper {
       width: 100%;
-      max-width: 600px; /* Standard readable feed width */
-      margin: 0 auto;
+      /* Removed max-width for full width content as requested */
       background-color: var(--bg-main);
-      border-left: 1px solid var(--border-color);
-      border-right: 1px solid var(--border-color);
+      /* Borders removed as they are typically for the central column, but if full width, edges handle it */
       min-height: calc(100vh - 253px); /* approx */
       position: relative;
       top: 0; /* Stacking context */
+      box-sizing: border-box;
   }
 
   /* If on mobile, remove borders */

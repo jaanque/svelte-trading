@@ -161,7 +161,7 @@
       on:click={() => onNavigate("/post")}
     >
       <div class="post-icon-container">
-        <Plus size={24} strokeWidth={3} />
+        <Plus size={24} strokeWidth={3} color="#ffffff" />
       </div>
       <span class="text post-text">Post</span>
     </button>
@@ -442,28 +442,31 @@
     align-items: center;
     justify-content: center;
     background-color: var(--primary-color);
-    color: white;
+    color: #ffffff;
     border-radius: 9999px;
-    padding: 16px;
+    padding: 15px 0;
     margin: 32px 0 12px 0;
     width: 90%;
-    font-weight: 800;
-    font-size: 18px;
+    font-weight: 700;
+    font-size: 17px;
     cursor: pointer;
-    transition: background-color 0.2s, width 0.3s, padding 0.3s, transform 0.2s;
+    transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
     text-decoration: none;
     border: none;
     align-self: center; /* Center in sidebar */
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
   }
 
   .post-btn:hover {
     background-color: var(--primary-hover);
-    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
     text-decoration: none;
+    transform: translateY(-1px);
   }
 
   .post-btn:active {
-    transform: scale(0.98);
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   .post-icon-container {
@@ -488,15 +491,17 @@
     width: 0;
   }
 
-  /* When expanded, we show text and hide icon? No, user wants icon ("icona quiero que sea un simbolo de mas")
-     Ideally on expanded: Icon + "Post" text, or just "Post"?
-     Twitter does "Post" text only on expanded large screens, but feather icon on smaller.
-     Let's do Icon + Text for clarity or Text only?
-     "perfeccionalo y la icona quiero que sea un simbolo de mas" implies the icon is important.
-     Let's show Icon + Text on expanded.
-  */
+  .post-btn .post-text {
+      color: #ffffff; /* Explicitly white text */
+      margin: 0;
+      opacity: 1;
+      width: auto;
+  }
+
   .post-btn .post-icon-container {
      margin-right: 8px;
+     display: flex;
+     align-items: center;
   }
 
   .sidebar.collapsed .post-btn .post-icon-container {

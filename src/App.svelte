@@ -63,7 +63,7 @@
       {#if !$userSession}
         <TopNavbar onNavigate={handleNavigate} />
       {/if}
-      <div class="page-container {route === '/profile' || route === '/portfolio' ? 'full-width' : ''}">
+      <div class="page-container {route === '/profile' || route === '/portfolio' || route === '/messages' ? 'full-width' : ''}">
         {#if route === "/" || route === ""}
           <Home />
         {:else if route === "/markets"}

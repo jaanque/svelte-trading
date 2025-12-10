@@ -9,6 +9,7 @@
     type ChatMessage,
   } from "../../lib/chat";
   import { supabase } from "../../lib/supabase";
+  import { formatMessage } from "../../lib/utils";
   import { Loader2, Send, Search, ArrowLeft } from "lucide-svelte";
 
   let loadingConversations = true;
@@ -228,7 +229,7 @@
                     {#each messages as msg}
                         <div class="message-row {msg.sender_id === $userProfile?.id ? 'sent' : 'received'}">
                             <div class="message-bubble">
-                                {msg.content}
+                                {@html formatMessage(msg.content)}
                             </div>
                             <span class="message-time">{formatTime(msg.created_at)}</span>
                         </div>
@@ -458,16 +459,34 @@
         word-break: break-word;
     }
 
+    /* Links in messages */
+    .message-bubble :global(a) {
+        text-decoration: underline;
+        word-break: break-all;
+    }
+
+    .message-bubble :global(a:hover) {
+        opacity: 0.8;
+    }
+
     .sent .message-bubble {
         background-color: var(--primary-color);
         color: white;
         border-bottom-right-radius: 4px;
     }
 
+    .sent .message-bubble :global(a) {
+        color: white;
+    }
+
     .received .message-bubble {
         background-color: var(--bg-secondary);
         color: var(--text-main);
         border-bottom-left-radius: 4px;
+    }
+
+    .received .message-bubble :global(a) {
+        color: var(--primary-color);
     }
 
     .message-time {

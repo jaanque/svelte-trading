@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Search, Clock, TrendingUp, TrendingDown, Activity, DollarSign } from "lucide-svelte";
+  import { Search, Clock, TrendingUp, TrendingDown, Activity, DollarSign, BarChart2 } from "lucide-svelte";
   import { supabase } from "../../lib/supabase";
-  import { onMount, afterUpdate } from "svelte";
+  import { onMount } from "svelte";
   import UserCard from "../../components/general/UserCard.svelte";
   import Chart from "chart.js/auto";
 
@@ -23,13 +23,14 @@
   let chartCanvas: HTMLCanvasElement;
   let chartInstance: Chart | null = null;
 
+  let activeTab: 'gainers' | 'losers' = 'gainers';
+
   async function fetchDailyStats() {
     statsLoading = true;
     try {
       const { data, error } = await supabase.rpc("get_daily_investment_stats");
 
       if (error) {
-        // Fallback mock data if RPC fails (e.g. not created yet)
         console.warn("RPC get_daily_investment_stats failed, using mock data:", error.message);
         dailyStats = {
             count: 142,
@@ -107,7 +108,7 @@
         .from("search_history")
         .select(`
           created_at,
-          searched_profile:profiles!inner(id, username, full_name, avatar_url)
+          searched_profile:profiles!inner(id, username, full_name, avatar_url, price)
         `)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -140,8 +141,6 @@
       const { data, error } = await supabase.rpc("get_top_movers");
       if (error) throw error;
 
-      // Filter out users with 0% change if desired, or keep them.
-      // Sort desc for gainers
       const sorted = [...data].sort((a, b) => b.change_pct - a.change_pct);
 
       topGainers = sorted.filter(u => u.change_pct > 0).slice(0, 5);
@@ -194,7 +193,7 @@
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, username, full_name, avatar_url")
+        .select("id, username, full_name, avatar_url, price")
         .or(`username.ilike.%${searchQuery}%,full_name.ilike.%${searchQuery}%`)
         .limit(20);
 
@@ -217,6 +216,10 @@
   async function handleProfileClick(profile: any) {
       await addToHistory(profile);
       onNavigate(`/profile?u=${profile.username}`);
+  }
+
+  function formatPrice(num: number) {
+      return num.toLocaleString(undefined, { maximumFractionDigits: 0 });
   }
 
   onMount(() => {
@@ -247,6 +250,23 @@
         </div>
       </div>
 
+      <!-- Mobile Market Highlights -->
+      <div class="mobile-market-highlights">
+          {#if dailyStats}
+              <div class="highlight-card">
+                  <div class="highlight-item">
+                      <span class="label">24h Vol</span>
+                      <span class="value">{dailyStats.volume.toLocaleString()}</span>
+                  </div>
+                  <div class="highlight-divider"></div>
+                  <div class="highlight-item">
+                      <span class="label">Trades</span>
+                      <span class="value">{dailyStats.count}</span>
+                  </div>
+              </div>
+          {/if}
+      </div>
+
       <!-- Content -->
       <div class="results-container">
     {#if isLoading}
@@ -256,102 +276,101 @@
     {:else if searchQuery.trim() === ""}
 
       <!-- History View -->
-      <div class="history-section">
-        <div class="section-header">
-           <h2>
-             <Clock size={20} class="icon-inline" />
-             Recent Searches
-           </h2>
-        </div>
-
-        {#if historyLoading}
-           <div class="loading-state">
-             <div class="spinner"></div>
-           </div>
-        {:else if searchHistory.length === 0}
-           <div class="empty-state">
-             <p>Your search history will appear here.</p>
-           </div>
-        {:else}
-           <div class="history-grid">
-             {#each searchHistory as user (user.id)}
-                  <div role="button" tabindex="0" class="card-wrapper">
-                      <UserCard
-                        {user}
-                        onClick={() => handleProfileClick(user)}
-                      />
-                </div>
-             {/each}
-           </div>
-        {/if}
-      </div>
-
-      <!-- Top Gainers Section -->
-      <div class="history-section">
-        <div class="section-header">
+      {#if searchHistory.length > 0}
+        <div class="history-section">
+            <div class="section-header">
             <h2>
-              <TrendingUp size={20} class="icon-inline positive" />
-              Top Gainers (24h)
+                <Clock size={20} class="icon-inline" />
+                Recent Searches
             </h2>
-        </div>
-        {#if moversLoading}
-            <div class="loading-state-mini">
-                <div class="spinner-small"></div>
             </div>
-        {:else if topGainers.length > 0}
             <div class="history-grid">
-                {#each topGainers as user (user.id)}
+                {#each searchHistory as user (user.id)}
                     <div role="button" tabindex="0" class="card-wrapper">
                         <UserCard
                             {user}
                             onClick={() => handleProfileClick(user)}
-                        >
-                            <div class="trend-badge positive">
-                                +{user.change_pct.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%
-                            </div>
-                        </UserCard>
+                        />
                     </div>
                 {/each}
             </div>
-        {:else}
-            <div class="empty-list-state">
-                <p>No gainers in the last 24h</p>
-            </div>
-        {/if}
-      </div>
-
-      <!-- Top Losers Section -->
-      <div class="history-section">
-        <div class="section-header">
-            <h2>
-              <TrendingDown size={20} class="icon-inline negative" />
-              Top Losers (24h)
-            </h2>
         </div>
-        {#if moversLoading}
-            <div class="loading-state-mini">
-                <div class="spinner-small"></div>
-            </div>
-        {:else if topLosers.length > 0}
-            <div class="history-grid">
-                {#each topLosers as user (user.id)}
-                    <div role="button" tabindex="0" class="card-wrapper">
-                        <UserCard
-                            {user}
-                            onClick={() => handleProfileClick(user)}
-                        >
-                            <div class="trend-badge negative">
-                                {user.change_pct.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%
+      {/if}
+
+      <!-- Top Movers Section -->
+      <div class="movers-section">
+         <div class="tabs-header">
+             <button
+               class="tab-btn {activeTab === 'gainers' ? 'active' : ''}"
+               on:click={() => activeTab = 'gainers'}
+             >
+                 <TrendingUp size={18} />
+                 Top Gainers
+             </button>
+             <button
+               class="tab-btn {activeTab === 'losers' ? 'active' : ''}"
+               on:click={() => activeTab = 'losers'}
+             >
+                 <TrendingDown size={18} />
+                 Top Losers
+             </button>
+         </div>
+
+         {#if moversLoading}
+             <div class="loading-state-mini">
+                 <div class="spinner-small"></div>
+             </div>
+         {:else}
+             {#if activeTab === 'gainers'}
+                 {#if topGainers.length > 0}
+                    <div class="history-grid">
+                        {#each topGainers as user (user.id)}
+                            <div role="button" tabindex="0" class="card-wrapper">
+                                <UserCard
+                                    {user}
+                                    onClick={() => handleProfileClick(user)}
+                                >
+                                    <div class="price-info">
+                                        <span class="current-price">{formatPrice(user.current_price || 0)}</span>
+                                        <div class="trend-badge positive">
+                                            +{user.change_pct.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%
+                                        </div>
+                                    </div>
+                                </UserCard>
                             </div>
-                        </UserCard>
+                        {/each}
                     </div>
-                {/each}
-            </div>
-        {:else}
-            <div class="empty-list-state">
-                <p>No losers in the last 24h</p>
-            </div>
-        {/if}
+                 {:else}
+                    <div class="empty-list-state">
+                        <p>No gainers in the last 24h</p>
+                    </div>
+                 {/if}
+             {:else}
+                 {#if topLosers.length > 0}
+                    <div class="history-grid">
+                        {#each topLosers as user (user.id)}
+                            <div role="button" tabindex="0" class="card-wrapper">
+                                <UserCard
+                                    {user}
+                                    onClick={() => handleProfileClick(user)}
+                                >
+                                    <div class="price-info">
+                                        <span class="current-price">{formatPrice(user.current_price || 0)}</span>
+                                        <div class="trend-badge negative">
+                                            {user.change_pct.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%
+                                        </div>
+                                    </div>
+                                </UserCard>
+                            </div>
+                        {/each}
+                    </div>
+                 {:else}
+                    <div class="empty-list-state">
+                        <p>No losers in the last 24h</p>
+                    </div>
+                 {/if}
+             {/if}
+         {/if}
       </div>
 
     {:else if searchResults.length === 0}
@@ -373,6 +392,11 @@
               <span class="fullname">{user.full_name || "Unknown"}</span>
               <span class="username">${user.username.toUpperCase()}</span>
             </div>
+            {#if user.price}
+                <div class="list-price">
+                    {formatPrice(user.price)}
+                </div>
+            {/if}
           </a>
         {/each}
       </div>
@@ -431,27 +455,64 @@
     display: flex;
     width: 100%;
     gap: 24px;
-    /* removed fixed padding bottom as App.svelte handles mobile safe area */
   }
 
   .main-column {
       flex: 1;
-      min-width: 0; /* Prevent flex child from overflowing */
+      min-width: 0;
   }
 
   .right-sidebar {
       width: 300px;
       flex-shrink: 0;
-      display: none; /* Hidden on mobile/tablet by default */
+      display: none;
   }
 
-  /* Show sidebar on larger screens */
   @media (min-width: 1024px) {
       .right-sidebar {
           display: block;
       }
+      .mobile-market-highlights {
+          display: none;
+      }
   }
 
+  /* Mobile Highlights */
+  .mobile-market-highlights {
+      margin-bottom: 24px;
+  }
+  .highlight-card {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background-color: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border-color);
+  }
+  .highlight-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+  }
+  .highlight-item .label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-weight: 600;
+  }
+  .highlight-item .value {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+  }
+  .highlight-divider {
+      width: 1px;
+      height: 30px;
+      background-color: var(--border-color);
+  }
+
+  /* Right Sidebar Stats */
   .stats-card {
       background-color: var(--bg-secondary);
       border-radius: 16px;
@@ -599,7 +660,7 @@
     font-size: 15px;
   }
 
-  .history-section {
+  .history-section, .movers-section {
     margin-bottom: 32px;
   }
 
@@ -618,16 +679,41 @@
     margin: 0;
   }
 
+  .tabs-header {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+  }
+
+  .tab-btn {
+      background: none;
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: all 0.2s;
+  }
+
+  .tab-btn:hover {
+      background-color: var(--bg-secondary);
+      color: var(--text-main);
+  }
+
+  .tab-btn.active {
+      color: var(--text-main);
+      background-color: var(--bg-secondary);
+  }
+
   :global(.icon-inline) {
       margin-bottom: -2px;
-  }
-
-  :global(.icon-inline.positive) {
-      color: var(--success-color, #10B981);
-  }
-
-  :global(.icon-inline.negative) {
-      color: var(--danger-color, #EF4444);
   }
 
   .history-grid {
@@ -642,8 +728,21 @@
       cursor: pointer;
   }
 
-  .trend-badge {
+  .price-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
       margin-top: 8px;
+  }
+
+  .current-price {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-main);
+  }
+
+  .trend-badge {
       font-size: 13px;
       font-weight: 700;
       padding: 4px 8px;
@@ -699,6 +798,12 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    flex-grow: 1;
+  }
+
+  .list-price {
+      font-weight: 700;
+      color: var(--text-main);
   }
 
   .fullname {

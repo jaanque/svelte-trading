@@ -115,11 +115,14 @@
       </a>
 
       {#if $userProfile}
-        <div class="tokens-pill" title="Your Tokens">
-          <div class="coin-icon">
-            <Coins size={16} strokeWidth={2.5} />
+        <div class="wallet-indicator" title="Available Balance">
+          <div class="wallet-icon-bg">
+            <Coins size={14} strokeWidth={2.5} color="#F59E0B" />
           </div>
-          <span class="tokens-amount">{$userProfile.tokens}</span>
+          <div class="wallet-info">
+             <span class="wallet-label">Balance</span>
+             <span class="wallet-amount">{$userProfile.tokens.toLocaleString()}</span>
+          </div>
         </div>
       {/if}
     </div>
@@ -292,39 +295,65 @@
     object-fit: contain;
   }
 
-  /* Tokens Pill */
-  .tokens-pill {
+  /* Wallet Indicator */
+  .wallet-indicator {
     display: flex;
     align-items: center;
-    background-color: #FFECB3; /* Richer pastel gold */
-    color: #4E342E; /* Dark Brown/Bronze for contrast */
+    background-color: var(--bg-secondary);
     padding: 6px 12px;
-    border-radius: 9999px;
+    border-radius: 12px;
     margin-left: 12px;
-    font-weight: 800; /* Extra bold */
-    font-size: 15px;
-    border: 1px solid #FFD54F; /* Stronger border */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle depth */
-    transition: opacity 0.3s, width 0.3s, margin 0.3s;
-    white-space: nowrap;
+    transition: opacity 0.3s, width 0.3s, margin 0.3s, padding 0.3s;
     overflow: hidden;
+    white-space: nowrap;
+    border: 1px solid transparent;
   }
 
-  .sidebar.collapsed .tokens-pill {
+  .wallet-indicator:hover {
+      border-color: var(--border-color);
+      background-color: var(--bg-hover);
+  }
+
+  .sidebar.collapsed .wallet-indicator {
     opacity: 0;
     width: 0;
     padding: 0;
     margin: 0;
-    border: none;
-    box-shadow: none;
+    pointer-events: none;
   }
 
-  .coin-icon {
+  .wallet-icon-bg {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: rgba(245, 158, 11, 0.1); /* Amber tint */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 6px;
-    color: #F57F17; /* Darker amber icon */
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+
+  .wallet-info {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      line-height: 1.1;
+  }
+
+  .wallet-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+  }
+
+  .wallet-amount {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-main);
+      font-feature-settings: "tnum";
   }
 
   /* Nav Links */

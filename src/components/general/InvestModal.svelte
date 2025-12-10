@@ -30,7 +30,10 @@
   function updateFromTokens(e: Event) {
       const val = parseFloat((e.target as HTMLInputElement).value);
       if (!isNaN(val)) {
-          sharesAmount = (val / price).toFixed(4);
+          // Calculate shares and floor to 1 decimal place
+          const rawShares = val / price;
+          const snappedShares = Math.floor(rawShares * 10) / 10;
+          sharesAmount = snappedShares.toFixed(1);
       } else {
           sharesAmount = "";
       }
@@ -39,6 +42,7 @@
   function updateFromShares(e: Event) {
       const val = parseFloat((e.target as HTMLInputElement).value);
       if (!isNaN(val)) {
+          // Calculate cost based on shares
           investAmount = (val * price).toFixed(2);
       } else {
           investAmount = "";
@@ -46,7 +50,20 @@
   }
 
   async function handleInvest() {
-    if (!isValid) return;
+    const exactShares = Math.floor(shareVal * 10) / 10;
+
+    if (exactShares <= 0) {
+        errorMsg = "Minimum purchase is 0.1 shares.";
+        return;
+    }
+
+    const exactTokens = exactShares * price;
+
+    if (exactTokens > userBalance) {
+         errorMsg = "Insufficient balance for this share amount.";
+         return;
+    }
+
     loading = true;
     errorMsg = "";
     successMsg = "";
@@ -54,12 +71,12 @@
     try {
       const { error } = await supabase.rpc("invest_in_user", {
         target_user_id: targetUser.id,
-        invest_amount: tokenVal
+        invest_amount: exactTokens
       });
 
       if (error) throw error;
 
-      successMsg = `Successfully invested ${tokenVal.toLocaleString(undefined, {minimumFractionDigits: 2})} tokens in ${targetUser.username}!`;
+      successMsg = `Successfully invested ${exactTokens.toLocaleString(undefined, {minimumFractionDigits: 2})} tokens in ${targetUser.username}!`;
       setTimeout(() => {
           onClose();
           dispatch("success");
@@ -125,7 +142,8 @@
                     bind:value={sharesAmount}
                     on:input={updateFromShares}
                     placeholder="0"
-                    min="0"
+                    min="0.1"
+                    step="0.1"
                 />
             </div>
         </div>

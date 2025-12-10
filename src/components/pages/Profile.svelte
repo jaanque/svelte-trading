@@ -156,7 +156,7 @@
     };
   });
 
-  $: $userSession, currentPath, loadProfile();
+  $: $userSession, $userProfile, currentPath, loadProfile();
 </script>
 
 <div class="profile-page">

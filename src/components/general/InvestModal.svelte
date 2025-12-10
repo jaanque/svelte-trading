@@ -63,7 +63,7 @@
       const val = parseFloat((e.target as HTMLInputElement).value);
       if (!isNaN(val)) {
           // Calculate cost based on shares
-          investAmount = (val * price).toFixed(2);
+          investAmount = (val * price).toFixed(0);
       } else {
           investAmount = "";
       }
@@ -128,17 +128,17 @@
       {:else}
         <div class="info-row">
             <span class="label">Current Price</span>
-            <span class="value">{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Tokens/Share</span>
+            <span class="value">{price.toLocaleString()} Tokens/Share</span>
         </div>
 
         <div class="info-row">
             <span class="label">Available Shares</span>
-            <span class="value">{Math.floor(availableShares).toLocaleString()}</span>
+            <span class="value">{availableShares.toLocaleString()}</span>
         </div>
 
         <div class="info-row">
             <span class="label">Your Balance</span>
-            <span class="value">{userBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} Tokens</span>
+            <span class="value">{userBalance.toLocaleString()} Tokens</span>
         </div>
 
         <div class="input-grid">

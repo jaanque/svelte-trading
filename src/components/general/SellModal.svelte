@@ -26,7 +26,7 @@
   function updateFromShares(e: Event) {
       const val = parseFloat((e.target as HTMLInputElement).value);
       if (!isNaN(val)) {
-          receiveTokens = (val * price).toFixed(2);
+          receiveTokens = (val * price).toFixed(0);
       } else {
           receiveTokens = "";
       }
@@ -52,7 +52,7 @@
       if (!isNaN(val)) {
           // Show decimals to trigger error
           const rawShares = val / price;
-          sellShares = rawShares.toFixed(2);
+          sellShares = rawShares.toFixed(2); // Keep decimals here for error trigger if user enters tokens
       } else {
           sellShares = "";
       }
@@ -95,7 +95,7 @@
       // Logic: shares * price
       const tokensEarned = (exactShares * price);
 
-      successMsg = `Has vendido ${exactShares.toLocaleString()} acciones a ${tokensEarned.toLocaleString(undefined, {minimumFractionDigits: 2})} tokens`;
+      successMsg = `Has vendido ${exactShares.toLocaleString()} acciones a ${tokensEarned.toLocaleString()} tokens`;
       setTimeout(() => {
           onClose();
           dispatch("success");
@@ -127,12 +127,12 @@
       {:else}
         <div class="info-row">
             <span class="label">Current Price</span>
-            <span class="value">{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Tokens/Share</span>
+            <span class="value">{price.toLocaleString()} Tokens/Share</span>
         </div>
 
         <div class="info-row">
             <span class="label">Your Shares</span>
-            <span class="value">{userShares.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4})}</span>
+            <span class="value">{userShares.toLocaleString()}</span>
         </div>
 
         <div class="input-grid">

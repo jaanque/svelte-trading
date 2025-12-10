@@ -351,7 +351,7 @@
       </div>
     </div>
 
-  {:else}
+  {:else if !$userSession && !urlUsername}
     <div class="cta-container">
       <div class="cta-card">
          <h2>Join to see your profile</h2>
@@ -362,6 +362,11 @@
          </div>
       </div>
     </div>
+  {:else}
+     <!-- Logged in but profile data loading or not found yet (and not in loading state) - likely waiting for profile store -->
+     <div class="center-content">
+        <Loader2 class="animate-spin" size={32} color="var(--primary-color)" />
+     </div>
   {/if}
 
   {#if showInvestModal}

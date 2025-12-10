@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Search, Clock, TrendingUp, TrendingDown, Activity, DollarSign, BarChart2, ArrowRight } from "lucide-svelte";
+  import { Search, Clock, TrendingUp, TrendingDown, Activity, DollarSign, BarChart2, ArrowRight, Coins } from "lucide-svelte";
   import { supabase } from "../../lib/supabase";
   import { onMount } from "svelte";
   import Chart from "chart.js/auto";
@@ -273,7 +273,14 @@
                                       </div>
                                   </div>
                                   <div class="td price-col">
-                                      <span class="price-val">{formatPrice(user.current_price || 0)}</span>
+                                      <div class="price-wrapper">
+                                          <Coins size={14} class="currency-icon" />
+                                          <span class="price-val">{formatPrice(user.current_price || 0)}</span>
+                                      </div>
+                                      <div class="price-wrapper">
+                                          <Coins size={14} class="currency-icon" />
+                                          <span class="price-val">{formatPrice(user.current_price || 0)}</span>
+                                      </div>
                                   </div>
                                   <div class="td change-col">
                                       <span class="change-badge positive">+{user.change_pct.toFixed(2)}%</span>
@@ -562,10 +569,22 @@
 
   .td.price-col {
       flex: 1;
-      text-align: right;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+  }
+
+  .price-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 4px;
       font-weight: 700;
       color: var(--text-main);
       font-size: 15px;
+  }
+
+  :global(.currency-icon) {
+      color: #F59E0B; /* Amber/Gold color for coin */
   }
 
   .td.change-col {

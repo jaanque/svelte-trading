@@ -10,7 +10,7 @@
   } from "../../lib/chat";
   import { supabase } from "../../lib/supabase";
   import { formatMessage } from "../../lib/utils";
-  import { Loader2, Send, Search, ArrowLeft } from "lucide-svelte";
+  import { Loader2, Send, Search, ArrowLeft, MessageSquare } from "lucide-svelte";
 
   let loadingConversations = true;
   let loadingMessages = false;
@@ -141,10 +141,46 @@
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
+  function formatDay(isoString: string) {
+      const date = new Date(isoString);
+      const today = new Date();
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      if (date.toDateString() === today.toDateString()) {
+          return "Today";
+      } else if (date.toDateString() === yesterday.toDateString()) {
+          return "Yesterday";
+      } else {
+          return date.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+      }
+  }
+
   function handleKeydown(e: KeyboardEvent) {
       if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
           handleSendMessage();
+      }
+  }
+
+  // Group messages by date for display
+  let groupedMessages: { dateLabel: string, msgs: ChatMessage[] }[] = [];
+  $: {
+      if (messages.length > 0) {
+          groupedMessages = [];
+          let currentGroup: { dateLabel: string, msgs: ChatMessage[] } | null = null;
+
+          messages.forEach(msg => {
+              const dateLabel = formatDay(msg.created_at);
+              if (!currentGroup || currentGroup.dateLabel !== dateLabel) {
+                  if (currentGroup) groupedMessages.push(currentGroup);
+                  currentGroup = { dateLabel, msgs: [] };
+              }
+              currentGroup.msgs.push(msg);
+          });
+          if (currentGroup) groupedMessages.push(currentGroup);
+      } else {
+          groupedMessages = [];
       }
   }
 </script>
@@ -182,15 +218,17 @@
                         role="button"
                         tabindex="0"
                     >
-                        <img
-                            src={conv.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${conv.username}`}
-                            alt={conv.username}
-                            class="avatar"
-                        />
+                        <div class="avatar-wrapper">
+                             <img
+                                src={conv.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${conv.username}`}
+                                alt={conv.username}
+                                class="avatar"
+                            />
+                        </div>
                         <div class="info">
                             <div class="top">
                                 <span class="name">{conv.full_name}</span>
-                                <span class="time">{new Date(conv.last_message_at).toLocaleDateString()}</span>
+                                <span class="time">{formatDay(conv.last_message_at) === 'Today' ? formatTime(conv.last_message_at) : new Date(conv.last_message_at).toLocaleDateString()}</span>
                             </div>
                             <div class="bottom">
                                 <span class="preview">{conv.last_message || "Start a conversation"}</span>
@@ -214,6 +252,12 @@
                 }}>
                     <ArrowLeft size={24} />
                 </button>
+                <div class="header-avatar-container">
+                    <img
+                        src={activeConversation.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${activeConversation.username}`}
+                        alt={activeConversation.username}
+                    />
+                </div>
                 <div class="header-info">
                     <span class="header-name">{activeConversation.full_name}</span>
                     <span class="header-username">${activeConversation.username.toUpperCase()}</span>
@@ -226,33 +270,46 @@
                         <Loader2 class="animate-spin" />
                     </div>
                 {:else}
-                    {#each messages as msg}
-                        <div class="message-row {msg.sender_id === $userProfile?.id ? 'sent' : 'received'}">
-                            <div class="message-bubble">
-                                {@html formatMessage(msg.content)}
+                    <div class="messages-container">
+                        {#each groupedMessages as group}
+                            <div class="date-separator">
+                                <span>{group.dateLabel}</span>
                             </div>
-                            <span class="message-time">{formatTime(msg.created_at)}</span>
-                        </div>
-                    {/each}
+                            {#each group.msgs as msg, i}
+                                <div class="message-row {msg.sender_id === $userProfile?.id ? 'sent' : 'received'}">
+                                    <div class="message-bubble">
+                                        {@html formatMessage(msg.content)}
+                                    </div>
+                                    <span class="message-time">{formatTime(msg.created_at)}</span>
+                                </div>
+                            {/each}
+                        {/each}
+                    </div>
                 {/if}
             </div>
 
-            <div class="input-area">
-                <input
-                    type="text"
-                    placeholder="Type a message..."
-                    bind:value={newMessage}
-                    on:keydown={handleKeydown}
-                />
-                <button class="send-btn" on:click={handleSendMessage} disabled={!newMessage.trim()}>
-                    <Send size={20} />
-                </button>
+            <div class="input-area-wrapper">
+                <div class="input-area">
+                    <input
+                        type="text"
+                        placeholder="Start a new message"
+                        bind:value={newMessage}
+                        on:keydown={handleKeydown}
+                    />
+                    <button class="send-btn" on:click={handleSendMessage} disabled={!newMessage.trim()}>
+                        <Send size={20} />
+                    </button>
+                </div>
             </div>
 
         {:else}
             <div class="no-chat-selected">
-                <h2>Select a conversation</h2>
-                <p>Choose from your existing conversations or start a new one.</p>
+                <div class="empty-icon-circle">
+                    <MessageSquare size={48} />
+                </div>
+                <h2>Select a message</h2>
+                <p>Choose from your existing conversations, start a new one, or just keep swimming.</p>
+                <a href="/markets" class="btn-primary-small">Find People</a>
             </div>
         {/if}
     </div>
@@ -269,7 +326,7 @@
 
     /* Sidebar */
     .conversation-list {
-        width: 350px;
+        width: 380px; /* Slightly wider */
         border-right: 1px solid var(--border-color);
         display: flex;
         flex-direction: column;
@@ -284,6 +341,7 @@
     .search-header h1 {
         margin: 0 0 16px 0;
         font-size: 20px;
+        font-weight: 800;
     }
 
     .search-bar {
@@ -291,18 +349,20 @@
         align-items: center;
         background-color: var(--bg-secondary);
         border-radius: 9999px;
-        padding: 8px 16px;
+        padding: 10px 16px; /* Taller touch target */
         border: 1px solid transparent;
+        transition: all 0.2s;
     }
 
     .search-bar:focus-within {
         background-color: var(--bg-main);
         border-color: var(--primary-color);
+        box-shadow: 0 0 0 1px var(--primary-color);
     }
 
     .search-icon {
         color: var(--text-secondary);
-        margin-right: 8px;
+        margin-right: 12px;
     }
 
     .search-bar input {
@@ -321,10 +381,10 @@
 
     .conversation-item {
         display: flex;
-        padding: 12px 16px;
+        padding: 16px;
         cursor: pointer;
         transition: background-color 0.2s;
-        border-bottom: 1px solid var(--border-color);
+        border-right: 2px solid transparent; /* Prepare for active border */
     }
 
     .conversation-item:hover {
@@ -333,7 +393,11 @@
 
     .conversation-item.active {
         background-color: var(--bg-secondary);
-        border-right: 2px solid var(--primary-color);
+        border-right-color: var(--primary-color);
+    }
+
+    .avatar-wrapper {
+        position: relative;
     }
 
     .avatar {
@@ -342,6 +406,7 @@
         border-radius: 50%;
         margin-right: 12px;
         background-color: var(--bg-tertiary);
+        object-fit: cover;
     }
 
     .info {
@@ -355,6 +420,7 @@
     .top {
         display: flex;
         justify-content: space-between;
+        align-items: baseline;
         margin-bottom: 4px;
     }
 
@@ -381,23 +447,28 @@
         text-overflow: ellipsis;
     }
 
+    .conversation-item.active .preview {
+        color: var(--text-main); /* Darker text for active item preview */
+    }
+
     /* Chat Area */
     .chat-area {
         flex: 1;
         display: flex;
         flex-direction: column;
         background-color: var(--bg-main);
+        position: relative;
     }
 
     .chat-header {
-        padding: 10px 16px;
+        padding: 0 16px;
         border-bottom: 1px solid var(--border-color);
         display: flex;
         align-items: center;
         background-color: rgba(255, 255, 255, 0.85);
         backdrop-filter: blur(12px);
         z-index: 10;
-        height: 53px;
+        height: 60px; /* Taller header */
         box-sizing: border-box;
     }
 
@@ -407,18 +478,33 @@
         border: none;
         cursor: pointer;
         padding: 8px;
-        margin-right: 8px;
+        margin-right: 4px;
         color: var(--text-main);
+    }
+
+    .header-avatar-container {
+        width: 36px;
+        height: 36px;
+        margin-right: 12px;
+    }
+
+    .header-avatar-container img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
     }
 
     .header-info {
         display: flex;
         flex-direction: column;
+        justify-content: center;
     }
 
     .header-name {
         font-weight: 700;
         font-size: 16px;
+        line-height: 1.2;
     }
 
     .header-username {
@@ -429,16 +515,38 @@
     .messages-list {
         flex: 1;
         overflow-y: auto;
-        padding: 16px;
+        padding: 20px 16px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .messages-container {
         display: flex;
         flex-direction: column;
         gap: 8px;
+        padding-bottom: 10px;
+    }
+
+    .date-separator {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+        position: relative;
+    }
+
+    .date-separator span {
+        background-color: var(--bg-secondary);
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
     }
 
     .message-row {
         display: flex;
         flex-direction: column;
-        max-width: 70%;
+        max-width: 75%;
     }
 
     .message-row.sent {
@@ -452,11 +560,12 @@
     }
 
     .message-bubble {
-        padding: 10px 16px;
-        border-radius: 16px;
+        padding: 12px 16px;
+        border-radius: 20px;
         font-size: 15px;
-        line-height: 1.4;
+        line-height: 1.5;
         word-break: break-word;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
 
     /* Links in messages */
@@ -495,30 +604,46 @@
         margin-top: 4px;
         margin-left: 4px;
         margin-right: 4px;
+        opacity: 0; /* Hide by default, show on hover? Or just keep visible but subtle */
+        transition: opacity 0.2s;
+    }
+
+    .message-row:hover .message-time {
+        opacity: 1;
+    }
+
+    /* Keep time visible for last message of group if needed, or just let user hover */
+
+    .input-area-wrapper {
+        padding: 16px;
+        background-color: var(--bg-main);
+        border-top: 1px solid var(--border-color);
     }
 
     .input-area {
-        padding: 16px;
-        border-top: 1px solid var(--border-color);
         display: flex;
         align-items: center;
         gap: 12px;
+        background-color: var(--bg-secondary);
+        padding: 4px;
+        border-radius: 24px; /* More rounded */
+        border: 1px solid transparent;
+        transition: background-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-area:focus-within {
+        background-color: var(--bg-main);
+        box-shadow: 0 0 0 2px var(--primary-color);
     }
 
     .input-area input {
         flex: 1;
         padding: 12px 16px;
-        border-radius: 20px;
-        border: 1px solid var(--border-color);
-        background-color: var(--bg-secondary);
+        border: none;
+        background: transparent;
         font-size: 15px;
         outline: none;
         color: var(--text-main);
-    }
-
-    .input-area input:focus {
-        border-color: var(--primary-color);
-        background-color: var(--bg-main);
     }
 
     .send-btn {
@@ -526,35 +651,83 @@
         border: none;
         cursor: pointer;
         color: var(--primary-color);
-        padding: 8px;
+        padding: 8px 12px;
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: opacity 0.2s;
     }
 
     .send-btn:disabled {
-        color: var(--text-secondary);
+        opacity: 0.5;
         cursor: default;
     }
 
+    .send-btn:hover:not(:disabled) {
+        opacity: 0.8;
+    }
+
+    /* Empty state */
     .no-chat-selected {
         flex: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        color: var(--text-main);
+        text-align: center;
+        padding: 20px;
+    }
+
+    .empty-icon-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: var(--text-main); /* Dark circle */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--bg-main);
+        margin-bottom: 24px;
+    }
+
+    .no-chat-selected h2 {
+        font-size: 28px;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .no-chat-selected p {
         color: var(--text-secondary);
+        max-width: 400px;
+        margin-bottom: 32px;
+        line-height: 1.5;
+    }
+
+    .btn-primary-small {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 10px 24px;
+        border-radius: 9999px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 15px;
+        transition: opacity 0.2s;
+    }
+
+    .btn-primary-small:hover {
+        opacity: 0.9;
     }
 
     .loading-container {
         display: flex;
         justify-content: center;
-        padding: 20px;
+        padding: 40px;
     }
 
     .empty-state {
         text-align: center;
-        padding: 20px;
+        padding: 40px;
         color: var(--text-secondary);
     }
 

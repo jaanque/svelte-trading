@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { userProfile, userSession } from "../../lib/authStore";
   import { supabase } from "../../lib/supabase";
-  import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft, MoreHorizontal, MessageSquare, LogOut } from "lucide-svelte";
+  import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft, MoreHorizontal, MessageSquare, LogOut, Share2, TrendingUp, Users } from "lucide-svelte";
   import InvestModal from "../../components/general/InvestModal.svelte";
   import SellModal from "../../components/general/SellModal.svelte";
   import PriceChart from "../../components/general/PriceChart.svelte";
@@ -90,11 +90,6 @@
 
     // Fetch shareholders count
     if (profileData) {
-        // We need to count unique investor_id where sum(amount_shares) > 0
-        // Since supabase .count() is simple, doing complex aggregation might be better done with .rpc or just client side if small.
-        // But for scalability, let's try a direct query approach if possible or assume manageable size.
-        // Actually, 'investments' table tracks all trades. We need to aggregate.
-
         const { data: allInvestments, error: countError } = await supabase
              .from("investments")
              .select("investor_id, amount_shares")
@@ -109,7 +104,7 @@
 
             let count = 0;
             holdingsMap.forEach((shares) => {
-                if (shares > 0.0001) count++; // Use a small epsilon for float precision
+                if (shares > 0.0001) count++;
             });
             shareholdersCount = count;
         }
@@ -130,6 +125,20 @@
   function toggleMoreMenu(e: Event) {
       e.stopPropagation();
       showMoreMenu = !showMoreMenu;
+  }
+
+  function handleShare() {
+      if (navigator.share) {
+          navigator.share({
+              title: profileData.full_name,
+              text: `Check out ${profileData.full_name} ($${profileData.username.toUpperCase()}) on Pulse`,
+              url: window.location.href
+          }).catch(console.error);
+      } else {
+          // Fallback
+          navigator.clipboard.writeText(window.location.href);
+          alert("Link copied to clipboard!");
+      }
   }
 
   onMount(() => {
@@ -196,6 +205,7 @@
 
            <div class="actions">
             {#if isOwnProfile}
+              <button class="btn-icon" on:click={handleShare} aria-label="Share"><Share2 size={18} /></button>
               <a href="/settings" class="btn-edit">Edit Profile</a>
               <div class="more-menu-container">
                   <button class="btn-icon" on:click={toggleMoreMenu}><MoreHorizontal size={20} /></button>
@@ -212,7 +222,12 @@
               <div class="more-menu-container">
                   <button class="btn-icon" on:click={toggleMoreMenu}><MoreHorizontal size={20} /></button>
                   {#if showMoreMenu}
-                       <!-- Generic actions for other profiles if needed -->
+                       <div class="dropdown-menu">
+                          <button class="menu-item" on:click={handleShare}>
+                              <Share2 size={16} />
+                              <span>Share</span>
+                          </button>
+                      </div>
                   {/if}
               </div>
               <a href={`/messages?u=${profileData.username}`} class="btn-icon" aria-label="Message"><MessageSquare size={20} /></a>
@@ -262,7 +277,8 @@
              {/if}
           </div>
 
-          <div class="stats-row">
+          <!-- Social Stats -->
+          <div class="stats-row social">
              <div class="stat-item">
                <span class="stat-value">0</span>
                <span class="stat-label">Inversores</span>
@@ -271,21 +287,24 @@
                <span class="stat-value">{formatNumber(shareholdersCount)}</span>
                <span class="stat-label">Accionistas</span>
              </div>
-             <div class="stat-divider"></div>
-             <a href="/portfolio" class="stat-item link">
-                <span class="stat-value highlight">{formatPrice(profileData.price || 50)}</span>
-                <span class="stat-label">Price</span>
-             </a>
-             <div class="stat-item">
-               <span class="stat-value highlight">{formatNumber(profileData.shares || 1000000)}</span>
-               <span class="stat-label">Shares</span>
-             </div>
-             {#if profileData.available_shares !== undefined}
-                <div class="stat-item">
-                  <span class="stat-value">{formatNumber(Math.floor(profileData.available_shares))}</span>
-                  <span class="stat-label">Available</span>
-                </div>
-             {/if}
+          </div>
+
+          <!-- Financial Stats Card -->
+          <div class="financial-card">
+              <div class="fin-stat">
+                  <div class="label"><TrendingUp size={14} /> Price</div>
+                  <div class="value highlight">{formatPrice(profileData.price || 50)}</div>
+              </div>
+              <div class="divider"></div>
+              <div class="fin-stat">
+                  <div class="label"><Users size={14} /> Outstanding</div>
+                  <div class="value">{formatNumber(profileData.shares || 1000000)}</div>
+              </div>
+              <div class="divider"></div>
+              <div class="fin-stat">
+                  <div class="label">Available</div>
+                  <div class="value">{formatNumber(Math.floor(profileData.available_shares || 0))}</div>
+              </div>
           </div>
         </div>
       </div>
@@ -309,7 +328,11 @@
       <div class="feed-content">
          {#if activeTab === "Posts"}
              <div class="empty-feed">
-                <p>${profileData.username.toUpperCase()} hasn't posted anything yet.</p>
+                <div class="empty-icon-circle">
+                    <MessageSquare size={32} />
+                </div>
+                <h3>No posts yet</h3>
+                <p>${profileData.username.toUpperCase()} hasn't posted anything yet. When they do, it will show up here.</p>
              </div>
          {:else if activeTab === "Chart"}
              <div class="chart-tab-content">
@@ -689,13 +712,47 @@
     color: var(--text-main);
   }
 
-  .stat-value.highlight {
-      color: var(--text-main); /* Or primary color if desired */
+  /* Financial Card */
+  .financial-card {
+      display: flex;
+      justify-content: space-around;
+      background-color: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-top: 16px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-color);
   }
 
-  .stat-divider {
+  .fin-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+  }
+
+  .fin-stat .label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      text-transform: uppercase;
+      font-weight: 600;
+  }
+
+  .fin-stat .value {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-main);
+  }
+
+  .fin-stat .value.highlight {
+      color: var(--text-main);
+  }
+
+  .divider {
       width: 1px;
-      height: 16px;
       background-color: var(--border-color);
   }
 
@@ -753,11 +810,38 @@
   }
 
   .empty-feed {
-    padding: 40px;
+    padding: 60px 20px;
     text-align: center;
     color: var(--text-secondary);
-    font-size: 15px;
-    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .empty-icon-circle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+  }
+
+  .empty-feed h3 {
+      margin: 0 0 8px 0;
+      color: var(--text-main);
+      font-size: 20px;
+      font-weight: 800;
+  }
+
+  .empty-feed p {
+      max-width: 300px;
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.4;
   }
 
   /* CTA */

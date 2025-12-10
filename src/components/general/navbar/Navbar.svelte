@@ -145,7 +145,7 @@
                     {/if}
                  </div>
               {:else}
-                <svelte:component this={item.icon} size={item.size} strokeWidth={item.strokeWidth} />
+                <svelte:component this={item.icon as any} size={item.size} strokeWidth={item.strokeWidth} />
               {/if}
             </div>
             <span class="text" data-text={item.label}>{item.label}</span>

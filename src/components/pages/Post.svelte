@@ -66,7 +66,6 @@
                   on:focus={() => isFocused = true}
                   on:blur={() => isFocused = false}
                   rows="3"
-                  autofocus
               ></textarea>
           </div>
 

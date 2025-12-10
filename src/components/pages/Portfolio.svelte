@@ -352,8 +352,8 @@
                          hour: '2-digit', minute: '2-digit'
                      });
                  },
-                 label: function(context) {
-                     return 'Value: ' + context.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                 label: function(context: any) {
+                     return 'Value: ' + (context.parsed.y || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
                  }
              }
           }
@@ -372,7 +372,6 @@
             },
             grid: {
               display: false,
-              drawBorder: false,
             },
             border: { display: false }
           },
@@ -484,12 +483,12 @@
           {#if showCustomDate}
              <div class="custom-date-picker">
                  <div class="date-input">
-                     <label>Start</label>
-                     <input type="date" bind:value={customStartDate} />
+                     <label for="startDate">Start</label>
+                     <input id="startDate" type="date" bind:value={customStartDate} />
                  </div>
                  <div class="date-input">
-                     <label>End</label>
-                     <input type="date" bind:value={customEndDate} />
+                     <label for="endDate">End</label>
+                     <input id="endDate" type="date" bind:value={customEndDate} />
                  </div>
                  <button class="apply-btn" on:click={applyCustomDate}>Apply</button>
              </div>
@@ -559,7 +558,7 @@
         <div class="transactions-list">
             {#each transactions as tx}
                 <div class="tx-card">
-                    <div class="tx-user-info" role="button" tabindex="0" on:click={() => handleUserClick(tx.target_user)}>
+                    <button class="tx-user-info" on:click={() => handleUserClick(tx.target_user)}>
                         <img
                             src={tx.target_user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${tx.target_user.username}`}
                             alt={tx.target_user.username}
@@ -569,7 +568,7 @@
                             <span class="tx-username">${tx.target_user.username.toUpperCase()}</span>
                             <span class="tx-date">{new Date(tx.created_at).toLocaleDateString()}</span>
                         </div>
-                    </div>
+                    </button>
                     <div class="tx-financials">
                         <div class="tx-type {tx.amount_shares > 0 ? 'buy' : 'sell'}">
                             {tx.amount_shares > 0 ? 'BUY' : 'SELL'}

@@ -71,8 +71,8 @@
   }
 </script>
 
-<div class="modal-overlay" on:click|self={onClose}>
-  <div class="modal-content">
+<div class="modal-overlay" on:click|self={onClose} role="button" tabindex="0" on:keydown={(e) => e.key === 'Escape' && onClose()}>
+  <div class="modal-content" role="dialog" aria-modal="true">
     <div class="modal-header">
       <h2>Sell shares of ${targetUser.username?.toUpperCase()}</h2>
       <button class="close-btn" on:click={onClose}>

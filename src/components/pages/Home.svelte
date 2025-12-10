@@ -7,7 +7,7 @@
     { label: "Total Balance", value: "$12,450.00", change: "+2.5%", isPositive: true, icon: DollarSign },
     { label: "Active Markets", value: "24", change: "+4", isPositive: true, icon: TrendingUp },
     { label: "Open Positions", value: "7", change: "-1", isPositive: false, icon: Activity },
-    { label: "Followers", value: "1.2k", change: "+12%", isPositive: true, icon: Users },
+    { label: "Accionistas", value: "1.2k", change: "+12%", isPositive: true, icon: Users },
   ];
 
   const recentActivity = [

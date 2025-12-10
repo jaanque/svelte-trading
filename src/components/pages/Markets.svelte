@@ -454,7 +454,11 @@
   .explore-container {
     display: flex;
     width: 100%;
-    gap: 24px;
+    gap: 40px;
+    padding: 24px 40px;
+    box-sizing: border-box;
+    max-width: 1600px;
+    margin: 0 auto;
   }
 
   .main-column {
@@ -463,9 +467,10 @@
   }
 
   .right-sidebar {
-      width: 300px;
+      width: 350px;
       flex-shrink: 0;
       display: none;
+      padding-top: 0px;
   }
 
   @media (min-width: 1024px) {
@@ -474,6 +479,19 @@
       }
       .mobile-market-highlights {
           display: none;
+      }
+  }
+
+  @media (max-width: 1024px) {
+      .explore-container {
+          padding: 24px;
+          gap: 24px;
+      }
+  }
+
+  @media (max-width: 640px) {
+      .explore-container {
+          padding: 16px;
       }
   }
 
@@ -602,13 +620,9 @@
   }
 
   .search-header {
-    margin-bottom: 24px;
-    position: sticky;
-    top: 0;
-    background-color: var(--bg-main, #ffffff);
+    margin-bottom: 32px;
+    position: relative;
     z-index: 10;
-    padding-top: 10px;
-    padding-bottom: 10px;
   }
 
   .search-bar {

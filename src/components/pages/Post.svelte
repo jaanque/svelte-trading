@@ -1,16 +1,22 @@
 <script lang="ts">
-  import { Image, Smile, Calendar, BarChart2, MapPin, X } from "lucide-svelte";
+  import { Image, Smile, Calendar, BarChart2, MapPin, X, Globe, UserPlus } from "lucide-svelte";
   import { userProfile } from "../../lib/authStore";
 
   export let onClose: () => void = () => {};
 
   let content = "";
   let isFocused = false;
+  let showVisibilityOptions = false;
+  let visibility = "Everyone"; // Everyone, Followers
 
   $: isValid = content.trim().length > 0;
+  $: charCount = content.length;
+  $: progress = Math.min((charCount / 280) * 100, 100);
+  $: isNearLimit = charCount > 260;
+  $: isOverLimit = charCount > 280;
 
   function handlePost() {
-    if (!isValid) return;
+    if (!isValid || isOverLimit) return;
     console.log("Posting:", content);
     // Logic to submit post would go here
     content = "";
@@ -28,6 +34,15 @@
     target.style.height = 'auto';
     target.style.height = target.scrollHeight + 'px';
   }
+
+  function toggleVisibility() {
+      showVisibilityOptions = !showVisibilityOptions;
+  }
+
+  function setVisibility(type: string) {
+      visibility = type;
+      showVisibilityOptions = false;
+  }
 </script>
 
 <!-- Backdrop -->
@@ -39,9 +54,7 @@
       <button class="close-btn" on:click={onClose} aria-label="Close">
         <X size={20} />
       </button>
-      <div class="header-actions">
-        <button class="btn-text">Drafts</button>
-      </div>
+      <!-- Removed Drafts button as implied it's not functional yet, cleaner UI -->
     </div>
 
     <div class="editor-layout">
@@ -58,6 +71,37 @@
       </div>
 
       <div class="content-column">
+          <div class="visibility-wrapper">
+               <button class="visibility-btn" on:click={toggleVisibility}>
+                   {#if visibility === 'Everyone'}
+                       <Globe size={14} />
+                       <span>Everyone</span>
+                   {:else}
+                       <UserPlus size={14} />
+                       <span>Followers</span>
+                   {/if}
+                   <!-- Dropdown arrow could go here -->
+               </button>
+               {#if showVisibilityOptions}
+                   <div class="visibility-dropdown">
+                       <button class="dropdown-item {visibility === 'Everyone' ? 'selected' : ''}" on:click={() => setVisibility('Everyone')}>
+                           <div class="icon-circle"><Globe size={18} /></div>
+                           <div class="text">
+                               <span class="label">Everyone</span>
+                           </div>
+                       </button>
+                       <button class="dropdown-item {visibility === 'Followers' ? 'selected' : ''}" on:click={() => setVisibility('Followers')}>
+                           <div class="icon-circle"><UserPlus size={18} /></div>
+                           <div class="text">
+                               <span class="label">Followers</span>
+                           </div>
+                       </button>
+                   </div>
+                   <!-- Backdrop for dropdown to close on click outside -->
+                   <div class="dropdown-backdrop" on:click={() => showVisibilityOptions = false}></div>
+               {/if}
+          </div>
+
           <div class="input-area">
               <textarea
                   placeholder="What is happening?!"
@@ -69,29 +113,46 @@
               ></textarea>
           </div>
 
-          <div class="visibility-control">
-              <span class="globe-icon">🌎</span>
-              <span class="visibility-text">Everyone can reply</span>
+          <!-- Divider line if needed -->
+          <div class="divider"></div>
+
+          <div class="reply-permission">
+              <Globe size={14} />
+              <span>{visibility === 'Everyone' ? 'Everyone can reply' : 'Only followers can reply'}</span>
           </div>
 
           <div class="toolbar">
               <div class="media-actions">
-                  <button class="icon-btn" aria-label="Media"><Image size={20} /></button>
-                  <button class="icon-btn" aria-label="GIF"><div class="gif-badge">GIF</div></button>
-                  <button class="icon-btn" aria-label="Poll"><BarChart2 size={20} transform="rotate(90)" /></button>
-                  <button class="icon-btn" aria-label="Emoji"><Smile size={20} /></button>
-                  <button class="icon-btn" aria-label="Schedule"><Calendar size={20} /></button>
-                  <button class="icon-btn disabled" aria-label="Location"><MapPin size={20} /></button>
+                  <button class="icon-btn" aria-label="Media" title="Media"><Image size={20} /></button>
+                  <button class="icon-btn" aria-label="GIF" title="GIF"><div class="gif-badge">GIF</div></button>
+                  <button class="icon-btn" aria-label="Poll" title="Poll"><BarChart2 size={20} transform="rotate(90)" /></button>
+                  <button class="icon-btn" aria-label="Emoji" title="Emoji"><Smile size={20} /></button>
+                  <button class="icon-btn" aria-label="Schedule" title="Schedule"><Calendar size={20} /></button>
+                  <button class="icon-btn disabled" aria-label="Location" title="Location"><MapPin size={20} /></button>
               </div>
 
               <div class="submit-action">
                   {#if content.length > 0}
-                      <div class="character-count-ring">
-                          <!-- Simplified visual for progress -->
-                          <div class="ring-circle"></div>
+                      <div class="progress-indicator">
+                          {#if isNearLimit}
+                              <span class="count-text {isOverLimit ? 'danger' : 'warning'}">{280 - charCount}</span>
+                          {:else}
+                              <svg width="24" height="24" viewBox="0 0 24 24" class="circular-chart">
+                                <path class="circle-bg" d="M12 2.5 A9.5 9.5 0 1 1 12 21.5 A9.5 9.5 0 1 1 12 2.5" />
+                                <path
+                                    class="circle"
+                                    stroke-dasharray="{progress}, 100"
+                                    d="M12 2.5 A9.5 9.5 0 1 1 12 21.5 A9.5 9.5 0 1 1 12 2.5"
+                                />
+                              </svg>
+                          {/if}
                       </div>
+                      <div class="separator"></div>
                   {/if}
-                  <button class="btn-primary" disabled={!isValid} on:click={handlePost}>Post</button>
+
+                  <!-- Add Circle Icon if content > 0? Maybe not needed for this simplified request -->
+
+                  <button class="btn-primary" disabled={!isValid || isOverLimit} on:click={handlePost}>Post</button>
               </div>
           </div>
       </div>
@@ -106,7 +167,8 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgba(91, 112, 131, 0.4);
+    backdrop-filter: blur(4px); /* Nice blur effect */
     z-index: 9999;
     display: flex;
     justify-content: center;
@@ -129,7 +191,7 @@
 
   .modal-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     height: 53px;
     position: sticky;
@@ -149,24 +211,11 @@
     color: var(--text-main);
     cursor: pointer;
     transition: background-color 0.2s;
-    margin-left: -8px; /* Align slightly to left */
+    margin-left: -8px;
   }
 
   .close-btn:hover {
     background-color: var(--bg-hover);
-  }
-
-  .btn-text {
-      background: none;
-      color: var(--primary-color);
-      font-weight: 700;
-      font-size: 14px;
-      padding: 8px 16px;
-      border-radius: 9999px;
-  }
-
-  .btn-text:hover {
-      background-color: var(--bg-hover);
   }
 
   .editor-layout {
@@ -200,8 +249,89 @@
       flex-direction: column;
   }
 
-  .input-area {
+  .visibility-wrapper {
+      position: relative;
       margin-bottom: 12px;
+  }
+
+  .visibility-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--primary-color);
+      border: 1px solid var(--border-color);
+      background-color: transparent;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.2s;
+  }
+
+  .visibility-btn:hover {
+      background-color: var(--bg-hover);
+  }
+
+  .visibility-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background-color: var(--bg-main);
+      box-shadow: var(--shadow-md); /* Assuming shadow variable exists, else 0 2px 10px rgba(0,0,0,0.1) */
+      border-radius: 12px;
+      padding: 8px 0;
+      z-index: 20;
+      min-width: 200px;
+      border: 1px solid var(--border-color);
+  }
+
+  .dropdown-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 15;
+      cursor: default;
+  }
+
+  .dropdown-item {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      gap: 12px;
+  }
+
+  .dropdown-item:hover {
+      background-color: var(--bg-hover);
+  }
+
+  .dropdown-item .icon-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-main);
+  }
+
+  .dropdown-item.selected .icon-circle {
+      color: var(--primary-color);
+  }
+
+  .dropdown-item .label {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text-main);
+  }
+
+  .input-area {
+      margin-bottom: 8px;
   }
 
   textarea {
@@ -222,26 +352,23 @@
       color: var(--text-secondary);
   }
 
-  .visibility-control {
+  .divider {
+      height: 1px;
+      background-color: var(--border-color);
+      margin-bottom: 12px;
+      opacity: 0.5;
+  }
+
+  .reply-permission {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border-color);
-      margin-bottom: 12px;
       color: var(--primary-color);
       font-weight: 700;
-      font-size: 14px;
+      font-size: 13px;
+      margin-bottom: 12px;
+      padding: 0 4px;
       cursor: pointer;
-  }
-
-  .visibility-control:hover {
-      background-color: var(--bg-hover);
-      border-radius: 12px;
-      padding-left: 8px;
-      margin-left: -8px;
-      width: fit-content;
-      border-bottom-color: transparent;
   }
 
   .toolbar {
@@ -253,7 +380,8 @@
 
   .media-actions {
       display: flex;
-      gap: 2px;
+      gap: 0px;
+      margin-left: -8px; /* Offset padding of first icon */
   }
 
   .icon-btn {
@@ -300,14 +428,15 @@
     background-color: var(--primary-color);
     color: white;
     border-radius: 9999px;
-    padding: 8px 16px;
+    padding: 8px 20px;
     font-weight: 700;
     font-size: 15px;
     transition: opacity 0.2s, background-color 0.2s;
+    border: none;
   }
 
   .btn-primary:hover:not(:disabled) {
-    background-color: var(--primary-hover);
+    opacity: 0.9;
   }
 
   .btn-primary:disabled {
@@ -315,13 +444,48 @@
       cursor: default;
   }
 
-  .ring-circle {
-      width: 20px;
-      height: 20px;
-      border: 2px solid var(--primary-color);
-      border-radius: 50%;
-      border-top-color: transparent; /* Indicate progress roughly */
-      transform: rotate(45deg);
+  /* Progress Ring */
+  .progress-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+  }
+
+  .circular-chart {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      max-height: 100%;
+      transform: rotate(-90deg);
+  }
+
+  .circle-bg {
+      fill: none;
+      stroke: var(--border-color);
+      stroke-width: 2;
+  }
+
+  .circle {
+      fill: none;
+      stroke: var(--primary-color);
+      stroke-width: 2;
+      stroke-linecap: round;
+      transition: stroke-dasharray 0.3s ease;
+  }
+
+  .count-text {
+      font-size: 13px;
+      font-weight: 500;
+  }
+  .count-text.warning { color: #eab308; } /* Yellow */
+  .count-text.danger { color: #ef4444; } /* Red */
+
+  .separator {
+      width: 1px;
+      height: 24px;
+      background-color: var(--border-color);
   }
 
   @media (max-width: 640px) {

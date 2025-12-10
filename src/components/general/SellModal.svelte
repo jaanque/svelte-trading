@@ -36,14 +36,29 @@
   function updateFromTokens(e: Event) {
       const val = parseFloat((e.target as HTMLInputElement).value);
       if (!isNaN(val)) {
-          sellShares = (val / price).toFixed(4);
+          // Snap shares to 1 decimal place (0.1 steps)
+          const rawShares = val / price;
+          const snappedShares = Math.floor(rawShares * 10) / 10;
+          sellShares = snappedShares.toFixed(1);
       } else {
           sellShares = "";
       }
   }
 
   async function handleSell() {
-    if (!isValid) return;
+    const exactShares = Math.floor(sharesVal * 10) / 10;
+
+    if (exactShares <= 0) {
+        errorMsg = "Minimum sale is 0.1 shares.";
+        return;
+    }
+
+    // Check if trying to sell more than owned (redundant with isValid but safe)
+    if (exactShares > userShares) {
+        errorMsg = "Cannot sell more shares than you own.";
+        return;
+    }
+
     loading = true;
     errorMsg = "";
     successMsg = "";
@@ -51,12 +66,12 @@
     try {
       const { error } = await supabase.rpc("sell_shares", {
         p_target_user_id: targetUser.id,
-        p_amount_shares: sharesVal
+        p_amount_shares: exactShares
       });
 
       if (error) throw error;
 
-      successMsg = `Successfully sold ${sharesVal} shares for ${parseFloat(receiveTokens).toLocaleString(undefined, {minimumFractionDigits: 2})} tokens!`;
+      successMsg = `Successfully sold ${exactShares} shares of ${targetUser.username}!`;
       setTimeout(() => {
           onClose();
           dispatch("success");
@@ -105,9 +120,9 @@
                     bind:value={sellShares}
                     on:input={updateFromShares}
                     placeholder="0"
-                    min="0.0001"
+                    min="0.1"
                     max={userShares}
-                    step="any"
+                    step="0.1"
                 />
             </div>
             <div class="input-group">

@@ -4,7 +4,7 @@
 
 create or replace function public.sell_shares(
   p_target_user_id uuid,
-  p_amount_shares numeric
+  p_amount_shares bigint
 )
 returns void
 language plpgsql
@@ -15,7 +15,7 @@ declare
   target_profile public.profiles%ROWTYPE;
   tokens_to_receive numeric;
   new_price numeric;
-  total_shares_owned numeric;
+  total_shares_owned bigint;
 begin
   current_user_id := auth.uid();
 

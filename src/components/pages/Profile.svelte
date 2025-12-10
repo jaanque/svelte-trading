@@ -265,7 +265,7 @@
           <div class="stats-row">
              <div class="stat-item">
                <span class="stat-value">0</span>
-               <span class="stat-label">Siguiendo</span>
+               <span class="stat-label">Inversores</span>
              </div>
              <div class="stat-item">
                <span class="stat-value">{formatNumber(shareholdersCount)}</span>

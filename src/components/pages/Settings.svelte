@@ -156,47 +156,44 @@
       background-color: var(--bg-main);
       display: flex;
       justify-content: center;
-      padding-bottom: 80px; /* Safe area */
+      padding: 40px 24px 80px 24px; /* Generous padding: Top, Right, Bottom, Left */
+      box-sizing: border-box;
   }
 
   .settings-container {
       width: 100%;
-      max-width: 600px; /* Mobile-first column width */
+      max-width: 800px; /* Wider container to utilize page */
       display: flex;
       flex-direction: column;
+      gap: 24px;
   }
 
   .header {
-      padding: 16px;
-      position: sticky;
-      top: 0;
-      background-color: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(10px);
-      z-index: 10;
-      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 8px;
   }
 
   .header h1 {
       margin: 0;
-      font-size: 20px;
+      font-size: 28px;
       font-weight: 800;
+      color: var(--text-main);
   }
 
   /* User Summary */
   .user-summary {
-      margin: 20px 16px;
       background-color: var(--bg-secondary);
-      border-radius: 20px;
-      padding: 20px;
+      border-radius: 24px;
+      padding: 24px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
       border: 1px solid var(--border-color);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
   }
 
   .avatar-container {
-      width: 60px;
-      height: 60px;
+      width: 72px;
+      height: 72px;
       flex-shrink: 0;
   }
 
@@ -206,6 +203,7 @@
       border-radius: 50%;
       object-fit: cover;
       background-color: var(--bg-tertiary);
+      border: 2px solid white;
   }
 
   .user-info {
@@ -214,33 +212,35 @@
   }
 
   .fullname {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 800;
-      margin: 0 0 2px 0;
+      margin: 0 0 4px 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      color: var(--text-main);
   }
 
   .username {
-      font-size: 14px;
+      font-size: 15px;
       color: var(--text-secondary);
-      margin: 0 0 8px 0;
+      margin: 0 0 12px 0;
   }
 
   .contact-badges {
       display: flex;
       gap: 8px;
+      flex-wrap: wrap;
   }
 
   .badge {
       display: flex;
       align-items: center;
-      gap: 4px;
-      font-size: 11px;
+      gap: 6px;
+      font-size: 12px;
       background-color: rgba(16, 185, 129, 0.1); /* Green tint */
       color: var(--success-color);
-      padding: 2px 8px;
+      padding: 4px 10px;
       border-radius: 999px;
       font-weight: 600;
   }
@@ -251,46 +251,48 @@
   }
 
   .edit-btn {
-      padding: 8px 16px;
+      padding: 10px 20px;
       border-radius: 999px;
       border: 1px solid var(--border-color);
       background-color: var(--bg-main);
       font-weight: 700;
-      font-size: 13px;
+      font-size: 14px;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: all 0.2s;
+      color: var(--text-main);
   }
 
   .edit-btn:hover {
       background-color: var(--bg-hover);
+      border-color: var(--text-secondary);
   }
 
   /* Settings Sections */
   .settings-list {
       display: flex;
       flex-direction: column;
-      gap: 24px;
-      padding: 0 16px;
+      gap: 32px;
   }
 
   .section-title {
       font-size: 18px;
       font-weight: 800;
-      margin: 0 0 12px 4px;
+      margin: 0 0 16px 8px;
       color: var(--text-main);
   }
 
   .section-items {
       background-color: var(--bg-main);
-      border-radius: 16px;
+      border-radius: 24px;
       overflow: hidden;
       border: 1px solid var(--border-color);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.03);
   }
 
   .setting-item {
       display: flex;
       align-items: center;
-      padding: 16px;
+      padding: 20px;
       background-color: var(--bg-main);
       border-bottom: 1px solid var(--border-color);
       transition: background-color 0.2s;
@@ -309,9 +311,9 @@
   }
 
   .icon-box {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
       background-color: var(--bg-secondary);
       display: flex;
       align-items: center;
@@ -328,19 +330,19 @@
   }
 
   .item-label {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 600;
       color: var(--text-main);
   }
 
   .item-desc {
-      font-size: 13px;
+      font-size: 14px;
       color: var(--text-secondary);
-      margin-top: 2px;
+      margin-top: 4px;
   }
 
   .item-action {
-      margin-left: 8px;
+      margin-left: 12px;
       color: var(--text-secondary);
       display: flex;
       align-items: center;
@@ -348,8 +350,8 @@
 
   /* Toggle Switch */
   .toggle-switch {
-      width: 48px;
-      height: 28px;
+      width: 52px;
+      height: 32px;
       background-color: var(--bg-tertiary);
       border-radius: 999px;
       position: relative;
@@ -362,13 +364,13 @@
   }
 
   .toggle-knob {
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       background-color: white;
       border-radius: 50%;
       position: absolute;
-      top: 2px;
-      left: 2px;
+      top: 3px;
+      left: 3px;
       transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
       box-shadow: 0 1px 3px rgba(0,0,0,0.2);
   }
@@ -379,7 +381,7 @@
 
   /* Logout */
   .logout-section {
-      margin-top: 20px;
+      margin-top: 24px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -388,23 +390,24 @@
 
   .logout-btn {
       width: 100%;
-      padding: 16px;
+      padding: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      background-color: rgba(239, 68, 68, 0.1); /* Light red */
+      background-color: rgba(239, 68, 68, 0.05);
       color: var(--danger-color);
-      border: none;
-      border-radius: 16px;
+      border: 1px solid rgba(239, 68, 68, 0.1);
+      border-radius: 20px;
       font-weight: 700;
       font-size: 16px;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: all 0.2s;
   }
 
   .logout-btn:hover {
-      background-color: rgba(239, 68, 68, 0.2);
+      background-color: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.2);
   }
 
   .version-info {
@@ -414,14 +417,20 @@
   }
 
   @media (max-width: 640px) {
+      .settings-page {
+          padding: 24px 16px 80px 16px; /* Slightly less padding on small screens */
+      }
       .settings-container {
           max-width: 100%;
       }
       .user-summary {
-          border-radius: 0;
-          margin: 0;
-          border-left: none;
-          border-right: none;
+          flex-direction: column;
+          align-items: flex-start;
+          text-align: left;
+      }
+      .edit-btn {
+          width: 100%;
+          justify-content: center;
       }
   }
 </style>

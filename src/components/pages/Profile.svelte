@@ -237,11 +237,11 @@
           <div class="stats-row">
              <div class="stat-item">
                <span class="stat-value">0</span>
-               <span class="stat-label">Following</span>
+               <span class="stat-label">Siguiendo</span>
              </div>
              <div class="stat-item">
                <span class="stat-value">0</span>
-               <span class="stat-label">Followers</span>
+               <span class="stat-label">Accionistas</span>
              </div>
              <div class="stat-divider"></div>
              <a href="/portfolio" class="stat-item link">

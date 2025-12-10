@@ -86,10 +86,12 @@ begin
   where id = current_user_id;
 
   -- Logic for price increase:
-  -- Price increases by 5 for every 100 tokens invested (invest_amount / 20).
-  -- (invest_amount / 100) * 5 = invest_amount / 20
+  -- Price increases by 5% for every 50 shares bought (0.1% per share).
+  -- Formula: target_price * (1 + (shares_to_buy / 1000))
+  -- Change = (target_price * shares_to_buy) / 1000
+  -- We use rounding ((val + 500) / 1000) to handle small values better.
 
-  new_price := target_price + (invest_amount / 20);
+  new_price := target_price + ((target_price * shares_to_buy + 500) / 1000);
 
   -- Ensure price doesn't drop below 1 (though this is buy logic, so it goes up)
   if new_price < 1 then new_price := 1; end if;

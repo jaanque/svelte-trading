@@ -52,10 +52,10 @@ begin
   -- Update target user stats
   -- Return shares to available pool
   -- Decrease price
-  -- Sell: New = Old - (TokensValue / 20)
-  -- Price decreases by 5 for every 100 tokens worth sold
+  -- Sell: New = Old - (5% per 50 shares sold) -> 0.1% per share
+  -- Change = (target_price * p_amount_shares) / 1000
 
-  new_price := target_profile.price - (tokens_to_receive / 20);
+  new_price := target_profile.price - ((target_profile.price * p_amount_shares + 500) / 1000);
 
   if new_price < 1 then new_price := 1; end if;
 

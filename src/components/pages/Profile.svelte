@@ -33,8 +33,8 @@
   }
 
   function formatPrice(num: number | undefined | null) {
-      if (num === undefined || num === null) return "0.00";
-      return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (num === undefined || num === null) return "0";
+      return num.toLocaleString(undefined, { maximumFractionDigits: 0 });
   }
 
   async function loadProfile() {

@@ -13,8 +13,8 @@ as $$
 declare
   current_user_id uuid;
   target_profile public.profiles%ROWTYPE;
-  tokens_to_receive numeric;
-  new_price numeric;
+  tokens_to_receive bigint;
+  new_price bigint;
   total_shares_owned bigint;
 begin
   current_user_id := auth.uid();
@@ -42,7 +42,6 @@ begin
 
   -- Calculate tokens to receive based on current price
   -- Tokens = Shares * Price
-  -- Ensure numeric calculation
   tokens_to_receive := p_amount_shares * target_profile.price;
 
   -- Update seller's token balance
@@ -53,11 +52,13 @@ begin
   -- Update target user stats
   -- Return shares to available pool
   -- Decrease price
-  -- Price impact: Inverse of buy.
-  -- Buy: New = Old * (1 + 0.005 * InvestAmount)
-  -- Sell: New = Old / (1 + 0.005 * TokensValue)
+  -- Sell: New = Old - (TokensValue / 200)
+  -- We use the same sensitivity (0.5%) but linear approximation for integer math simplicity
+  -- or we reverse the buy logic: Buy added (Invest / 200). Sell subtracts (Tokens / 200).
 
-  new_price := target_profile.price / (1 + (0.005 * tokens_to_receive));
+  new_price := target_profile.price - (tokens_to_receive / 200);
+
+  if new_price < 1 then new_price := 1; end if;
 
   update public.profiles
   set

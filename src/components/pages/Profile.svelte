@@ -16,6 +16,7 @@
   let showSellModal = false;
   let showMoreMenu = false;
   let userShares = 0;
+  let shareholdersCount = 0;
 
   let activeTab = "Chart";
   const tabs = ["Chart", "Posts", "Replies", "Media", "Likes"];
@@ -84,6 +85,33 @@
 
         if (!invError && investments) {
             userShares = investments.reduce((acc, curr) => acc + parseFloat(curr.amount_shares), 0);
+        }
+    }
+
+    // Fetch shareholders count
+    if (profileData) {
+        // We need to count unique investor_id where sum(amount_shares) > 0
+        // Since supabase .count() is simple, doing complex aggregation might be better done with .rpc or just client side if small.
+        // But for scalability, let's try a direct query approach if possible or assume manageable size.
+        // Actually, 'investments' table tracks all trades. We need to aggregate.
+
+        const { data: allInvestments, error: countError } = await supabase
+             .from("investments")
+             .select("investor_id, amount_shares")
+             .eq("target_user_id", profileData.id);
+
+        if (!countError && allInvestments) {
+            const holdingsMap = new Map();
+            allInvestments.forEach((inv: any) => {
+                const current = holdingsMap.get(inv.investor_id) || 0;
+                holdingsMap.set(inv.investor_id, current + parseFloat(inv.amount_shares));
+            });
+
+            let count = 0;
+            holdingsMap.forEach((shares) => {
+                if (shares > 0.0001) count++; // Use a small epsilon for float precision
+            });
+            shareholdersCount = count;
         }
     }
 
@@ -240,7 +268,7 @@
                <span class="stat-label">Siguiendo</span>
              </div>
              <div class="stat-item">
-               <span class="stat-value">0</span>
+               <span class="stat-value">{formatNumber(shareholdersCount)}</span>
                <span class="stat-label">Accionistas</span>
              </div>
              <div class="stat-divider"></div>

@@ -2,8 +2,8 @@
 alter table public.profiles
 add column if not exists tokens numeric default 250,
 add column if not exists price numeric default 50,
-add column if not exists shares numeric default 1000000,
-add column if not exists available_shares numeric default 1000000;
+add column if not exists shares bigint default 1000000,
+add column if not exists available_shares bigint default 1000000;
 
 -- Create investments table
 create table if not exists public.investments (
@@ -11,7 +11,7 @@ create table if not exists public.investments (
   investor_id uuid references public.profiles(id) not null,
   target_user_id uuid references public.profiles(id) not null,
   amount_tokens numeric not null,
-  amount_shares numeric not null,
+  amount_shares bigint not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -39,8 +39,8 @@ declare
   current_user_id uuid;
   user_balance numeric;
   target_price numeric;
-  target_available_shares numeric;
-  shares_to_buy numeric;
+  target_available_shares bigint;
+  shares_to_buy bigint;
   new_price numeric;
 begin
   current_user_id := auth.uid();
@@ -66,8 +66,13 @@ begin
     target_price := 50;
   end if;
 
-  -- Calculate shares
-  shares_to_buy := invest_amount / target_price;
+  -- Calculate shares (truncate to integer)
+  shares_to_buy := floor(invest_amount / target_price);
+
+  -- Ensure at least 1 share
+  if shares_to_buy < 1 then
+     raise exception 'Investment amount too low for 1 share';
+  end if;
 
   -- Check if there are enough shares available
   -- We use coalesce to treat null as 0, though default is 1M

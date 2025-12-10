@@ -229,7 +229,7 @@
         });
 
         // Filter out holdings with 0 or negative shares (effectively sold out)
-        holdings = Array.from(aggregated.values()).filter((h: any) => h.totalShares > 0.0001);
+        holdings = Array.from(aggregated.values()).filter((h: any) => h.totalShares > 0);
 
         // Initial current value based on holdings
         currentValue = holdings.reduce((sum, h) => sum + (h.totalShares * h.user.price), 0);

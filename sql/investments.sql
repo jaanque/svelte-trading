@@ -86,13 +86,11 @@ begin
   where id = current_user_id;
 
   -- Logic for price increase:
-  -- Price increases by 0.5% for every trade (invest_amount / 200).
+  -- Price increases by 0.1% for every trade (invest_amount / 1000).
   -- We use integer division which naturally floors.
-  -- If invest_amount < 200, price doesn't change?
-  -- Or we ensure minimum +1 if invest_amount > 0?
-  -- Let's stick to simple integer math: new_price = target_price + (invest_amount / 200)
+  -- This provides minimal variation and keeps integers.
 
-  new_price := target_price + (invest_amount / 200);
+  new_price := target_price + (invest_amount / 1000);
 
   -- Ensure price doesn't drop below 1 (though this is buy logic, so it goes up)
   if new_price < 1 then new_price := 1; end if;

@@ -150,15 +150,13 @@
                 />
             </div>
             <div class="input-group">
-                <label for="tokens">Tokens (approx)</label>
+                <label for="tokens">Tokens (Earnings)</label>
                 <input
                     type="number"
                     id="tokens"
                     bind:value={receiveTokens}
-                    on:input={updateFromTokens}
+                    readonly
                     placeholder="0"
-                    min="0"
-                    step="any"
                 />
             </div>
         </div>

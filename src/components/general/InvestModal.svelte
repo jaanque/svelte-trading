@@ -143,18 +143,6 @@
 
         <div class="input-grid">
             <div class="input-group">
-                <label for="amount">Tokens</label>
-                <input
-                    type="number"
-                    id="amount"
-                    bind:value={investAmount}
-                    on:input={updateFromTokens}
-                    placeholder="0"
-                    min="1"
-                    max={userBalance}
-                />
-            </div>
-            <div class="input-group">
                 <label for="shares">Shares</label>
                 <input
                     type="number"
@@ -164,6 +152,16 @@
                     placeholder="0"
                     min="1"
                     step="1"
+                />
+            </div>
+            <div class="input-group">
+                <label for="amount">Tokens (Cost)</label>
+                <input
+                    type="number"
+                    id="amount"
+                    bind:value={investAmount}
+                    readonly
+                    placeholder="0"
                 />
             </div>
         </div>

@@ -233,472 +233,246 @@
   }
 </script>
 
-<div class="explore-container">
-  <div class="main-column">
-      <!-- Search Bar Header -->
-      <div class="search-header">
-        <div class="search-bar">
-          <div class="search-icon">
-            <Search size={20} color="var(--text-secondary)" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search for users..."
-            bind:value={searchQuery}
-            on:input={handleInput}
-          />
-        </div>
-      </div>
-
-      <!-- Mobile Market Highlights -->
-      <div class="mobile-market-highlights">
-          {#if dailyStats}
-              <div class="highlight-card">
-                  <div class="highlight-item">
-                      <span class="label">24h Vol</span>
-                      <span class="value">{dailyStats.volume.toLocaleString()}</span>
+<div class="markets-page">
+  <div class="markets-grid">
+      <!-- Main Column: Search & Discovery -->
+      <div class="main-column">
+          <div class="search-header">
+              <h1>Explore Markets</h1>
+              <div class="search-bar">
+                  <div class="search-icon">
+                      <Search size={20} color="var(--text-secondary)" />
                   </div>
-                  <div class="highlight-divider"></div>
-                  <div class="highlight-item">
-                      <span class="label">Trades</span>
-                      <span class="value">{dailyStats.count}</span>
-                  </div>
+                  <input
+                      type="text"
+                      placeholder="Search for traders, stocks..."
+                      bind:value={searchQuery}
+                      on:input={handleInput}
+                  />
               </div>
-          {/if}
-      </div>
-
-      <!-- Content -->
-      <div class="results-container">
-    {#if isLoading}
-      <div class="loading-state">
-        <div class="spinner"></div>
-      </div>
-    {:else if searchQuery.trim() === ""}
-
-      <!-- History View -->
-      {#if searchHistory.length > 0}
-        <div class="history-section">
-            <div class="section-header">
-            <h2>
-                <Clock size={20} class="icon-inline" />
-                Recent Searches
-            </h2>
-            </div>
-            <div class="history-grid">
-                {#each searchHistory as user (user.id)}
-                    <div role="button" tabindex="0" class="card-wrapper">
-                        <UserCard
-                            {user}
-                            onClick={() => handleProfileClick(user)}
-                        />
-                    </div>
-                {/each}
-            </div>
-        </div>
-      {/if}
-
-      <!-- Top Movers Section -->
-      <div class="movers-section">
-         <div class="tabs-header">
-             <button
-               class="tab-btn {activeTab === 'gainers' ? 'active' : ''}"
-               on:click={() => activeTab = 'gainers'}
-             >
-                 <TrendingUp size={18} />
-                 Top Gainers
-             </button>
-             <button
-               class="tab-btn {activeTab === 'losers' ? 'active' : ''}"
-               on:click={() => activeTab = 'losers'}
-             >
-                 <TrendingDown size={18} />
-                 Top Losers
-             </button>
-         </div>
-
-         {#if moversLoading}
-             <div class="loading-state-mini">
-                 <div class="spinner-small"></div>
-             </div>
-         {:else}
-             {#if activeTab === 'gainers'}
-                 {#if topGainers.length > 0}
-                    <div class="history-grid">
-                        {#each topGainers as user (user.id)}
-                            <div role="button" tabindex="0" class="card-wrapper">
-                                <UserCard
-                                    {user}
-                                    onClick={() => handleProfileClick(user)}
-                                >
-                                    <div class="price-info">
-                                        <span class="current-price">{formatPrice(user.current_price || 0)}</span>
-                                        <div class="trend-badge positive">
-                                            +{user.change_pct.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%
-                                        </div>
-                                    </div>
-                                </UserCard>
-                            </div>
-                        {/each}
-                    </div>
-                 {:else}
-                    <div class="empty-list-state">
-                        <p>No gainers in the last 24h</p>
-                    </div>
-                 {/if}
-             {:else}
-                 {#if topLosers.length > 0}
-                    <div class="history-grid">
-                        {#each topLosers as user (user.id)}
-                            <div role="button" tabindex="0" class="card-wrapper">
-                                <UserCard
-                                    {user}
-                                    onClick={() => handleProfileClick(user)}
-                                >
-                                    <div class="price-info">
-                                        <span class="current-price">{formatPrice(user.current_price || 0)}</span>
-                                        <div class="trend-badge negative">
-                                            {user.change_pct.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%
-                                        </div>
-                                    </div>
-                                </UserCard>
-                            </div>
-                        {/each}
-                    </div>
-                 {:else}
-                    <div class="empty-list-state">
-                        <p>No losers in the last 24h</p>
-                    </div>
-                 {/if}
-             {/if}
-         {/if}
-      </div>
-
-    {:else if searchResults.length === 0}
-      <div class="no-results">
-        <p>No results for "{searchQuery}"</p>
-      </div>
-    {:else}
-      <!-- Search Results List -->
-      <div class="users-list">
-        {#each searchResults as user}
-          <a href={`/profile?u=${user.username}`} class="user-list-item" on:click|preventDefault={() => handleProfileClick(user)}>
-            <div class="avatar">
-              <img
-                src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`}
-                alt={user.username}
-              />
-            </div>
-            <div class="user-info">
-              <span class="fullname">{user.full_name || "Unknown"}</span>
-              <span class="username">${user.username.toUpperCase()}</span>
-            </div>
-            {#if user.price}
-                <div class="list-price">
-                    {formatPrice(user.price)}
-                </div>
-            {/if}
-          </a>
-        {/each}
-      </div>
-    {/if}
-      </div>
-  </div>
-
-  <!-- Right Sidebar -->
-  <div class="right-sidebar">
-      <div class="stats-card">
-          <div class="stats-header">
-              <h2>Market Overview</h2>
-              <span class="live-badge">Live</span>
           </div>
 
-          {#if statsLoading}
-              <div class="loading-state-mini">
-                  <div class="spinner-small"></div>
-              </div>
-          {:else if dailyStats}
-              <div class="stats-grid">
-                  <div class="stat-item">
-                      <div class="stat-icon">
-                          <Activity size={18} color="#1d9bf0" />
+          <div class="content-area">
+              {#if isLoading}
+                  <div class="loading-state"><div class="spinner"></div></div>
+              {:else if searchQuery.trim() === ""}
+
+                  <!-- Recent Searches -->
+                  {#if searchHistory.length > 0}
+                      <section class="market-section">
+                          <h2 class="section-title"><Clock size={18} /> Recent Searches</h2>
+                          <div class="cards-grid">
+                              {#each searchHistory as user (user.id)}
+                                  <div class="card-item">
+                                      <UserCard {user} onClick={() => handleProfileClick(user)} />
+                                  </div>
+                              {/each}
+                          </div>
+                      </section>
+                  {/if}
+
+                  <!-- Top Movers -->
+                  <section class="market-section">
+                      <div class="tabs-header">
+                          <button class="tab-btn {activeTab === 'gainers' ? 'active' : ''}" on:click={() => activeTab = 'gainers'}>
+                              <TrendingUp size={18} /> Top Gainers
+                          </button>
+                          <button class="tab-btn {activeTab === 'losers' ? 'active' : ''}" on:click={() => activeTab = 'losers'}>
+                              <TrendingDown size={18} /> Top Losers
+                          </button>
                       </div>
-                      <div class="stat-info">
-                          <span class="stat-label">Transactions Today</span>
-                          <span class="stat-value">{dailyStats.count}</span>
-                      </div>
+
+                      {#if moversLoading}
+                          <div class="loading-mini"><div class="spinner-small"></div></div>
+                      {:else}
+                          <div class="cards-grid">
+                              {#if activeTab === 'gainers'}
+                                  {#each topGainers as user}
+                                      <div class="card-item">
+                                          <UserCard {user} onClick={() => handleProfileClick(user)}>
+                                              <div class="price-row">
+                                                  <span class="price">{formatPrice(user.current_price || 0)}</span>
+                                                  <span class="badge positive">+{user.change_pct.toFixed(2)}%</span>
+                                              </div>
+                                          </UserCard>
+                                      </div>
+                                  {/each}
+                              {:else}
+                                  {#each topLosers as user}
+                                      <div class="card-item">
+                                          <UserCard {user} onClick={() => handleProfileClick(user)}>
+                                              <div class="price-row">
+                                                  <span class="price">{formatPrice(user.current_price || 0)}</span>
+                                                  <span class="badge negative">{user.change_pct.toFixed(2)}%</span>
+                                              </div>
+                                          </UserCard>
+                                      </div>
+                                  {/each}
+                              {/if}
+                          </div>
+                      {/if}
+                  </section>
+
+              {:else if searchResults.length === 0}
+                  <div class="no-results">
+                      <p>No results found for "{searchQuery}"</p>
                   </div>
-                  <div class="stat-item">
-                      <div class="stat-icon">
-                          <DollarSign size={18} color="#10B981" />
-                      </div>
-                      <div class="stat-info">
-                          <span class="stat-label">Volume Today</span>
-                          <span class="stat-value">{dailyStats.volume.toLocaleString()} Tokens</span>
-                      </div>
+              {:else}
+                  <div class="search-results-list">
+                      {#each searchResults as user}
+                          <a href={`/profile?u=${user.username}`} class="result-item" on:click|preventDefault={() => handleProfileClick(user)}>
+                              <img src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`} alt="" class="result-avatar"/>
+                              <div class="result-info">
+                                  <span class="name">{user.full_name || user.username}</span>
+                                  <span class="handle">${user.username.toUpperCase()}</span>
+                              </div>
+                              <span class="result-price">{formatPrice(user.price)}</span>
+                          </a>
+                      {/each}
                   </div>
+              {/if}
+          </div>
+      </div>
+
+      <!-- Right Sidebar: Stats -->
+      <div class="sidebar-column">
+          <div class="stats-card">
+              <div class="stats-header">
+                  <h2>Market Overview</h2>
+                  <span class="live-badge">LIVE</span>
               </div>
 
-              <div class="chart-container">
-                  <canvas bind:this={chartCanvas}></canvas>
-              </div>
-          {:else}
-              <div class="empty-list-state">
-                  <p>No market data available</p>
-              </div>
-          {/if}
+              {#if statsLoading}
+                  <div class="loading-mini"><div class="spinner-small"></div></div>
+              {:else if dailyStats}
+                  <div class="stats-rows">
+                      <div class="stat-row">
+                          <div class="icon-bg blue"><Activity size={18} /></div>
+                          <div class="stat-data">
+                              <span class="label">Transactions</span>
+                              <span class="value">{dailyStats.count}</span>
+                          </div>
+                      </div>
+                      <div class="stat-row">
+                          <div class="icon-bg green"><DollarSign size={18} /></div>
+                          <div class="stat-data">
+                              <span class="label">Volume (24h)</span>
+                              <span class="value">{dailyStats.volume.toLocaleString()}</span>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="chart-wrapper">
+                      <canvas bind:this={chartCanvas}></canvas>
+                  </div>
+              {:else}
+                  <div class="empty-text">No data available</div>
+              {/if}
+          </div>
       </div>
   </div>
 </div>
 
 <style>
-  .explore-container {
-    display: flex;
-    width: 100%;
-    gap: 40px;
-    padding: 24px 40px;
-    box-sizing: border-box;
-    max-width: 1600px;
-    margin: 0 auto;
+  .markets-page {
+      padding: 32px 40px;
+      max-width: 100%;
+      box-sizing: border-box;
+      min-height: 100vh;
   }
 
-  .main-column {
-      flex: 1;
-      min-width: 0;
+  .markets-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
   }
 
-  .right-sidebar {
-      width: 350px;
-      flex-shrink: 0;
-      display: none;
-      padding-top: 0px;
-  }
-
-  @media (min-width: 1024px) {
-      .right-sidebar {
-          display: block;
+  @media (max-width: 1024px) {
+      .markets-grid {
+          grid-template-columns: 1fr;
       }
-      .mobile-market-highlights {
+      .sidebar-column {
           display: none;
       }
   }
 
-  @media (max-width: 1024px) {
-      .explore-container {
-          padding: 24px;
-          gap: 24px;
-      }
-  }
-
   @media (max-width: 640px) {
-      .explore-container {
+      .markets-page {
           padding: 16px;
       }
   }
 
-  /* Mobile Highlights */
-  .mobile-market-highlights {
-      margin-bottom: 24px;
-  }
-  .highlight-card {
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      background-color: var(--bg-secondary);
-      border-radius: 12px;
-      padding: 16px;
-      border: 1px solid var(--border-color);
-  }
-  .highlight-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-  }
-  .highlight-item .label {
-      font-size: 12px;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      font-weight: 600;
-  }
-  .highlight-item .value {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--text-main);
-  }
-  .highlight-divider {
-      width: 1px;
-      height: 30px;
-      background-color: var(--border-color);
-  }
-
-  /* Right Sidebar Stats */
-  .stats-card {
-      background-color: var(--bg-secondary);
-      border-radius: 16px;
-      padding: 20px;
-      position: sticky;
-      top: 20px;
-  }
-
-  .stats-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-  }
-
-  .stats-header h2 {
-      font-size: 18px;
-      font-weight: 800;
-      margin: 0;
-      color: var(--text-main);
-  }
-
-  .live-badge {
-      background-color: var(--danger-color, #EF4444);
-      color: white;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.6; }
-      100% { opacity: 1; }
-  }
-
-  .stats-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-bottom: 24px;
-  }
-
-  .stat-item {
-      display: flex;
-      align-items: center;
-  }
-
-  .stat-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background-color: var(--bg-main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 12px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  }
-
-  .stat-info {
-      display: flex;
-      flex-direction: column;
-  }
-
-  .stat-label {
-      font-size: 13px;
-      color: var(--text-secondary);
-  }
-
-  .stat-value {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-main);
-  }
-
-  .chart-container {
-      height: 120px;
-      width: 100%;
-      background-color: var(--bg-main);
-      border-radius: 12px;
-      padding: 8px;
-      box-sizing: border-box;
-  }
-
+  /* Main Column */
   .search-header {
-    margin-bottom: 32px;
-    position: relative;
-    z-index: 10;
+      margin-bottom: 32px;
+  }
+
+  .search-header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      color: var(--text-main);
   }
 
   .search-bar {
-    display: flex;
-    align-items: center;
-    background-color: var(--bg-secondary, #eff3f4);
-    border-radius: 9999px;
-    padding: 0 12px;
-    height: 44px;
-    border: 1px solid transparent;
-    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      background-color: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 12px 16px;
+      transition: all 0.2s;
+      border: 1px solid transparent;
   }
 
   .search-bar:focus-within {
-    background-color: var(--bg-main, #ffffff);
-    border-color: var(--primary-color, #1d9bf0);
-    box-shadow: 0 0 0 1px var(--primary-color, #1d9bf0);
+      background-color: var(--bg-main);
+      box-shadow: 0 0 0 2px var(--primary-color);
   }
 
   .search-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 12px;
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
   }
 
   .search-bar input {
-    flex-grow: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    font-size: 15px;
-    color: var(--text-main, #0f1419);
-    height: 100%;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 16px;
+      width: 100%;
+      color: var(--text-main);
   }
 
-  .search-bar input::placeholder {
-    color: var(--text-secondary, #536471);
+  /* Content */
+  .market-section {
+      margin-bottom: 40px;
   }
 
-  .results-container {
-    min-height: 200px;
+  .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
   }
 
-  .empty-state, .no-results {
-    padding: 40px 20px;
-    text-align: center;
-    color: var(--text-secondary, #536471);
-    font-size: 15px;
+  .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
   }
 
-  .history-section, .movers-section {
-    margin-bottom: 32px;
-  }
-
-  .section-header {
-    margin-bottom: 16px;
-    padding: 0 4px;
-  }
-
-  .section-header h2 {
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--text-main, #0f1419);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-  }
-
+  /* Tabs */
   .tabs-header {
       display: flex;
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 16px;
+      margin-bottom: 16px;
       border-bottom: 1px solid var(--border-color);
-      padding-bottom: 12px;
+      padding-bottom: 8px;
   }
 
   .tab-btn {
@@ -726,152 +500,188 @@
       background-color: var(--bg-secondary);
   }
 
-  :global(.icon-inline) {
-      margin-bottom: -2px;
+  /* Card Extras */
+  .price-row {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
   }
 
-  .history-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 16px;
-    padding-bottom: 20px;
+  .price {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text-main);
   }
 
-  .card-wrapper {
-      height: 100%;
-      cursor: pointer;
+  .badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 999px;
   }
+  .badge.positive { background-color: rgba(16,185,129,0.1); color: var(--success-color); }
+  .badge.negative { background-color: rgba(239,68,68,0.1); color: var(--danger-color); }
 
-  .price-info {
+  /* Search Results List */
+  .search-results-list {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      margin-top: 8px;
+      gap: 8px;
   }
 
-  .current-price {
-      font-size: 15px;
+  .result-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      background-color: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      text-decoration: none;
+      transition: background-color 0.2s;
+  }
+
+  .result-item:hover {
+      background-color: var(--bg-hover);
+  }
+
+  .result-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 12px;
+      background-color: var(--bg-tertiary);
+  }
+
+  .result-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+  }
+
+  .name {
+      font-weight: 700;
+      color: var(--text-main);
+  }
+
+  .handle {
+      font-size: 13px;
+      color: var(--text-secondary);
+  }
+
+  .result-price {
+      font-weight: 700;
+      color: var(--text-main);
+  }
+
+  /* Sidebar Stats */
+  .stats-card {
+      background-color: var(--bg-secondary);
+      border-radius: 24px;
+      padding: 24px;
+      position: sticky;
+      top: 24px;
+  }
+
+  .stats-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+  }
+
+  .stats-header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+  }
+
+  .live-badge {
+      background-color: #ef4444;
+      color: white;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      animation: pulse 2s infinite;
+  }
+
+  .stats-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-bottom: 24px;
+  }
+
+  .stat-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+  }
+
+  .icon-bg {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+  }
+  .icon-bg.blue { background-color: #3b82f6; }
+  .icon-bg.green { background-color: #10b981; }
+
+  .stat-data {
+      display: flex;
+      flex-direction: column;
+  }
+
+  .stat-data .label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-weight: 600;
+  }
+
+  .stat-data .value {
+      font-size: 18px;
       font-weight: 800;
       color: var(--text-main);
   }
 
-  .trend-badge {
-      font-size: 13px;
-      font-weight: 700;
-      padding: 4px 8px;
-      border-radius: 999px;
-      display: inline-block;
+  .chart-wrapper {
+      height: 150px;
+      width: 100%;
   }
 
-  .trend-badge.positive {
-      color: var(--success-color, #10B981);
-      background-color: rgba(16, 185, 129, 0.1);
-  }
-
-  .trend-badge.negative {
-      color: var(--danger-color, #EF4444);
-      background-color: rgba(239, 68, 68, 0.1);
-  }
-
-  .users-list {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .user-list-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border-color, #eff3f4);
-    text-decoration: none;
-    transition: background-color 0.2s;
-    cursor: pointer;
-  }
-
-  .user-list-item:hover {
-    background-color: var(--bg-hover, #f7f9f9);
-  }
-
-  .avatar {
-    margin-right: 12px;
-    width: 48px;
-    height: 48px;
-    flex-shrink: 0;
-  }
-
-  .avatar img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-    background-color: var(--bg-tertiary, #cfd9de);
-  }
-
-  .user-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex-grow: 1;
-  }
-
-  .list-price {
-      font-weight: 700;
-      color: var(--text-main);
-  }
-
-  .fullname {
-    font-weight: 700;
-    font-size: 15px;
-    color: var(--text-main, #0f1419);
-  }
-
-  .username {
-    font-size: 14px;
-    color: var(--text-secondary, #536471);
-  }
-
-  .loading-state {
-    display: flex;
-    justify-content: center;
-    padding: 40px;
-  }
-
-  .spinner {
-    border: 3px solid var(--bg-tertiary, #cfd9de);
-    border-top: 3px solid var(--primary-color, #1d9bf0);
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    animation: spin 1s linear infinite;
-  }
-
-  .loading-state-mini {
+  /* Loading */
+  .loading-state, .loading-mini {
       display: flex;
       justify-content: center;
       padding: 20px;
   }
-
-  .spinner-small {
-      border: 2px solid var(--bg-tertiary, #cfd9de);
-      border-top: 2px solid var(--primary-color, #1d9bf0);
+  .spinner, .spinner-small {
+      border: 3px solid var(--bg-tertiary);
+      border-top-color: var(--primary-color);
       border-radius: 50%;
-      width: 18px;
-      height: 18px;
       animation: spin 1s linear infinite;
   }
+  .spinner { width: 32px; height: 32px; }
+  .spinner-small { width: 20px; height: 20px; border-width: 2px; }
 
-  .empty-list-state {
-      padding: 20px;
+  .no-results {
       text-align: center;
+      padding: 40px;
       color: var(--text-secondary);
-      background-color: var(--bg-secondary);
-      border-radius: 12px;
-      font-size: 14px;
   }
 
+  @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+  }
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+      to { transform: rotate(360deg); }
   }
 </style>

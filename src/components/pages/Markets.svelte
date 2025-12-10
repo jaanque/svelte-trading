@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Search, Clock, TrendingUp, TrendingDown, Activity, DollarSign, BarChart2, ArrowRight, Coins } from "lucide-svelte";
+  import { Search, Clock, TrendingUp, TrendingDown, Activity, DollarSign, BarChart2, ArrowRight, Coins, X } from "lucide-svelte";
   import { supabase } from "../../lib/supabase";
   import { onMount } from "svelte";
   import Chart from "chart.js/auto";
@@ -8,7 +8,7 @@
 
   let searchQuery = "";
   let searchResults: any[] = [];
-  let isLoading = false;
+  let isSearching = false;
   let debounceTimer: any;
   let searchHistory: any[] = [];
   let historyLoading = false;
@@ -176,7 +176,7 @@
       return;
     }
 
-    isLoading = true;
+    isSearching = true;
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -189,7 +189,7 @@
     } catch (error) {
       console.error("Error searching users:", error);
     } finally {
-      isLoading = false;
+      isSearching = false;
     }
   }
 
@@ -200,13 +200,19 @@
     }, 300);
   }
 
+  function clearSearch() {
+      searchQuery = "";
+      searchResults = [];
+      fetchHistory();
+  }
+
   async function handleProfileClick(profile: any) {
       await addToHistory(profile);
       onNavigate(`/profile?u=${profile.username}`);
   }
 
   function formatPrice(num: number) {
-      return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   onMount(() => {
@@ -218,6 +224,8 @@
   $: if (dailyStats && chartCanvas) {
       renderChart();
   }
+
+  $: showSearchResults = searchQuery.trim().length > 0;
 </script>
 
 <div class="markets-page">
@@ -233,6 +241,11 @@
               bind:value={searchQuery}
               on:input={handleInput}
           />
+          {#if searchQuery}
+            <button class="clear-btn" on:click={clearSearch}>
+                <X size={16} color="var(--text-secondary)" />
+            </button>
+          {/if}
       </div>
   </div>
 
@@ -240,30 +253,51 @@
       <!-- Main Content: Market List -->
       <div class="market-list-card">
           <div class="card-header">
-              <div class="tabs">
-                  <button class="tab-btn {activeTab === 'gainers' ? 'active' : ''}" on:click={() => activeTab = 'gainers'}>
-                      Top Gainers
-                  </button>
-                  <button class="tab-btn {activeTab === 'losers' ? 'active' : ''}" on:click={() => activeTab = 'losers'}>
-                      Top Losers
-                  </button>
-              </div>
+              {#if showSearchResults}
+                  <div class="search-header">Search Results</div>
+              {:else}
+                  <div class="tabs">
+                      <button class="tab-btn {activeTab === 'gainers' ? 'active' : ''}" on:click={() => activeTab = 'gainers'}>
+                          Top Gainers
+                      </button>
+                      <button class="tab-btn {activeTab === 'losers' ? 'active' : ''}" on:click={() => activeTab = 'losers'}>
+                          Top Losers
+                      </button>
+                  </div>
+              {/if}
           </div>
 
           <div class="table-container">
               <div class="table-header">
                   <div class="th user-col">Trader</div>
                   <div class="th price-col">Price</div>
-                  <div class="th change-col">24h Change</div>
+                  {#if !showSearchResults}
+                    <div class="th change-col">24h Change</div>
+                  {/if}
                   <div class="th action-col"></div>
               </div>
 
               <div class="table-body">
-                  {#if moversLoading}
-                      <div class="loading-state"><div class="spinner"></div></div>
-                  {:else}
-                      {#if activeTab === 'gainers'}
-                          {#each topGainers as user}
+                  {#if showSearchResults}
+                      {#if isSearching}
+                           <!-- Skeleton Loading -->
+                           {#each Array(5) as _}
+                              <div class="table-row skeleton-row">
+                                  <div class="td user-col">
+                                      <div class="skeleton-avatar skeleton"></div>
+                                      <div class="skeleton-text-group">
+                                          <div class="skeleton-line short skeleton"></div>
+                                          <div class="skeleton-line long skeleton"></div>
+                                      </div>
+                                  </div>
+                              </div>
+                           {/each}
+                      {:else if searchResults.length === 0}
+                          <div class="empty-state">
+                              <p>No traders found for "{searchQuery}"</p>
+                          </div>
+                      {:else}
+                          {#each searchResults as user}
                               <div class="table-row" on:click={() => handleProfileClick(user)} role="button" tabindex="0">
                                   <div class="td user-col">
                                       <img src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`} alt="" class="row-avatar"/>
@@ -275,38 +309,88 @@
                                   <div class="td price-col">
                                       <div class="price-wrapper">
                                           <Coins size={14} class="currency-icon" />
-                                          <span class="price-val">{formatPrice(user.current_price || 0)}</span>
+                                          <span class="price-val">{formatPrice(user.price || 0)}</span>
                                       </div>
                                   </div>
-                                  <div class="td change-col">
-                                      <span class="change-badge positive">+{user.change_pct.toFixed(2)}%</span>
-                                  </div>
+                                  {#if !showSearchResults}
+                                    <div class="td change-col"></div>
+                                  {/if}
                                   <div class="td action-col">
+                                      <div class="view-btn">View</div>
                                       <ArrowRight size={18} class="action-icon" />
+                                  </div>
+                              </div>
+                          {/each}
+                      {/if}
+                  {:else}
+                      {#if moversLoading}
+                          <!-- Skeleton Loading for Movers -->
+                          {#each Array(8) as _}
+                              <div class="table-row skeleton-row">
+                                  <div class="td user-col">
+                                      <div class="skeleton-avatar skeleton"></div>
+                                      <div class="skeleton-text-group">
+                                          <div class="skeleton-line short skeleton"></div>
+                                          <div class="skeleton-line long skeleton"></div>
+                                      </div>
+                                  </div>
+                                  <div class="td price-col">
+                                      <div class="skeleton-line medium skeleton"></div>
+                                  </div>
+                                  <div class="td change-col">
+                                      <div class="skeleton-badge skeleton"></div>
                                   </div>
                               </div>
                           {/each}
                       {:else}
-                          {#each topLosers as user}
-                              <div class="table-row" on:click={() => handleProfileClick(user)} role="button" tabindex="0">
-                                  <div class="td user-col">
-                                      <img src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`} alt="" class="row-avatar"/>
-                                      <div class="user-meta">
-                                          <span class="row-name">{user.full_name}</span>
-                                          <span class="row-username">${user.username.toUpperCase()}</span>
+                          {#if activeTab === 'gainers'}
+                              {#each topGainers as user}
+                                  <div class="table-row" on:click={() => handleProfileClick(user)} role="button" tabindex="0">
+                                      <div class="td user-col">
+                                          <img src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`} alt="" class="row-avatar"/>
+                                          <div class="user-meta">
+                                              <span class="row-name">{user.full_name}</span>
+                                              <span class="row-username">${user.username.toUpperCase()}</span>
+                                          </div>
+                                      </div>
+                                      <div class="td price-col">
+                                          <div class="price-wrapper">
+                                              <Coins size={14} class="currency-icon" />
+                                              <span class="price-val">{formatPrice(user.current_price || 0)}</span>
+                                          </div>
+                                      </div>
+                                      <div class="td change-col">
+                                          <span class="change-badge positive">+{user.change_pct.toFixed(2)}%</span>
+                                      </div>
+                                      <div class="td action-col">
+                                          <div class="view-btn">View</div>
+                                          <ArrowRight size={18} class="action-icon" />
                                       </div>
                                   </div>
-                                  <div class="td price-col">
-                                      <span class="price-val">{formatPrice(user.current_price || 0)}</span>
+                              {/each}
+                          {:else}
+                              {#each topLosers as user}
+                                  <div class="table-row" on:click={() => handleProfileClick(user)} role="button" tabindex="0">
+                                      <div class="td user-col">
+                                          <img src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`} alt="" class="row-avatar"/>
+                                          <div class="user-meta">
+                                              <span class="row-name">{user.full_name}</span>
+                                              <span class="row-username">${user.username.toUpperCase()}</span>
+                                          </div>
+                                      </div>
+                                      <div class="td price-col">
+                                          <span class="price-val">{formatPrice(user.current_price || 0)}</span>
+                                      </div>
+                                      <div class="td change-col">
+                                          <span class="change-badge negative">{user.change_pct.toFixed(2)}%</span>
+                                      </div>
+                                      <div class="td action-col">
+                                          <div class="view-btn">View</div>
+                                          <ArrowRight size={18} class="action-icon" />
+                                      </div>
                                   </div>
-                                  <div class="td change-col">
-                                      <span class="change-badge negative">{user.change_pct.toFixed(2)}%</span>
-                                  </div>
-                                  <div class="td action-col">
-                                      <ArrowRight size={18} class="action-icon" />
-                                  </div>
-                              </div>
-                          {/each}
+                              {/each}
+                          {/if}
                       {/if}
                   {/if}
               </div>
@@ -366,6 +450,7 @@
       margin: 0 auto;
       width: 100%;
       box-sizing: border-box;
+      min-height: 100vh;
   }
 
   .header-section {
@@ -418,6 +503,21 @@
       outline: none;
   }
 
+  .clear-btn {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+  }
+
+  .clear-btn:hover {
+      background-color: var(--bg-tertiary);
+  }
+
   .main-grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
@@ -432,6 +532,16 @@
       .markets-page {
           padding: 24px;
       }
+      .sidebar {
+          display: none; /* Hide sidebar on smaller screens for cleaner look or move to bottom */
+      }
+  }
+
+  @media (min-width: 1025px) {
+      .sidebar {
+          position: sticky;
+          top: 24px;
+      }
   }
 
   @media (max-width: 640px) {
@@ -444,6 +554,10 @@
       }
       .search-wrapper {
           max-width: 100%;
+      }
+      /* Hide change column on mobile */
+      .th.change-col, .td.change-col {
+          display: none;
       }
   }
 
@@ -460,6 +574,16 @@
       padding: 16px 20px;
       border-bottom: 1px solid var(--border-color);
       background-color: var(--bg-main);
+      display: flex;
+      align-items: center;
+      height: 60px;
+      box-sizing: border-box;
+  }
+
+  .search-header {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
   }
 
   .tabs {
@@ -508,7 +632,11 @@
   .th.user-col { flex: 2; }
   .th.price-col { flex: 1; text-align: right; }
   .th.change-col { flex: 1; text-align: right; }
-  .th.action-col { width: 40px; }
+  .th.action-col { width: 80px; text-align: right; } /* Expanded for View button */
+
+  .table-body {
+      min-height: 200px;
+  }
 
   .table-row {
       display: flex;
@@ -517,10 +645,21 @@
       border-bottom: 1px solid var(--border-color);
       cursor: pointer;
       transition: background-color 0.1s;
+      position: relative;
   }
 
   .table-row:hover {
       background-color: var(--bg-hover);
+  }
+
+  .table-row:hover .view-btn {
+      opacity: 1;
+      transform: translateX(0);
+  }
+
+  .table-row:hover .action-icon {
+      opacity: 0;
+      transform: translateX(10px);
   }
 
   .table-row:last-child {
@@ -541,6 +680,7 @@
       border-radius: 50%;
       background-color: var(--bg-tertiary);
       flex-shrink: 0;
+      object-fit: cover;
   }
 
   .user-meta {
@@ -610,10 +750,30 @@
   }
 
   .td.action-col {
-      width: 40px;
+      width: 80px;
       display: flex;
       justify-content: flex-end;
+      align-items: center;
       color: var(--text-tertiary);
+      position: relative;
+  }
+
+  .view-btn {
+      position: absolute;
+      right: 0;
+      background-color: var(--bg-tertiary);
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .action-icon {
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   /* Sidebar */
@@ -724,28 +884,60 @@
       color: var(--text-main);
   }
 
-  .loading-state {
-      padding: 40px;
-      display: flex;
-      justify-content: center;
+  .empty-state {
+      padding: 48px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-weight: 600;
   }
 
-  .spinner {
-      border: 3px solid var(--bg-tertiary);
-      border-top-color: var(--primary-color);
-      border-radius: 50%;
-      width: 32px;
-      height: 32px;
-      animation: spin 1s linear infinite;
+  /* Skeleton Loading */
+  @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
   }
+
+  .skeleton {
+      background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-secondary) 50%, var(--bg-tertiary) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+  }
+
+  .skeleton-row {
+      cursor: default;
+  }
+
+  .skeleton-row:hover {
+      background-color: transparent;
+  }
+
+  .skeleton-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      flex-shrink: 0;
+  }
+
+  .skeleton-text-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+  }
+
+  .skeleton-line {
+      height: 12px;
+  }
+
+  .skeleton-line.short { width: 40%; }
+  .skeleton-line.long { width: 70%; }
+  .skeleton-line.medium { width: 60px; }
+  .skeleton-badge { width: 60px; height: 24px; border-radius: 8px; }
 
   @keyframes pulse {
       0% { opacity: 1; }
       50% { opacity: 0.5; }
       100% { opacity: 1; }
-  }
-
-  @keyframes spin {
-      to { transform: rotate(360deg); }
   }
 </style>

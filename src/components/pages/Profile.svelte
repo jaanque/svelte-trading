@@ -215,7 +215,7 @@
                        <!-- Generic actions for other profiles if needed -->
                   {/if}
               </div>
-              <button class="btn-icon"><MessageSquare size={20} /></button>
+              <a href={`/messages?u=${profileData.username}`} class="btn-icon" aria-label="Message"><MessageSquare size={20} /></a>
               {#if userShares > 0}
                   <button
                     class="btn-secondary-action"

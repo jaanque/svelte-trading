@@ -77,7 +77,7 @@
         {:else if route === "/settings"}
           <Settings />
         {:else if route === "/profile"}
-          <Profile />
+          <Profile {currentPath} />
         {:else}
           <Home />
         {/if}

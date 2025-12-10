@@ -277,10 +277,6 @@
                                           <Coins size={14} class="currency-icon" />
                                           <span class="price-val">{formatPrice(user.current_price || 0)}</span>
                                       </div>
-                                      <div class="price-wrapper">
-                                          <Coins size={14} class="currency-icon" />
-                                          <span class="price-val">{formatPrice(user.current_price || 0)}</span>
-                                      </div>
                                   </div>
                                   <div class="td change-col">
                                       <span class="change-badge positive">+{user.change_pct.toFixed(2)}%</span>

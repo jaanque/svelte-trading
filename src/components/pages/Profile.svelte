@@ -7,6 +7,8 @@
   import SellModal from "../../components/general/SellModal.svelte";
   import PriceChart from "../../components/general/PriceChart.svelte";
 
+  export let currentPath = "";
+
   let loading = true;
   let profileData: any = null;
   let error: string | null = null;
@@ -154,7 +156,7 @@
     };
   });
 
-  $: $userSession, loadProfile();
+  $: $userSession, currentPath, loadProfile();
 </script>
 
 <div class="profile-page">

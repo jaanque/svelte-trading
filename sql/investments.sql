@@ -86,11 +86,10 @@ begin
   where id = current_user_id;
 
   -- Logic for price increase:
-  -- Price increases by 0.1% for every trade (invest_amount / 1000).
-  -- We use integer division which naturally floors.
-  -- This provides minimal variation and keeps integers.
+  -- Price increases by 5 for every 100 tokens invested (invest_amount / 20).
+  -- (invest_amount / 100) * 5 = invest_amount / 20
 
-  new_price := target_price + (invest_amount / 1000);
+  new_price := target_price + (invest_amount / 20);
 
   -- Ensure price doesn't drop below 1 (though this is buy logic, so it goes up)
   if new_price < 1 then new_price := 1; end if;

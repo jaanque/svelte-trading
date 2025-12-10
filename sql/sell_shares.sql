@@ -52,11 +52,10 @@ begin
   -- Update target user stats
   -- Return shares to available pool
   -- Decrease price
-  -- Sell: New = Old - (TokensValue / 200)
-  -- We use the same sensitivity (0.5%) but linear approximation for integer math simplicity
-  -- or we reverse the buy logic: Buy added (Invest / 200). Sell subtracts (Tokens / 200).
+  -- Sell: New = Old - (TokensValue / 1000)
+  -- Sensitivity matched to buy logic (0.1%)
 
-  new_price := target_profile.price - (tokens_to_receive / 200);
+  new_price := target_profile.price - (tokens_to_receive / 1000);
 
   if new_price < 1 then new_price := 1; end if;
 

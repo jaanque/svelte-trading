@@ -96,7 +96,7 @@
 
       if (error) throw error;
 
-      successMsg = `Successfully invested ${exactTokens.toLocaleString(undefined, {minimumFractionDigits: 2})} tokens in ${targetUser.username}!`;
+      successMsg = `Has comprado ${exactShares.toLocaleString()} acciones a ${exactTokens.toLocaleString(undefined, {minimumFractionDigits: 2})} tokens`;
       setTimeout(() => {
           onClose();
           dispatch("success");

@@ -15,7 +15,7 @@
   import { initAuth, userSession } from "./lib/authStore";
 
   let isCollapsed = false;
-  let currentPath = window.location.pathname;
+  let currentPath = window.location.pathname + window.location.search;
   let showPostModal = false;
 
   function handleNavigate(path: string) {
@@ -36,7 +36,7 @@
     initAuth(); // Initialize authentication listener
 
     const handlePopState = () => {
-      currentPath = window.location.pathname;
+      currentPath = window.location.pathname + window.location.search;
     };
 
     window.addEventListener("popstate", handlePopState);

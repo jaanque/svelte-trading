@@ -299,14 +299,15 @@
   .wallet-indicator {
     display: flex;
     align-items: center;
-    background-color: var(--bg-secondary);
+    background-color: #FFF8E1; /* Light Amber/Gold tint for more pop */
     padding: 6px 12px;
     border-radius: 12px;
     margin-left: 12px;
     transition: opacity 0.3s, width 0.3s, margin 0.3s, padding 0.3s;
     overflow: hidden;
     white-space: nowrap;
-    border: 1px solid transparent;
+    border: 1px solid #FFE082; /* Distinct border */
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.15); /* Warm shadow */
   }
 
   .wallet-indicator:hover {

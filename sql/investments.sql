@@ -2,7 +2,8 @@
 alter table public.profiles
 add column if not exists tokens numeric default 250,
 add column if not exists price numeric default 50,
-add column if not exists shares numeric default 1000000;
+add column if not exists shares numeric default 1000000,
+add column if not exists available_shares numeric default 1000000;
 
 -- Create investments table
 create table if not exists public.investments (
@@ -38,6 +39,7 @@ declare
   current_user_id uuid;
   user_balance numeric;
   target_price numeric;
+  target_available_shares numeric;
   shares_to_buy numeric;
   new_price numeric;
 begin
@@ -52,10 +54,12 @@ begin
     raise exception 'Insufficient tokens';
   end if;
 
-  -- Get target user details
-  select price into target_price
+  -- Get target user details (price and available shares)
+  -- Lock the row to prevent race conditions
+  select price, available_shares into target_price, target_available_shares
   from public.profiles
-  where id = target_user_id;
+  where id = target_user_id
+  for update;
 
   -- Default price safety
   if target_price is null or target_price <= 0 then
@@ -65,26 +69,27 @@ begin
   -- Calculate shares
   shares_to_buy := invest_amount / target_price;
 
+  -- Check if there are enough shares available
+  -- We use coalesce to treat null as 0, though default is 1M
+  if coalesce(target_available_shares, 0) < shares_to_buy then
+      raise exception 'Not enough shares available. Requested: %, Available: %', shares_to_buy, target_available_shares;
+  end if;
+
   -- Deduct tokens from investor
   update public.profiles
   set tokens = tokens - invest_amount
   where id = current_user_id;
 
   -- Logic for price increase:
-  -- Simple Linear Model: Price increases by 0.1% of the investment amount per share?
-  -- Or just: New Price = Old Price + (Investment / 1000)?
-  -- Let's use a simple mechanic: Price increases by 0.5% for every trade, weighted by amount relative to price.
-  -- Simpler: Price = Price + (InvestAmount * 0.01)
+  -- Price increases by 0.5% for every trade, weighted by amount relative to price.
   new_price := target_price + (invest_amount * 0.005);
 
   -- Update target user stats
-  -- We don't deduct shares from the user per se (unless we treat it as limited supply).
-  -- For now, we just track "investments" without reducing a global "shares" pool,
-  -- or we assume the pool is infinite/flexible.
-  -- However, user requested "shares of that user they would buy".
-
+  -- Deduct purchased shares from available_shares
   update public.profiles
-  set price = new_price
+  set
+    price = new_price,
+    available_shares = available_shares - shares_to_buy
   where id = target_user_id;
 
   -- Record investment

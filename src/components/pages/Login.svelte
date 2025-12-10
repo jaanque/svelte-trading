@@ -1,5 +1,6 @@
 <script lang="ts">
   import { supabase } from "../../lib/supabase";
+  import logo from "../../assets/svelte.svg";
 
   let email = "";
   let password = "";
@@ -34,7 +35,10 @@
 
 <div class="auth-container">
   <div class="auth-card">
-    <h1>Log in</h1>
+    <div class="logo-container">
+      <img src={logo} alt="Logo" class="logo" />
+    </div>
+    <h1>Inicia sesión</h1>
 
     {#if errorMsg}
       <div class="error">{errorMsg}</div>
@@ -42,34 +46,34 @@
 
     <form on:submit|preventDefault={handleLogin}>
       <div class="form-group">
-        <label for="email">Email</label>
+        <label for="email">Correo electrónico</label>
         <input
           type="email"
           id="email"
           bind:value={email}
-          placeholder="Enter your email"
+          placeholder="Ingresa tu correo"
           required
         />
       </div>
 
       <div class="form-group">
-        <label for="password">Password</label>
+        <label for="password">Contraseña</label>
         <input
           type="password"
           id="password"
           bind:value={password}
-          placeholder="Enter your password"
+          placeholder="Ingresa tu contraseña"
           required
         />
       </div>
 
       <button type="submit" disabled={loading}>
-        {loading ? "Logging in..." : "Log in"}
+        {loading ? "Iniciando sesión..." : "Iniciar sesión"}
       </button>
     </form>
 
     <div class="footer">
-      <p>Don't have an account? <a href="/register" on:click={goToRegister}>Sign up</a></p>
+      <p>¿No tienes una cuenta? <a href="/register" on:click={goToRegister}>Regístrate</a></p>
     </div>
   </div>
 </div>
@@ -80,93 +84,111 @@
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #f7f9f9;
+    background-color: var(--bg-secondary);
+    padding: var(--spacing-md);
   }
 
   .auth-card {
-    background: white;
-    padding: 32px;
+    background: var(--bg-main);
+    padding: var(--spacing-xl);
     border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
     width: 100%;
     max-width: 400px;
   }
 
+  .logo-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .logo {
+    width: 48px;
+    height: 48px;
+  }
+
   h1 {
     margin-top: 0;
-    margin-bottom: 24px;
+    margin-bottom: var(--spacing-lg);
     text-align: center;
-    color: #0f1419;
+    color: var(--text-main);
+    font-size: var(--font-size-xl);
   }
 
   .error {
-    background-color: rgba(244, 33, 46, 0.1);
-    color: #f4212e;
-    padding: 12px;
+    background-color: rgba(255, 105, 97, 0.1); /* Pastel red alpha */
+    color: var(--danger-color);
+    padding: var(--spacing-sm);
     border-radius: 8px;
-    margin-bottom: 16px;
-    font-size: 14px;
+    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-sm);
+    border: 1px solid var(--danger-color);
   }
 
   .form-group {
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-md);
   }
 
   label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-xs);
     font-weight: 600;
-    font-size: 14px;
-    color: #0f1419;
+    font-size: var(--font-size-sm);
+    color: var(--text-main);
   }
 
   input {
     width: 100%;
     padding: 12px;
-    border: 1px solid #cfd9de;
-    border-radius: 4px;
-    font-size: 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    font-size: var(--font-size-md);
     box-sizing: border-box;
-    transition: border-color 0.2s;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    transition: all 0.2s ease;
   }
 
   input:focus {
     outline: none;
-    border-color: #1d9bf0;
-    box-shadow: 0 0 0 1px #1d9bf0;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--bg-hover);
   }
 
   button {
     width: 100%;
-    padding: 14px;
-    background-color: #0f1419;
-    color: white;
+    padding: 12px;
+    background-color: var(--primary-color);
+    color: var(--text-on-primary);
     border: none;
-    border-radius: 9999px;
+    border-radius: 9999px; /* Pill shape */
     font-weight: 700;
-    font-size: 16px;
+    font-size: var(--font-size-md);
     cursor: pointer;
     transition: background-color 0.2s;
+    margin-top: var(--spacing-sm);
   }
 
   button:hover {
-    background-color: #272c30;
+    background-color: var(--primary-hover);
   }
 
   button:disabled {
-    opacity: 0.5;
+    opacity: 0.7;
     cursor: not-allowed;
   }
 
   .footer {
-    margin-top: 24px;
+    margin-top: var(--spacing-lg);
     text-align: center;
-    font-size: 14px;
-    color: #536471;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
   }
 
   .footer a {
-    color: #1d9bf0;
+    color: var(--primary-color);
     text-decoration: none;
     font-weight: 600;
   }

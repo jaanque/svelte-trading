@@ -22,7 +22,6 @@
   // Validation
   $: sharesVal = parseFloat(sellShares) || 0;
   $: tokensVal = parseFloat(receiveTokens) || 0;
-  $: isValid = sharesVal > 0 && sharesVal <= userShares;
 
   function updateFromShares(e: Event) {
       const val = parseFloat((e.target as HTMLInputElement).value);
@@ -33,20 +32,40 @@
       }
   }
 
+  $: isIntegerShares = Number.isInteger(sharesVal);
+  $: isValid = sharesVal > 0 && sharesVal <= userShares && isIntegerShares;
+
+  // Reactively check for decimal input to show specific error
+  $: {
+      if (sharesVal > 0 && !isIntegerShares) {
+          errorMsg = "Solo se permiten números enteros.";
+      } else if (sharesVal > 0 && sharesVal > userShares) {
+         // handled in template
+         errorMsg = "";
+      } else if (isValid) {
+         errorMsg = "";
+      }
+  }
+
   function updateFromTokens(e: Event) {
       const val = parseFloat((e.target as HTMLInputElement).value);
       if (!isNaN(val)) {
-          // Snap shares to integer
+          // Show decimals to trigger error
           const rawShares = val / price;
-          const snappedShares = Math.floor(rawShares);
-          sellShares = snappedShares.toFixed(0);
+          sellShares = rawShares.toFixed(2);
       } else {
           sellShares = "";
       }
   }
 
   async function handleSell() {
-    const exactShares = Math.floor(sharesVal);
+    // If we rely on isValid, exactShares is integer
+    const exactShares = sharesVal;
+
+    if (!Number.isInteger(exactShares)) {
+        errorMsg = "Solo se permiten números enteros.";
+        return;
+    }
 
     if (exactShares <= 0) {
         errorMsg = "Minimum sale is 1 share.";

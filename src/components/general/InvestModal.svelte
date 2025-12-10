@@ -24,16 +24,36 @@
   // Validation
   $: tokenVal = parseFloat(investAmount) || 0;
   $: shareVal = parseFloat(sharesAmount) || 0;
+  $: isIntegerShares = Number.isInteger(shareVal);
   $: isSharesAvailable = shareVal <= availableShares;
-  $: isValid = tokenVal > 0 && tokenVal <= userBalance && isSharesAvailable;
+  $: isValid = tokenVal > 0 && tokenVal <= userBalance && isSharesAvailable && isIntegerShares;
+
+  // Reactively check for decimal input to show specific error
+  $: {
+      if (shareVal > 0 && !isIntegerShares) {
+          errorMsg = "Solo se permiten números enteros.";
+      } else if (tokenVal > 0 && !isSharesAvailable) {
+          // Error logic handled in template
+          errorMsg = "";
+      } else if (isValid) {
+          errorMsg = "";
+      }
+  }
 
   function updateFromTokens(e: Event) {
       const val = parseFloat((e.target as HTMLInputElement).value);
       if (!isNaN(val)) {
-          // Calculate shares and floor to integer
+          // Do NOT floor it automatically if we want to show error on decimal tokens leading to decimal shares?
+          // BUT request says "quiero que de error si el valor introducido es decimal".
+          // If user types Tokens, we calculate shares. If shares are decimal, should we snap or error?
+          // "que diga que solo numeros completos no decimales".
+          // If I type tokens that result in 1.5 shares, displaying 1.5 shares and showing error is better than snapping.
+          // Because snapping hides the "why" or just fixes it.
+          // The prompt says "que de error... y que diga que solo numeros completos".
+          // So I should calculate raw shares and let validation catch it.
+
           const rawShares = val / price;
-          const snappedShares = Math.floor(rawShares);
-          sharesAmount = snappedShares.toFixed(0);
+          sharesAmount = rawShares.toFixed(2); // Show decimals to trigger error perception
       } else {
           sharesAmount = "";
       }

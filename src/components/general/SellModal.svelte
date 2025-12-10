@@ -36,20 +36,20 @@
   function updateFromTokens(e: Event) {
       const val = parseFloat((e.target as HTMLInputElement).value);
       if (!isNaN(val)) {
-          // Snap shares to 1 decimal place (0.1 steps)
+          // Snap shares to integer
           const rawShares = val / price;
-          const snappedShares = Math.floor(rawShares * 10) / 10;
-          sellShares = snappedShares.toFixed(1);
+          const snappedShares = Math.floor(rawShares);
+          sellShares = snappedShares.toFixed(0);
       } else {
           sellShares = "";
       }
   }
 
   async function handleSell() {
-    const exactShares = Math.floor(sharesVal * 10) / 10;
+    const exactShares = Math.floor(sharesVal);
 
     if (exactShares <= 0) {
-        errorMsg = "Minimum sale is 0.1 shares.";
+        errorMsg = "Minimum sale is 1 share.";
         return;
     }
 
@@ -120,9 +120,9 @@
                     bind:value={sellShares}
                     on:input={updateFromShares}
                     placeholder="0"
-                    min="0.1"
+                    min="1"
                     max={userShares}
-                    step="0.1"
+                    step="1"
                 />
             </div>
             <div class="input-group">

@@ -30,10 +30,10 @@
   function updateFromTokens(e: Event) {
       const val = parseFloat((e.target as HTMLInputElement).value);
       if (!isNaN(val)) {
-          // Calculate shares and floor to 1 decimal place
+          // Calculate shares and floor to integer
           const rawShares = val / price;
-          const snappedShares = Math.floor(rawShares * 10) / 10;
-          sharesAmount = snappedShares.toFixed(1);
+          const snappedShares = Math.floor(rawShares);
+          sharesAmount = snappedShares.toFixed(0);
       } else {
           sharesAmount = "";
       }
@@ -50,10 +50,10 @@
   }
 
   async function handleInvest() {
-    const exactShares = Math.floor(shareVal * 10) / 10;
+    const exactShares = Math.floor(shareVal);
 
     if (exactShares <= 0) {
-        errorMsg = "Minimum purchase is 0.1 shares.";
+        errorMsg = "Minimum purchase is 1 share.";
         return;
     }
 
@@ -142,8 +142,8 @@
                     bind:value={sharesAmount}
                     on:input={updateFromShares}
                     placeholder="0"
-                    min="0.1"
-                    step="0.1"
+                    min="1"
+                    step="1"
                 />
             </div>
         </div>

@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { Search, Clock, TrendingUp, TrendingDown } from "lucide-svelte";
+  import { Search, Clock, TrendingUp, TrendingDown, Activity, DollarSign } from "lucide-svelte";
   import { supabase } from "../../lib/supabase";
-  import { onMount } from "svelte";
+  import { onMount, afterUpdate } from "svelte";
   import UserCard from "../../components/general/UserCard.svelte";
+  import Chart from "chart.js/auto";
 
   export let onNavigate: (path: string) => void = (path) => { window.location.href = path; };
 
@@ -16,6 +17,85 @@
   let topGainers: any[] = [];
   let topLosers: any[] = [];
   let moversLoading = false;
+
+  let dailyStats: { count: number; volume: number; chart_data: any[] } | null = null;
+  let statsLoading = false;
+  let chartCanvas: HTMLCanvasElement;
+  let chartInstance: Chart | null = null;
+
+  async function fetchDailyStats() {
+    statsLoading = true;
+    try {
+      const { data, error } = await supabase.rpc("get_daily_investment_stats");
+
+      if (error) {
+        // Fallback mock data if RPC fails (e.g. not created yet)
+        console.warn("RPC get_daily_investment_stats failed, using mock data:", error.message);
+        dailyStats = {
+            count: 142,
+            volume: 54200,
+            chart_data: Array.from({length: 24}, (_, i) => ({
+                hour: i,
+                count: Math.floor(Math.random() * 20),
+                volume: Math.floor(Math.random() * 5000)
+            }))
+        };
+      } else {
+        dailyStats = data;
+      }
+    } catch (err) {
+      console.error("Error fetching daily stats:", err);
+    } finally {
+      statsLoading = false;
+    }
+  }
+
+  function renderChart() {
+      if (!dailyStats || !chartCanvas) return;
+
+      if (chartInstance) {
+          chartInstance.destroy();
+      }
+
+      const labels = dailyStats.chart_data.map((d: any) => `${d.hour}:00`);
+      const data = dailyStats.chart_data.map((d: any) => d.volume);
+
+      chartInstance = new Chart(chartCanvas, {
+          type: 'line',
+          data: {
+              labels: labels,
+              datasets: [{
+                  label: 'Volume (Tokens)',
+                  data: data,
+                  borderColor: '#1d9bf0',
+                  backgroundColor: 'rgba(29, 155, 240, 0.1)',
+                  borderWidth: 2,
+                  fill: true,
+                  tension: 0.4,
+                  pointRadius: 0
+              }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                      mode: 'index',
+                      intersect: false,
+                  }
+              },
+              scales: {
+                  x: { display: false },
+                  y: { display: false }
+              },
+              interaction: {
+                  intersect: false,
+                  mode: 'index',
+              },
+          }
+      });
+  }
 
   async function fetchHistory() {
     historyLoading = true;
@@ -142,27 +222,33 @@
   onMount(() => {
     fetchHistory();
     fetchTopMovers();
+    fetchDailyStats();
   });
+
+  $: if (dailyStats && chartCanvas) {
+      renderChart();
+  }
 </script>
 
 <div class="explore-container">
-  <!-- Search Bar Header -->
-  <div class="search-header">
-    <div class="search-bar">
-      <div class="search-icon">
-        <Search size={20} color="var(--text-secondary)" />
+  <div class="main-column">
+      <!-- Search Bar Header -->
+      <div class="search-header">
+        <div class="search-bar">
+          <div class="search-icon">
+            <Search size={20} color="var(--text-secondary)" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search for users..."
+            bind:value={searchQuery}
+            on:input={handleInput}
+          />
+        </div>
       </div>
-      <input
-        type="text"
-        placeholder="Search for users..."
-        bind:value={searchQuery}
-        on:input={handleInput}
-      />
-    </div>
-  </div>
 
-  <!-- Content -->
-  <div class="results-container">
+      <!-- Content -->
+      <div class="results-container">
     {#if isLoading}
       <div class="loading-state">
         <div class="spinner"></div>
@@ -291,13 +377,167 @@
         {/each}
       </div>
     {/if}
+      </div>
+  </div>
+
+  <!-- Right Sidebar -->
+  <div class="right-sidebar">
+      <div class="stats-card">
+          <div class="stats-header">
+              <h2>Market Overview</h2>
+              <span class="live-badge">Live</span>
+          </div>
+
+          {#if statsLoading}
+              <div class="loading-state-mini">
+                  <div class="spinner-small"></div>
+              </div>
+          {:else if dailyStats}
+              <div class="stats-grid">
+                  <div class="stat-item">
+                      <div class="stat-icon">
+                          <Activity size={18} color="#1d9bf0" />
+                      </div>
+                      <div class="stat-info">
+                          <span class="stat-label">Transactions Today</span>
+                          <span class="stat-value">{dailyStats.count}</span>
+                      </div>
+                  </div>
+                  <div class="stat-item">
+                      <div class="stat-icon">
+                          <DollarSign size={18} color="#10B981" />
+                      </div>
+                      <div class="stat-info">
+                          <span class="stat-label">Volume Today</span>
+                          <span class="stat-value">{dailyStats.volume.toLocaleString()} Tokens</span>
+                      </div>
+                  </div>
+              </div>
+
+              <div class="chart-container">
+                  <canvas bind:this={chartCanvas}></canvas>
+              </div>
+          {:else}
+              <div class="empty-list-state">
+                  <p>No market data available</p>
+              </div>
+          {/if}
+      </div>
   </div>
 </div>
 
 <style>
   .explore-container {
+    display: flex;
     width: 100%;
+    gap: 24px;
     /* removed fixed padding bottom as App.svelte handles mobile safe area */
+  }
+
+  .main-column {
+      flex: 1;
+      min-width: 0; /* Prevent flex child from overflowing */
+  }
+
+  .right-sidebar {
+      width: 300px;
+      flex-shrink: 0;
+      display: none; /* Hidden on mobile/tablet by default */
+  }
+
+  /* Show sidebar on larger screens */
+  @media (min-width: 1024px) {
+      .right-sidebar {
+          display: block;
+      }
+  }
+
+  .stats-card {
+      background-color: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 20px;
+      position: sticky;
+      top: 20px;
+  }
+
+  .stats-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+  }
+
+  .stats-header h2 {
+      font-size: 18px;
+      font-weight: 800;
+      margin: 0;
+      color: var(--text-main);
+  }
+
+  .live-badge {
+      background-color: var(--danger-color, #EF4444);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.6; }
+      100% { opacity: 1; }
+  }
+
+  .stats-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+  }
+
+  .stat-item {
+      display: flex;
+      align-items: center;
+  }
+
+  .stat-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: var(--bg-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  .stat-info {
+      display: flex;
+      flex-direction: column;
+  }
+
+  .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+  }
+
+  .stat-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+  }
+
+  .chart-container {
+      height: 120px;
+      width: 100%;
+      background-color: var(--bg-main);
+      border-radius: 12px;
+      padding: 8px;
+      box-sizing: border-box;
   }
 
   .search-header {

@@ -90,7 +90,12 @@
 
       if (error) throw error;
 
-      successMsg = `Successfully sold ${exactShares} shares of ${targetUser.username}!`;
+      // Determine tokens earned
+      // We need to calculate it client side since RPC doesn't return it directly here
+      // Logic: shares * price
+      const tokensEarned = (exactShares * price);
+
+      successMsg = `Has vendido ${exactShares.toLocaleString()} acciones a ${tokensEarned.toLocaleString(undefined, {minimumFractionDigits: 2})} tokens`;
       setTimeout(() => {
           onClose();
           dispatch("success");

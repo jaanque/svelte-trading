@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Image, Smile, Calendar, BarChart2, MapPin, X, Globe, UserPlus } from "lucide-svelte";
+  import { Image, Smile, Calendar, BarChart2, MapPin, X, Globe, UserPlus, Loader2 } from "lucide-svelte";
   import { userProfile } from "../../lib/authStore";
   import { supabase } from "../../lib/supabase";
 
@@ -37,7 +37,7 @@
             console.log("Posted successfully");
             content = "";
             onClose();
-            // Trigger a global event or refresh if needed
+            // Trigger a global event so Home refetches
             window.dispatchEvent(new CustomEvent('post-created'));
         }
     } catch (e) {
@@ -78,7 +78,6 @@
       <button class="close-btn" on:click={onClose} aria-label="Close">
         <X size={20} />
       </button>
-      <!-- Removed Drafts button as implied it's not functional yet, cleaner UI -->
     </div>
 
     <div class="editor-layout">
@@ -104,7 +103,6 @@
                        <UserPlus size={14} />
                        <span>Followers</span>
                    {/if}
-                   <!-- Dropdown arrow could go here -->
                </button>
                {#if showVisibilityOptions}
                    <div class="visibility-dropdown">
@@ -121,7 +119,6 @@
                            </div>
                        </button>
                    </div>
-                   <!-- Backdrop for dropdown to close on click outside -->
                    <div class="dropdown-backdrop" on:click={() => showVisibilityOptions = false}></div>
                {/if}
           </div>
@@ -134,10 +131,10 @@
                   on:focus={() => isFocused = true}
                   on:blur={() => isFocused = false}
                   rows="3"
+                  disabled={isPosting}
               ></textarea>
           </div>
 
-          <!-- Divider line if needed -->
           <div class="divider"></div>
 
           <div class="reply-permission">
@@ -147,16 +144,17 @@
 
           <div class="toolbar">
               <div class="media-actions">
-                  <button class="icon-btn" aria-label="Media" title="Media"><Image size={20} /></button>
-                  <button class="icon-btn" aria-label="GIF" title="GIF"><div class="gif-badge">GIF</div></button>
-                  <button class="icon-btn" aria-label="Poll" title="Poll"><BarChart2 size={20} transform="rotate(90)" /></button>
+                  <!-- Disabled features not supported by current table schema -->
+                  <button class="icon-btn disabled" aria-label="Media" title="Not available"><Image size={20} /></button>
+                  <button class="icon-btn disabled" aria-label="GIF" title="Not available"><div class="gif-badge">GIF</div></button>
+                  <button class="icon-btn disabled" aria-label="Poll" title="Not available"><BarChart2 size={20} transform="rotate(90)" /></button>
                   <button class="icon-btn" aria-label="Emoji" title="Emoji"><Smile size={20} /></button>
-                  <button class="icon-btn" aria-label="Schedule" title="Schedule"><Calendar size={20} /></button>
-                  <button class="icon-btn disabled" aria-label="Location" title="Location"><MapPin size={20} /></button>
+                  <button class="icon-btn disabled" aria-label="Schedule" title="Not available"><Calendar size={20} /></button>
+                  <button class="icon-btn disabled" aria-label="Location" title="Not available"><MapPin size={20} /></button>
               </div>
 
               <div class="submit-action">
-                  {#if content.length > 0}
+                  {#if content.length > 0 && !isPosting}
                       <div class="progress-indicator">
                           {#if isNearLimit}
                               <span class="count-text {isOverLimit ? 'danger' : 'warning'}">{280 - charCount}</span>
@@ -174,9 +172,14 @@
                       <div class="separator"></div>
                   {/if}
 
-                  <!-- Add Circle Icon if content > 0? Maybe not needed for this simplified request -->
-
-                  <button class="btn-primary" disabled={!isValid || isOverLimit} on:click={handlePost}>Post</button>
+                  <button class="btn-primary" disabled={!isValid || isOverLimit || isPosting} on:click={handlePost}>
+                      {#if isPosting}
+                          <Loader2 class="animate-spin" size={18} />
+                          <span>Posting...</span>
+                      {:else}
+                          Post
+                      {/if}
+                  </button>
               </div>
           </div>
       </div>
@@ -192,7 +195,7 @@
     width: 100%;
     height: 100%;
     background-color: rgba(91, 112, 131, 0.4);
-    backdrop-filter: blur(4px); /* Nice blur effect */
+    backdrop-filter: blur(4px);
     z-index: 9999;
     display: flex;
     justify-content: center;
@@ -302,7 +305,7 @@
       top: 100%;
       left: 0;
       background-color: var(--bg-main);
-      box-shadow: var(--shadow-md); /* Assuming shadow variable exists, else 0 2px 10px rgba(0,0,0,0.1) */
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
       border-radius: 12px;
       padding: 8px 0;
       z-index: 20;
@@ -405,7 +408,7 @@
   .media-actions {
       display: flex;
       gap: 0px;
-      margin-left: -8px; /* Offset padding of first icon */
+      margin-left: -8px;
   }
 
   .icon-btn {
@@ -426,8 +429,9 @@
   }
 
   .icon-btn.disabled {
-      opacity: 0.5;
-      cursor: default;
+      opacity: 0.3;
+      cursor: not-allowed;
+      color: var(--text-secondary);
   }
 
   .icon-btn.disabled:hover {
@@ -457,6 +461,9 @@
     font-size: 15px;
     transition: opacity 0.2s, background-color 0.2s;
     border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .btn-primary:hover:not(:disabled) {
@@ -465,7 +472,7 @@
 
   .btn-primary:disabled {
       opacity: 0.5;
-      cursor: default;
+      cursor: not-allowed;
   }
 
   /* Progress Ring */
@@ -503,13 +510,22 @@
       font-size: 13px;
       font-weight: 500;
   }
-  .count-text.warning { color: #eab308; } /* Yellow */
-  .count-text.danger { color: #ef4444; } /* Red */
+  .count-text.warning { color: #eab308; }
+  .count-text.danger { color: #ef4444; }
 
   .separator {
       width: 1px;
       height: 24px;
       background-color: var(--border-color);
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 
   @media (max-width: 640px) {

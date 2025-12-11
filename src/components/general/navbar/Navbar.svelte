@@ -48,14 +48,14 @@
   }
 
   const navItems = [
-    { path: "/", label: "Home", icon: Home, size: 28, strokeWidth: 2 },
-    { path: "/markets", label: "Markets", icon: Search, size: 28, strokeWidth: 2 },
-    { path: "/messages", label: "Messages", icon: Mail, size: 28, strokeWidth: 2 },
-    { path: "/portfolio", label: "Portfolio", icon: BarChart3, size: 28, strokeWidth: 2 },
-    { path: "/notifications", label: "Notifications", icon: Bell, size: 28, strokeWidth: 2 },
-    { path: "/settings", label: "Settings", icon: Settings, size: 28, strokeWidth: 2, isDesktopOnly: true },
+    { path: "/", label: "Inicio", icon: Home, size: 28, strokeWidth: 2 },
+    { path: "/markets", label: "Mercados", icon: Search, size: 28, strokeWidth: 2 },
+    { path: "/messages", label: "Mensajes", icon: Mail, size: 28, strokeWidth: 2 },
+    { path: "/portfolio", label: "Portafolio", icon: BarChart3, size: 28, strokeWidth: 2 },
+    { path: "/notifications", label: "Notificaciones", icon: Bell, size: 28, strokeWidth: 2 },
+    { path: "/settings", label: "Configuración", icon: Settings, size: 28, strokeWidth: 2, isDesktopOnly: true },
     // Mobile only Profile item (hidden on desktop via CSS)
-    { path: "/profile", label: "Profile", icon: svelteLogo, size: 28, strokeWidth: 2, isMobileOnly: true },
+    { path: "/profile", label: "Perfil", icon: svelteLogo, size: 28, strokeWidth: 2, isMobileOnly: true },
   ];
 
   let navElements: HTMLAnchorElement[] = [];
@@ -160,13 +160,13 @@
     <!-- Use a button instead of a link for modal action -->
     <button
       class="post-btn"
-      aria-label="Post"
+      aria-label="Publicar"
       on:click={() => onNavigate("/post")}
     >
       <div class="post-icon-container">
         <Plus size={24} strokeWidth={3} color="#ffffff" />
       </div>
-      <span class="text post-text">Post</span>
+      <span class="text post-text">Publicar</span>
     </button>
 
     <div class="spacer"></div>
@@ -602,22 +602,51 @@
       flex-direction: row;
       justify-content: space-around;
       align-items: center;
-      width: auto; /* Let it shrink */
-      flex-grow: 1;
+      width: 100%;
       height: 100%;
     }
 
     .nav-links li {
-       width: auto;
+       width: 100%;
+       display: flex;
+       justify-content: center;
     }
 
     .nav-item {
-      padding: 8px;
+      padding: 6px;
       margin: 0;
+      flex-direction: column;
+      justify-content: center;
+      width: 100%;
+      border-radius: 8px; /* Slightly squarer for vertical stack */
+    }
+
+    .nav-item .text {
+      display: block;
+      font-size: 10px;
+      line-height: 12px;
+      margin-right: 0;
+      margin-top: 4px;
+      width: auto;
+      opacity: 1;
+      visibility: visible;
+      text-align: center;
+    }
+
+    .nav-item .text::after {
+        content: none; /* Remove bold reserver on mobile to save space */
     }
 
     .icon-container {
         margin-right: 0;
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Resize icons for mobile to fit with text */
+    :global(.nav-item .icon-container svg) {
+        width: 24px;
+        height: 24px;
     }
 
     /* Floating Action Button (FAB) for Mobile */

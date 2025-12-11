@@ -3,18 +3,25 @@
   import { userSession } from "../../../lib/authStore";
 
   export let onNavigate: (path: string) => void = () => {};
+  export let currentPath = "/";
 
-  // Determine page title based on current path
-  let pageTitle = "Home";
+  $: pageTitle = getPageTitle(currentPath);
 
-  // A reactive statement to update title would need the current path prop passed down
-  // But since we don't have it as a prop yet, let's just use window location for now or rely on simplistic mapping
-  // Better approach: Accept currentPath as prop.
-  // For now, let's try to infer it from URL or just keep it simple.
+  function getPageTitle(path: string) {
+    // Remove query params
+    const route = path.split('?')[0];
 
-  // Actually, to make it "Context Aware", we should probably accept a prop.
-  // Let's assume we can get it from window or add it later.
-  // For now, let's keep the right side logic clean.
+    if (route === "/") return "Inicio";
+    if (route === "/markets") return "Mercados";
+    if (route === "/messages") return "Mensajes";
+    if (route === "/portfolio") return "Portafolio";
+    if (route === "/notifications") return "Notificaciones";
+    if (route === "/settings") return "Configuración";
+    if (route === "/profile") return "Perfil";
+    if (route === "/login") return "Iniciar Sesión";
+    if (route === "/register") return "Registrarse";
+    return "App";
+  }
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -24,8 +31,7 @@
 
 <div class="top-navbar">
   <div class="page-header">
-     <!-- Placeholder for dynamic title if we decide to pass it -->
-     <!-- <h2>{pageTitle}</h2> -->
+     <h2>{pageTitle}</h2>
   </div>
   <div class="actions">
     {#if !$userSession}

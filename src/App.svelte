@@ -60,9 +60,7 @@
   <div class="app-layout" style="--sidebar-width: {isCollapsed ? '88px' : '275px'}">
     <Navbar bind:isCollapsed {currentPath} onNavigate={handleNavigate} />
     <main class="main-content">
-      {#if !$userSession}
-        <TopNavbar onNavigate={handleNavigate} />
-      {/if}
+      <TopNavbar {currentPath} onNavigate={handleNavigate} />
       <div class="page-container {route === '/profile' || route === '/portfolio' || route === '/messages' || route === '/settings' || route === '/markets' ? 'full-width' : ''}">
         {#if route === "/" || route === ""}
           <Home />

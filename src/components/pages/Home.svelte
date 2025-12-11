@@ -118,29 +118,11 @@
 
         if (!postsError && postsData && postsData.length > 0) {
             posts = postsData.map((p: any) => ({ ...p, type: 'post' }));
-        } else {
-             // Mock posts if table missing or empty
-             posts = [
-                 { id: 'p1', type: 'post', created_at: new Date().toISOString(), content: "Just bought some more $TECH! Bullish on the sector.", likes_count: 12, user: { username: "trader_joe", full_name: "Joe Trader", avatar_url: "" } },
-                 { id: 'p2', type: 'post', created_at: new Date(Date.now() - 3600000).toISOString(), content: "Who else is watching the charts today?", likes_count: 5, user: { username: "chart_master", full_name: "Chart Master", avatar_url: "" } }
-             ];
         }
 
         let investments = [];
         if (!actError && activity && activity.length > 0) {
             investments = activity.map((a: any) => ({ ...a, type: 'investment' }));
-        } else {
-             // Mock investments if empty
-             investments = [
-                 {
-                     id: 'i1',
-                     type: 'investment',
-                     created_at: new Date(Date.now() - 1800000).toISOString(),
-                     amount_tokens: 500,
-                     investor: { username: "whale_watch", full_name: "Whale Watcher", avatar_url: "" },
-                     target: { id: 'mock_target_1', username: "meme_lord", price: 69.42 }
-                 }
-             ];
         }
 
         // Merge and sort
@@ -286,6 +268,14 @@
       <div class="feed-list">
           {#if loading}
               <div class="loading-feed">Cargando feed...</div>
+          {:else if feedItems.length === 0}
+              <div class="empty-feed">
+                  <div class="empty-icon">
+                      <MessageCircle size={48} color="var(--text-secondary)" />
+                  </div>
+                  <h3>No hay actividad reciente</h3>
+                  <p>¡Sé el primero en publicar algo o invierte en un mercado!</p>
+              </div>
           {:else}
               {#each feedItems as item}
                   {#if item.type === 'post'}
@@ -742,6 +732,40 @@
 
   .investment-badge {
       color: var(--success-color);
+  }
+
+  .empty-feed {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+  }
+
+  .empty-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--bg-tertiary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+  }
+
+  .empty-feed h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 0;
+  }
+
+  .empty-feed p {
+      font-size: 15px;
+      max-width: 300px;
+      margin: 0 auto;
   }
 
   /* Right Sidebar */

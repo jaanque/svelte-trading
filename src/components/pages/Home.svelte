@@ -1,21 +1,33 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { TrendingUp, Users, DollarSign, Activity, ArrowUpRight, ArrowDownRight, Clock, Coins } from "lucide-svelte";
+  import { TrendingUp, Users, DollarSign, Activity, ArrowUpRight, ArrowDownRight, Clock, Coins, MessageCircle, Heart, Share2, Image as ImageIcon, BarChart2, Smile, Gift, ThumbsUp, ThumbsDown, UserPlus, Plus } from "lucide-svelte";
   import { userProfile } from "../../lib/authStore";
   import { supabase } from "../../lib/supabase";
   import Chart from "chart.js/auto";
+  import Post from "./Post.svelte";
+  import InvestModal from "../../components/general/InvestModal.svelte";
 
   // Data state
   let portfolioValue = 0;
   let activeMarketsCount = 0;
   let shareholdersCount = 0;
-  let recentActivity: any[] = [];
+  let feedItems: any[] = [];
+  let trendingUsers: any[] = [];
 
   let marketStats: { count: number; volume: number; chart_data: any[] } | null = null;
-  let chartCanvas: HTMLCanvasElement;
-  let chartInstance: Chart | null = null;
+
+  // New unique feature state
+  let sentimentRatio = 50; // 50% bullish
+  let dailyRewardClaimed = false;
+  let suggestedUsers: any[] = [];
 
   let loading = true;
+  let showPostModal = false;
+  let showInvestModal = false;
+  let selectedUser: any = null;
+
+  // For the inline post input
+  let postInputContent = "";
 
   async function fetchData() {
     try {
@@ -57,14 +69,13 @@
             }
         }
 
-        // Global Data (always fetch)
+        // Global Data
 
         // 3. Fetch Market Stats (RPC)
         const { data: stats, error: statsError } = await supabase.rpc("get_daily_investment_stats");
         if (!statsError && stats) {
             marketStats = stats;
         } else {
-            // Mock data fallback if RPC fails or returns null
              marketStats = {
                 count: 142,
                 volume: 54200,
@@ -76,27 +87,75 @@
             };
         }
 
-        // 4. Fetch Recent Global Activity
+        // 4. Fetch Feed (Posts + Investments)
+
+        // Fetch Investments
         const { data: activity, error: actError } = await supabase
             .from('investments')
             .select(`
+                id,
                 created_at,
                 amount_tokens,
-                investor:profiles!investor_id(username, avatar_url),
-                target:profiles!target_user_id(username)
+                investor:profiles!investor_id(username, avatar_url, full_name),
+                target:profiles!target_user_id(id, username, price)
             `)
             .order('created_at', { ascending: false })
-            .limit(5);
+            .limit(10);
 
-        if (!actError && activity && activity.length > 0) {
-            recentActivity = activity;
+        // Fetch Posts (if table exists)
+        let posts: any[] = [];
+        const { data: postsData, error: postsError } = await supabase
+            .from('posts')
+            .select(`
+                id,
+                created_at,
+                content,
+                likes_count,
+                user:profiles!user_id(username, avatar_url, full_name)
+            `)
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (!postsError && postsData && postsData.length > 0) {
+            posts = postsData.map((p: any) => ({ ...p, type: 'post' }));
         } else {
-             // Mock activity if empty or error
-             recentActivity = [
-                 { created_at: new Date().toISOString(), amount_tokens: 500, investor: { username: "trader_pro", avatar_url: "" }, target: { username: "tech_guru" } },
-                 { created_at: new Date(Date.now() - 3600000).toISOString(), amount_tokens: 120, investor: { username: "investor_x", avatar_url: "" }, target: { username: "crypto_king" } },
-                 { created_at: new Date(Date.now() - 7200000).toISOString(), amount_tokens: 1000, investor: { username: "whale_watch", avatar_url: "" }, target: { username: "meme_lord" } }
+             // Mock posts if table missing or empty
+             posts = [
+                 { id: 'p1', type: 'post', created_at: new Date().toISOString(), content: "Just bought some more $TECH! Bullish on the sector.", likes_count: 12, user: { username: "trader_joe", full_name: "Joe Trader", avatar_url: "" } },
+                 { id: 'p2', type: 'post', created_at: new Date(Date.now() - 3600000).toISOString(), content: "Who else is watching the charts today?", likes_count: 5, user: { username: "chart_master", full_name: "Chart Master", avatar_url: "" } }
              ];
+        }
+
+        let investments = [];
+        if (!actError && activity && activity.length > 0) {
+            investments = activity.map((a: any) => ({ ...a, type: 'investment' }));
+        } else {
+             // Mock investments if empty
+             investments = [
+                 {
+                     id: 'i1',
+                     type: 'investment',
+                     created_at: new Date(Date.now() - 1800000).toISOString(),
+                     amount_tokens: 500,
+                     investor: { username: "whale_watch", full_name: "Whale Watcher", avatar_url: "" },
+                     target: { id: 'mock_target_1', username: "meme_lord", price: 69.42 }
+                 }
+             ];
+        }
+
+        // Merge and sort
+        feedItems = [...posts, ...investments].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        // 5. Fetch Suggested Users (Unique to Home)
+        suggestedUsers = [
+            { username: "new_star", full_name: "Rising Star", avatar_url: "" },
+            { username: "quant_fund", full_name: "Quant Fund", avatar_url: "" },
+            { username: "social_cap", full_name: "Social Capital", avatar_url: "" }
+        ];
+
+        // 6. Calculate Sentiment (Mock logic based on volume for now)
+        if (marketStats) {
+            sentimentRatio = 55 + Math.floor(Math.random() * 20) - 10;
         }
 
     } catch (e) {
@@ -106,426 +165,738 @@
     }
   }
 
-  function renderChart() {
-      if (!marketStats || !chartCanvas) return;
-
-      if (chartInstance) {
-          chartInstance.destroy();
-      }
-
-      // Prepare data for last 24h or today
-      // The RPC returns { hour, count, volume }
-      // We'll just plot volume for now
-      const labels = marketStats.chart_data.map((d: any) => `${d.hour}:00`);
-      const data = marketStats.chart_data.map((d: any) => d.volume);
-
-      chartInstance = new Chart(chartCanvas, {
-          type: 'bar', // Bar chart looks nice for volume
-          data: {
-              labels: labels,
-              datasets: [{
-                  label: 'Volumen',
-                  data: data,
-                  backgroundColor: '#1d9bf0',
-                  borderRadius: 4,
-                  barThickness: 12
-              }]
-          },
-          options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: { legend: { display: false } },
-              scales: {
-                  x: { display: false },
-                  y: { display: false } // minimalist
-              }
-          }
-      });
-  }
-
   // Format helpers
   const formatCurrency = (val: number) => val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const formatTime = (iso: string) => {
       const date = new Date(iso);
       const now = new Date();
       const diffMins = Math.floor((now.getTime() - date.getTime()) / 60000);
-
-      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffMins < 60) return `${diffMins}m`;
       const diffHours = Math.floor(diffMins / 60);
-      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffHours < 24) return `${diffHours}h`;
       return date.toLocaleDateString();
   };
 
+  function openPostModal() {
+      showPostModal = true;
+  }
+
+  function openInvestModal(target: any) {
+      if (!target) return;
+      selectedUser = target;
+      showInvestModal = true;
+  }
+
+  function claimReward() {
+      if (dailyRewardClaimed) return;
+      dailyRewardClaimed = true;
+      // In real app, call RPC to add tokens
+
+      // Toast logic would go here
+      const toast = document.createElement('div');
+      toast.className = 'reward-toast';
+      toast.innerText = '+50 Tokens Reclamados!';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+  }
+
   onMount(() => {
       fetchData();
+      window.addEventListener('post-created', fetchData);
+      return () => window.removeEventListener('post-created', fetchData);
   });
-
-  $: if (marketStats && chartCanvas) {
-      renderChart();
-  }
 </script>
 
-<div class="dashboard">
-  <header class="page-header">
-    <h1>Panel de Control</h1>
-    <p class="subtitle">¡Bienvenido de nuevo! Aquí tienes el resumen de hoy.</p>
-  </header>
+<div class="home-container">
 
-  <section class="stats-grid">
-    <!-- Balance -->
-    <div class="stat-card">
-        <div class="stat-icon balance">
-            <DollarSign size={24} />
-        </div>
-        <div class="stat-content">
-            <span class="stat-label">Balance Disponible</span>
-            <div class="stat-value-row">
-                <span class="stat-value">{$userProfile?.tokens.toLocaleString() || "0"}</span>
-            </div>
-        </div>
-    </div>
+  <!-- Left Sidebar (Desktop Only) -->
+  <div class="left-sidebar">
+      {#if $userProfile}
+          <div class="mini-profile-card">
+              <div class="mini-profile-bg"></div>
+              <div class="mini-profile-content">
+                  <img src={$userProfile.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${$userProfile.username}`} alt="" class="mini-avatar"/>
+                  <div class="mini-names">
+                      <span class="mini-fullname">{$userProfile.full_name}</span>
+                      <span class="mini-username">@{$userProfile.username}</span>
+                  </div>
+                  <div class="mini-stats-row">
+                      <div class="mini-stat">
+                          <span class="val">{activeMarketsCount}</span>
+                          <span class="lbl">Mercados</span>
+                      </div>
+                      <div class="mini-stat">
+                          <span class="val">{shareholdersCount}</span>
+                          <span class="lbl">Accionistas</span>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      {/if}
+  </div>
 
-    <!-- Portfolio Value -->
-    <div class="stat-card">
-        <div class="stat-icon portfolio">
-            <Activity size={24} />
-        </div>
-        <div class="stat-content">
-            <span class="stat-label">Valor del Portafolio</span>
-            <div class="stat-value-row">
-                <span class="stat-value">{formatCurrency(portfolioValue)}</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Active Markets -->
-    <div class="stat-card">
-        <div class="stat-icon markets">
-            <TrendingUp size={24} />
-        </div>
-        <div class="stat-content">
-            <span class="stat-label">Mercados Activos</span>
-            <div class="stat-value-row">
-                <span class="stat-value">{activeMarketsCount}</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Shareholders -->
-    <div class="stat-card">
-        <div class="stat-icon users">
-            <Users size={24} />
-        </div>
-        <div class="stat-content">
-            <span class="stat-label">Accionistas</span>
-            <div class="stat-value-row">
-                <span class="stat-value">{shareholdersCount}</span>
-            </div>
-        </div>
-    </div>
-  </section>
-
-  <div class="main-grid">
-    <section class="chart-section card">
-      <div class="card-header">
-          <h2>Actividad del Mercado</h2>
-          <div class="live-indicator">
-              <span class="dot"></span> En vivo
+  <!-- Main Feed Column -->
+  <div class="feed-column">
+      <!-- Create Post Box -->
+      <div class="compose-box">
+          <div class="compose-avatar">
+              {#if $userProfile}
+                <img src={$userProfile.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${$userProfile.username}`} alt=""/>
+              {:else}
+                <div class="placeholder-avatar"></div>
+              {/if}
+          </div>
+          <div class="compose-input-wrapper" on:click={openPostModal} role="button" tabindex="0">
+              <input type="text" placeholder="¿Qué está pasando?" readonly />
+              <div class="compose-actions">
+                  <ImageIcon size={20} color="var(--primary-color)" />
+                  <BarChart2 size={20} color="var(--primary-color)" transform="rotate(90)"/>
+                  <Smile size={20} color="var(--primary-color)" />
+              </div>
           </div>
       </div>
 
-      <div class="chart-container">
-          {#if loading && !marketStats}
-             <div class="loading-chart">Cargando datos...</div>
+      <!-- Mobile Unique Features (Visible only on <768px) -->
+      <div class="mobile-unique-features">
+          <!-- Daily Reward (Mobile) -->
+          <div class="mobile-feature-card">
+             <div class="m-reward-header">
+                 <Gift size={24} color="#F59E0B" />
+                 <span class="m-title">Recompensa Diaria</span>
+             </div>
+             <button class="m-claim-btn {dailyRewardClaimed ? 'claimed' : ''}" on:click={claimReward}>
+                 {dailyRewardClaimed ? '¡Reclamado!' : 'Reclamar 50 Tokens'}
+             </button>
+          </div>
+
+          <!-- Sentiment (Mobile) -->
+          <div class="mobile-feature-card">
+             <div class="m-sentiment-header">
+                 <Activity size={20} color="var(--text-main)"/>
+                 <span class="m-title">Sentimiento: {sentimentRatio > 50 ? 'Alcista' : 'Bajista'}</span>
+             </div>
+             <div class="sentiment-bar mobile">
+                  <div class="bar-fill buy" style="width: {sentimentRatio}%"></div>
+                  <div class="bar-fill sell" style="width: {100 - sentimentRatio}%"></div>
+             </div>
+          </div>
+      </div>
+
+      <!-- Feed -->
+      <div class="feed-list">
+          {#if loading}
+              <div class="loading-feed">Cargando feed...</div>
           {:else}
-             <canvas bind:this={chartCanvas}></canvas>
+              {#each feedItems as item}
+                  {#if item.type === 'post'}
+                      <div class="feed-item post">
+                          <div class="item-avatar">
+                              <img src={item.user?.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${item.user?.username}`} alt=""/>
+                          </div>
+                          <div class="item-content">
+                              <div class="item-header">
+                                  <span class="name">{item.user?.full_name}</span>
+                                  <span class="handle">@{item.user?.username}</span>
+                                  <span class="dot">·</span>
+                                  <span class="time">{formatTime(item.created_at)}</span>
+                              </div>
+                              <div class="post-text">{item.content}</div>
+                              <div class="post-actions">
+                                  <button class="action-btn"><MessageCircle size={18} /> <span>0</span></button>
+                                  <button class="action-btn"><Share2 size={18} /></button>
+                                  <button class="action-btn"><Heart size={18} /> <span>{item.likes_count}</span></button>
+                              </div>
+                          </div>
+                      </div>
+                  {:else}
+                      <div class="feed-item investment">
+                          <div class="item-avatar">
+                               <img src={item.investor?.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${item.investor?.username}`} alt=""/>
+                          </div>
+                          <div class="item-content">
+                              <div class="item-header">
+                                  <span class="name">{item.investor?.full_name}</span>
+                                  <span class="handle">@{item.investor?.username}</span>
+                                  <span class="dot">·</span>
+                                  <span class="time">{formatTime(item.created_at)}</span>
+                              </div>
+                              <div class="investment-row">
+                                <div class="investment-text">
+                                    Invirtió <span class="amount">{item.amount_tokens} tokens</span> en <span class="ticker">${item.target?.username.toUpperCase()}</span>
+                                </div>
+                                <button class="invest-action-btn" on:click|stopPropagation={() => openInvestModal(item.target)}>
+                                    Invertir
+                                </button>
+                              </div>
+                          </div>
+                          <div class="investment-badge">
+                              <TrendingUp size={16} />
+                          </div>
+                      </div>
+                  {/if}
+              {/each}
           {/if}
       </div>
+  </div>
 
-      <div class="market-summary">
-          <div class="summary-item">
-              <span class="label">Volumen Total (24h)</span>
-              <span class="val">{marketStats?.volume?.toLocaleString() || "0"}</span>
-          </div>
-          <div class="summary-item">
-              <span class="label">Transacciones</span>
-              <span class="val">{marketStats?.count?.toLocaleString() || "0"}</span>
+  <!-- Right Sidebar (Desktop) -->
+  <div class="right-sidebar">
+      <!-- Market Sentiment (Unique) -->
+      <div class="sidebar-card">
+          <h3>Sentimiento del Mercado</h3>
+          <div class="sentiment-container">
+              <div class="sentiment-bar">
+                  <div class="bar-fill buy" style="width: {sentimentRatio}%"></div>
+                  <div class="bar-fill sell" style="width: {100 - sentimentRatio}%"></div>
+              </div>
+              <div class="sentiment-labels">
+                  <span class="s-label buy"><ThumbsUp size={14} /> {sentimentRatio}% Compra</span>
+                  <span class="s-label sell"><ThumbsDown size={14} /> {100 - sentimentRatio}% Venta</span>
+              </div>
           </div>
       </div>
-    </section>
 
-    <section class="activity-section card">
-      <h2>Actividad Reciente</h2>
-      <ul class="activity-list">
-        {#if loading && recentActivity.length === 0}
-            <li class="loading-item">Cargando...</li>
-        {:else if recentActivity.length === 0}
-            <li class="empty-item">No hay actividad reciente.</li>
-        {:else}
-            {#each recentActivity as item}
-            <li class="activity-item">
-                <div class="activity-icon">
-                    <img src={item.investor?.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${item.investor?.username}`} alt="Avatar" />
-                </div>
-                <div class="activity-info">
-                    <div class="activity-text">
-                        <strong>@{item.investor?.username}</strong> invirtió en <strong>${item.target?.username.toUpperCase()}</strong>
-                    </div>
-                    <span class="activity-time">{formatTime(item.created_at)}</span>
-                </div>
-                <div class="activity-amount">
-                    <Coins size={12} class="coin-icon"/>
-                    {item.amount_tokens}
-                </div>
-            </li>
-            {/each}
-        {/if}
-      </ul>
-    </section>
+      <!-- Daily Reward (Unique) -->
+      <div class="sidebar-card reward-card">
+          <h3>Recompensa Diaria</h3>
+          <div class="reward-content">
+              <div class="reward-icon">
+                  <Gift size={32} color="#F59E0B" />
+              </div>
+              <div class="reward-info">
+                  <span class="r-title">¡Reclama tus tokens!</span>
+                  <span class="r-desc">Vuelve cada día para ganar más.</span>
+              </div>
+          </div>
+          <button class="claim-btn {dailyRewardClaimed ? 'claimed' : ''}" on:click={claimReward}>
+              {dailyRewardClaimed ? '¡Reclamado!' : 'Reclamar 50 Tokens'}
+          </button>
+      </div>
+
+      <!-- Who to Follow (Unique) -->
+      <div class="sidebar-card">
+          <h3>A quién seguir</h3>
+          <div class="suggested-list">
+              {#each suggestedUsers as user}
+                  <div class="suggested-item">
+                      <img src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`} alt="" class="s-avatar"/>
+                      <div class="s-info">
+                          <span class="s-name">{user.full_name}</span>
+                          <span class="s-handle">@{user.username}</span>
+                      </div>
+                      <button class="follow-btn"><UserPlus size={16} /></button>
+                  </div>
+              {/each}
+          </div>
+      </div>
+
+      <!-- My Stats (Desktop overlap) -->
+      {#if $userProfile}
+      <div class="sidebar-card stats-mini">
+          <h3>Mi Portafolio</h3>
+          <div class="p-row">
+              <span>Valor</span>
+              <span class="highlight">{formatCurrency(portfolioValue)}</span>
+          </div>
+          <div class="p-row">
+              <span>Balance</span>
+              <span>{($userProfile.tokens || 0).toLocaleString()}</span>
+          </div>
+      </div>
+      {/if}
   </div>
+
 </div>
 
+{#if showPostModal}
+  <Post onClose={() => showPostModal = false} />
+{/if}
+
+{#if showInvestModal && selectedUser}
+  <InvestModal targetUser={selectedUser} onClose={() => showInvestModal = false} />
+{/if}
+
 <style>
-  .dashboard {
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
-    max-width: 1200px;
-    margin: 0 auto;
-    width: 100%;
-  }
-
-  .page-header h1 {
-    font-size: 28px;
-    font-weight: 800;
-    margin-bottom: 8px;
-    color: var(--text-main);
-  }
-
-  .subtitle {
-    color: var(--text-secondary);
-    margin: 0;
-    font-size: 16px;
-  }
-
-  /* Stats Grid */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-  }
-
-  .stat-card {
-    background: var(--bg-main);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    transition: transform 0.2s, box-shadow 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-    border-color: rgba(29, 155, 240, 0.3);
-  }
-
-  .stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 4px;
-  }
-
-  .stat-icon.balance { background-color: rgba(245, 158, 11, 0.1); color: #F59E0B; }
-  .stat-icon.portfolio { background-color: rgba(29, 155, 240, 0.1); color: var(--primary-color); }
-  .stat-icon.markets { background-color: rgba(16, 185, 129, 0.1); color: var(--success-color); }
-  .stat-icon.users { background-color: rgba(139, 92, 246, 0.1); color: #8B5CF6; }
-
-  .stat-label {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .stat-value-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-  }
-
-  .stat-value {
-    font-size: 32px;
-    font-weight: 800;
-    color: var(--text-main);
-    letter-spacing: -1px;
-    line-height: 1;
-  }
-
-  /* Main Grid */
-  .main-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 24px;
-  }
-
-  @media (max-width: 900px) {
-    .main-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .card {
-    background: var(--bg-main);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-  }
-
-  h2 {
-    font-size: 18px;
-    font-weight: 700;
-    margin: 0;
-  }
-
-  .live-indicator {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--danger-color);
-      background-color: rgba(239, 68, 68, 0.1);
-      padding: 4px 8px;
+  :global(.reward-toast) {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--success-color);
+      color: white;
+      padding: 12px 24px;
       border-radius: 99px;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 2000;
+      animation: fadeInOut 3s ease-in-out;
+  }
+  @keyframes fadeInOut {
+      0% { opacity: 0; transform: translate(-50%, 20px); }
+      10% { opacity: 1; transform: translate(-50%, 0); }
+      90% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, -20px); }
   }
 
-  .live-indicator .dot {
-      width: 6px;
-      height: 6px;
-      background-color: var(--danger-color);
-      border-radius: 50%;
-      animation: pulse 1.5s infinite;
-  }
-
-  @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.4; }
-      100% { opacity: 1; }
-  }
-
-  .chart-container {
-    width: 100%;
-    height: 240px;
-    margin-bottom: 24px;
-    position: relative;
-  }
-
-  .market-summary {
-      display: flex;
-      gap: 32px;
+  .home-container {
+      display: grid;
+      grid-template-columns: 240px 1fr 300px;
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
       padding-top: 20px;
+      align-items: start;
+  }
+
+  @media (max-width: 1000px) {
+      .home-container {
+          grid-template-columns: 1fr 300px;
+      }
+      .left-sidebar {
+          display: none;
+      }
+  }
+
+  @media (max-width: 768px) {
+      .home-container {
+          grid-template-columns: 1fr;
+      }
+      .right-sidebar {
+          display: none;
+      }
+  }
+
+  /* Left Sidebar */
+  .mini-profile-card {
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      text-align: center;
+  }
+
+  .mini-profile-bg {
+      height: 60px;
+      background-color: var(--bg-tertiary);
+  }
+
+  .mini-profile-content {
+      padding: 0 16px 16px;
+      margin-top: -30px;
+  }
+
+  .mini-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 4px solid var(--bg-main);
+      background-color: var(--bg-main);
+  }
+
+  .mini-names {
+      margin-top: 8px;
+  }
+
+  .mini-fullname {
+      display: block;
+      font-weight: 700;
+      color: var(--text-main);
+  }
+
+  .mini-username {
+      display: block;
+      color: var(--text-secondary);
+      font-size: 14px;
+  }
+
+  .mini-stats-row {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 16px;
+      padding-top: 16px;
       border-top: 1px solid var(--border-color);
   }
 
-  .summary-item {
+  .mini-stat {
       display: flex;
       flex-direction: column;
-      gap: 4px;
   }
 
-  .summary-item .label {
+  .mini-stat .val {
+      font-weight: 700;
+      color: var(--text-main);
+  }
+
+  .mini-stat .lbl {
       font-size: 12px;
       color: var(--text-secondary);
+  }
+
+  /* Feed Column */
+  .feed-column {
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      background: var(--bg-main);
+      min-height: 80vh;
+  }
+
+  .compose-box {
+      display: flex;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+  }
+
+  .compose-avatar img, .placeholder-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: var(--bg-tertiary);
+  }
+
+  .compose-input-wrapper {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+  }
+
+  .compose-input-wrapper input {
+      border: none;
+      background: none;
+      font-size: 18px;
+      outline: none;
+      color: var(--text-main);
+      cursor: text;
+  }
+
+  .compose-actions {
+      display: flex;
+      gap: 16px;
+      padding-top: 8px;
+      border-top: 1px solid transparent;
+  }
+
+  /* Mobile Unique Features */
+  .mobile-unique-features {
+      display: none; /* hidden by default */
+  }
+
+  @media (max-width: 768px) {
+      .mobile-unique-features {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          padding: 16px;
+          border-bottom: 1px solid var(--border-color);
+          background: var(--bg-hover);
+      }
+  }
+
+  .mobile-feature-card {
+      background: var(--bg-main);
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+  }
+
+  .m-reward-header, .m-sentiment-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+  }
+
+  .m-title {
+      font-weight: 700;
+      font-size: 14px;
+  }
+
+  .m-claim-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      width: 100%;
+  }
+
+  .m-claim-btn.claimed {
+      background-color: var(--bg-tertiary);
+      color: var(--text-secondary);
+  }
+
+  .sentiment-bar.mobile {
+      height: 6px;
+      border-radius: 99px;
+      display: flex;
+      overflow: hidden;
+      background: var(--bg-tertiary);
+  }
+
+  .feed-list {
+      display: flex;
+      flex-direction: column;
+  }
+
+  .feed-item {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      gap: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+  }
+
+  .feed-item:hover {
+      background-color: var(--bg-hover);
+  }
+
+  .item-avatar img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+  }
+
+  .item-content {
+      flex-grow: 1;
+  }
+
+  .item-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 15px;
+      margin-bottom: 4px;
+  }
+
+  .item-header .name { font-weight: 700; color: var(--text-main); }
+  .item-header .handle { color: var(--text-secondary); }
+  .item-header .dot { color: var(--text-secondary); }
+  .item-header .time { color: var(--text-secondary); }
+
+  .post-text {
+      font-size: 15px;
+      color: var(--text-main);
+      line-height: 1.4;
+      white-space: pre-wrap;
+  }
+
+  .investment-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+  }
+
+  .investment-text {
+      font-size: 15px;
+      color: var(--text-main);
+  }
+
+  .investment-text .amount { font-weight: 700; color: #F59E0B; }
+  .investment-text .ticker { font-weight: 700; color: var(--primary-color); }
+
+  .invest-action-btn {
+      background: rgba(29, 155, 240, 0.1);
+      color: var(--primary-color);
+      border: none;
+      border-radius: 99px;
+      padding: 4px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+  }
+
+  .invest-action-btn:hover {
+      background: rgba(29, 155, 240, 0.2);
+  }
+
+  .post-actions {
+      display: flex;
+      justify-content: space-between;
+      max-width: 300px;
+      margin-top: 12px;
+  }
+
+  .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: color 0.2s;
+  }
+
+  .action-btn:hover { color: var(--primary-color); }
+
+  .investment-badge {
+      color: var(--success-color);
+  }
+
+  /* Right Sidebar */
+  .right-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+  }
+
+  .sidebar-card {
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px;
+  }
+
+  .sidebar-card h3 {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 12px;
+  }
+
+  /* Market Sentiment */
+  .sentiment-container {
+      margin-top: 8px;
+  }
+
+  .sentiment-bar {
+      height: 8px;
+      border-radius: 99px;
+      background-color: var(--bg-tertiary);
+      display: flex;
+      overflow: hidden;
+      margin-bottom: 8px;
+  }
+
+  .bar-fill.buy { background-color: var(--success-color); }
+  .bar-fill.sell { background-color: var(--danger-color); }
+
+  .sentiment-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
       font-weight: 600;
   }
 
-  .summary-item .val {
-      font-size: 20px;
+  .s-label { display: flex; align-items: center; gap: 4px; }
+  .s-label.buy { color: var(--success-color); }
+  .s-label.sell { color: var(--danger-color); }
+
+  /* Daily Reward */
+  .reward-content {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+  }
+
+  .reward-icon {
+      width: 48px;
+      height: 48px;
+      background-color: rgba(245, 158, 11, 0.1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+  }
+
+  .reward-info {
+      display: flex;
+      flex-direction: column;
+  }
+
+  .r-title { font-weight: 700; font-size: 15px; }
+  .r-desc { font-size: 13px; color: var(--text-secondary); }
+
+  .claim-btn {
+      width: 100%;
+      padding: 10px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 99px;
       font-weight: 700;
-      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.2s;
   }
 
-  /* Activity List */
-  .activity-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .activity-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .activity-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .activity-icon img {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background-color: var(--bg-tertiary);
-    object-fit: cover;
-  }
-
-  .activity-info {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    font-size: 14px;
-  }
-
-  .activity-text strong {
-      font-weight: 700;
-      color: var(--text-main);
-  }
-
-  .activity-time {
-    font-size: 12px;
-    color: var(--text-tertiary);
-  }
-
-  .activity-amount {
-    font-weight: 700;
-    font-size: 14px;
-    color: #F59E0B;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .loading-chart, .loading-item, .empty-item {
+  .claim-btn:hover { opacity: 0.9; }
+  .claim-btn.claimed {
+      background-color: var(--bg-tertiary);
       color: var(--text-secondary);
+      cursor: default;
+  }
+
+  /* Suggested Users */
+  .suggested-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+  }
+
+  .suggested-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+  }
+
+  .s-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: var(--bg-tertiary);
+  }
+
+  .s-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+  }
+
+  .s-name { font-weight: 700; font-size: 14px; }
+  .s-handle { font-size: 12px; color: var(--text-secondary); }
+
+  .follow-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: var(--bg-tertiary);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: background-color 0.2s;
+  }
+
+  .follow-btn:hover {
+      background-color: var(--bg-hover);
+      color: var(--primary-color);
+  }
+
+  .p-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
       font-size: 14px;
+  }
+
+  .highlight { color: var(--primary-color); font-weight: 700; }
+
+  .loading-feed {
+      padding: 24px;
       text-align: center;
-      padding: 20px;
+      color: var(--text-secondary);
   }
 </style>

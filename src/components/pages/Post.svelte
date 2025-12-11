@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Image, Smile, Calendar, BarChart2, MapPin, X, Globe, UserPlus } from "lucide-svelte";
   import { userProfile } from "../../lib/authStore";
+  import { supabase } from "../../lib/supabase";
 
   export let onClose: () => void = () => {};
 
@@ -8,6 +9,7 @@
   let isFocused = false;
   let showVisibilityOptions = false;
   let visibility = "Everyone"; // Everyone, Followers
+  let isPosting = false;
 
   $: isValid = content.trim().length > 0;
   $: charCount = content.length;
@@ -15,12 +17,34 @@
   $: isNearLimit = charCount > 260;
   $: isOverLimit = charCount > 280;
 
-  function handlePost() {
-    if (!isValid || isOverLimit) return;
-    console.log("Posting:", content);
-    // Logic to submit post would go here
-    content = "";
-    onClose();
+  async function handlePost() {
+    if (!isValid || isOverLimit || isPosting || !$userProfile) return;
+
+    isPosting = true;
+    try {
+        const { error } = await supabase
+            .from('posts')
+            .insert({
+                user_id: $userProfile.id,
+                content: content,
+                visibility: visibility.toLowerCase()
+            });
+
+        if (error) {
+            console.error('Error posting:', error);
+            // Optionally handle error (toast)
+        } else {
+            console.log("Posted successfully");
+            content = "";
+            onClose();
+            // Trigger a global event or refresh if needed
+            window.dispatchEvent(new CustomEvent('post-created'));
+        }
+    } catch (e) {
+        console.error("Exception posting:", e);
+    } finally {
+        isPosting = false;
+    }
   }
 
   function handleBackdropClick(e: MouseEvent) {

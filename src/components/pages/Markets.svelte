@@ -298,7 +298,13 @@
                           </div>
                       {:else}
                           {#each searchResults as user}
-                              <div class="table-row" on:click={() => handleProfileClick(user)} role="button" tabindex="0">
+                              <div
+                                class="table-row"
+                                on:click={() => handleProfileClick(user)}
+                                on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleProfileClick(user)}
+                                role="button"
+                                tabindex="0"
+                              >
                                   <div class="td user-col">
                                       <img src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`} alt="" class="row-avatar"/>
                                       <div class="user-meta">
@@ -350,7 +356,13 @@
                                   </div>
                               {:else}
                                   {#each topGainers as user}
-                                      <div class="table-row" on:click={() => handleProfileClick(user)} role="button" tabindex="0">
+                                      <div
+                                        class="table-row"
+                                        on:click={() => handleProfileClick(user)}
+                                        on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleProfileClick(user)}
+                                        role="button"
+                                        tabindex="0"
+                                      >
                                           <div class="td user-col">
                                               <img src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`} alt="" class="row-avatar"/>
                                               <div class="user-meta">
@@ -381,7 +393,13 @@
                                   </div>
                               {:else}
                                   {#each topLosers as user}
-                                      <div class="table-row" on:click={() => handleProfileClick(user)} role="button" tabindex="0">
+                                      <div
+                                        class="table-row"
+                                        on:click={() => handleProfileClick(user)}
+                                        on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleProfileClick(user)}
+                                        role="button"
+                                        tabindex="0"
+                                      >
                                           <div class="td user-col">
                                               <img src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`} alt="" class="row-avatar"/>
                                               <div class="user-meta">
@@ -444,7 +462,13 @@
                   </div>
                   <div class="recent-list">
                       {#each searchHistory as user}
-                          <div class="recent-item" on:click={() => handleProfileClick(user)} role="button" tabindex="0">
+                          <div
+                            class="recent-item"
+                            on:click={() => handleProfileClick(user)}
+                            on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleProfileClick(user)}
+                            role="button"
+                            tabindex="0"
+                          >
                               <img src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`} alt="" class="mini-avatar"/>
                               <div class="recent-info">
                                   <span class="recent-name">{user.username}</span>
@@ -672,11 +696,6 @@
       transform: translateX(0);
   }
 
-  .table-row:hover .action-icon {
-      opacity: 0;
-      transform: translateX(10px);
-  }
-
   .table-row:last-child {
       border-bottom: none;
   }
@@ -784,10 +803,6 @@
       color: var(--text-main);
       opacity: 0;
       transform: translateX(-10px);
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .action-icon {
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 

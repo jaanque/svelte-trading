@@ -782,10 +782,6 @@
     text-decoration: none;
   }
 
-  .stat-item.link:hover {
-      text-decoration: underline;
-  }
-
   .stat-value {
     font-weight: 700;
     color: var(--text-main);

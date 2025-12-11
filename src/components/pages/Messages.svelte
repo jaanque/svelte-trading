@@ -63,7 +63,7 @@
   }
 
   async function handleSendMessage() {
-    if (!newMessage.trim() || !activeConversation) return;
+    if (!newMessage.trim() || !activeConversation || !$userProfile) return;
 
     const tempMessage: ChatMessage = {
       id: "temp-" + Date.now(),
@@ -418,11 +418,6 @@
         background-color: var(--bg-main);
         border-color: var(--primary-color);
         box-shadow: 0 0 0 2px rgba(29, 155, 240, 0.1);
-    }
-
-    .search-icon {
-        color: var(--text-secondary);
-        margin-right: 12px;
     }
 
     .search-bar input {

@@ -17,6 +17,7 @@
     Smartphone,
     Mail
   } from "lucide-svelte";
+  import type { ComponentType } from "svelte";
 
   // Mock toggle states
   let notificationsEnabled = true;
@@ -28,7 +29,17 @@
       window.location.href = '/login';
   }
 
-  const sections = [
+  interface SettingItem {
+    icon: ComponentType;
+    label: string;
+    desc: string;
+    type?: 'toggle';
+    action?: () => void;
+    value?: boolean;
+    toggle?: () => void;
+  }
+
+  const sections: { title: string; items: SettingItem[] }[] = [
       {
           title: "Account",
           items: [
@@ -53,7 +64,7 @@
                   desc: "Push and email preferences",
                   type: "toggle",
                   value: notificationsEnabled,
-                  toggle: () => notificationsEnabled = !notificationsEnabled
+                  toggle: () => { notificationsEnabled = !notificationsEnabled; }
               },
               {
                   icon: Moon,
@@ -61,7 +72,7 @@
                   desc: "Toggle application theme",
                   type: "toggle",
                   value: darkMode,
-                  toggle: () => darkMode = !darkMode
+                  toggle: () => { darkMode = !darkMode; }
               }
           ]
       },
@@ -72,6 +83,21 @@
           ]
       }
   ];
+
+  function handleItemClick(item: SettingItem) {
+      if (item.type === 'toggle' && item.toggle) {
+          item.toggle();
+      } else if (item.action) {
+          item.action();
+      }
+  }
+
+  function handleItemKeydown(e: KeyboardEvent, item: SettingItem) {
+      if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleItemClick(item);
+      }
+  }
 </script>
 
 <div class="settings-page">
@@ -114,7 +140,8 @@
                               class="setting-item {item.type === 'toggle' ? '' : 'clickable'}"
                               role="button"
                               tabindex="0"
-                              on:click={item.type === 'toggle' ? item.toggle : item.action}
+                              on:click={() => handleItemClick(item)}
+                              on:keydown={(e) => handleItemKeydown(e, item)}
                           >
                               <div class="icon-box">
                                   <svelte:component this={item.icon} size={20} />

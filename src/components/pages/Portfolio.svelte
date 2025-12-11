@@ -464,7 +464,13 @@
                       {:else}
                         <div class="list-container">
                             {#each holdings as item}
-                                <div class="list-item" role="button" tabindex="0" on:click={() => handleUserClick(item.user)}>
+                                <div
+                                    class="list-item"
+                                    role="button"
+                                    tabindex="0"
+                                    on:click={() => handleUserClick(item.user)}
+                                    on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleUserClick(item.user)}
+                                >
                                     <img src={item.user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${item.user.username}`} alt="" class="item-avatar"/>
                                     <div class="item-info">
                                         <div class="item-top">

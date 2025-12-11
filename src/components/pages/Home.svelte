@@ -208,7 +208,13 @@
                 <div class="placeholder-avatar"></div>
               {/if}
           </div>
-          <div class="compose-input-wrapper" on:click={openPostModal} role="button" tabindex="0">
+          <div
+            class="compose-input-wrapper"
+            on:click={openPostModal}
+            on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && openPostModal()}
+            role="button"
+            tabindex="0"
+          >
               <input type="text" placeholder="¿Qué está pasando?" readonly />
               <div class="compose-actions">
                   <ImageIcon size={20} color="var(--primary-color)" />
@@ -643,38 +649,6 @@
       white-space: pre-wrap;
   }
 
-  .investment-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-  }
-
-  .investment-text {
-      font-size: 15px;
-      color: var(--text-main);
-  }
-
-  .investment-text .amount { font-weight: 700; color: #F59E0B; }
-  .investment-text .ticker { font-weight: 700; color: var(--primary-color); }
-
-  .invest-action-btn {
-      background: rgba(29, 155, 240, 0.1);
-      color: var(--primary-color);
-      border: none;
-      border-radius: 99px;
-      padding: 4px 12px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.2s;
-  }
-
-  .invest-action-btn:hover {
-      background: rgba(29, 155, 240, 0.2);
-  }
-
   .post-actions {
       display: flex;
       justify-content: space-between;
@@ -695,10 +669,6 @@
   }
 
   .action-btn:hover { color: var(--primary-color); }
-
-  .investment-badge {
-      color: var(--success-color);
-  }
 
   .empty-feed {
       padding: 40px 20px;

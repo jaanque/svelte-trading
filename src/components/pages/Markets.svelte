@@ -344,52 +344,67 @@
                           {/each}
                       {:else}
                           {#if activeTab === 'gainers'}
-                              {#each topGainers as user}
-                                  <div class="table-row" on:click={() => handleProfileClick(user)} role="button" tabindex="0">
-                                      <div class="td user-col">
-                                          <img src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`} alt="" class="row-avatar"/>
-                                          <div class="user-meta">
-                                              <span class="row-name">{user.full_name}</span>
-                                              <span class="row-username">${user.username.toUpperCase()}</span>
-                                          </div>
-                                      </div>
-                                      <div class="td price-col">
-                                          <div class="price-wrapper">
-                                              <Coins size={14} class="currency-icon" />
-                                              <span class="price-val">{formatPrice(user.current_price || 0)}</span>
-                                          </div>
-                                      </div>
-                                      <div class="td change-col">
-                                          <span class="change-badge positive">+{user.change_pct.toFixed(2)}%</span>
-                                      </div>
-                                      <div class="td action-col">
-                                          <div class="view-btn">View</div>
-                                          <ArrowRight size={18} class="action-icon" />
-                                      </div>
+                              {#if topGainers.length === 0}
+                                  <div class="empty-state">
+                                      <p>No active traders found</p>
                                   </div>
-                              {/each}
+                              {:else}
+                                  {#each topGainers as user}
+                                      <div class="table-row" on:click={() => handleProfileClick(user)} role="button" tabindex="0">
+                                          <div class="td user-col">
+                                              <img src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`} alt="" class="row-avatar"/>
+                                              <div class="user-meta">
+                                                  <span class="row-name">{user.full_name}</span>
+                                                  <span class="row-username">${user.username.toUpperCase()}</span>
+                                              </div>
+                                          </div>
+                                          <div class="td price-col">
+                                              <div class="price-wrapper">
+                                                  <Coins size={14} class="currency-icon" />
+                                                  <span class="price-val">{formatPrice(user.current_price || 0)}</span>
+                                              </div>
+                                          </div>
+                                          <div class="td change-col">
+                                              <span class="change-badge positive">+{user.change_pct.toFixed(2)}%</span>
+                                          </div>
+                                          <div class="td action-col">
+                                              <div class="view-btn">View</div>
+                                              <ArrowRight size={18} class="action-icon" />
+                                          </div>
+                                      </div>
+                                  {/each}
+                              {/if}
                           {:else}
-                              {#each topLosers as user}
-                                  <div class="table-row" on:click={() => handleProfileClick(user)} role="button" tabindex="0">
-                                      <div class="td user-col">
-                                          <img src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`} alt="" class="row-avatar"/>
-                                          <div class="user-meta">
-                                              <span class="row-name">{user.full_name}</span>
-                                              <span class="row-username">${user.username.toUpperCase()}</span>
+                              {#if topLosers.length === 0}
+                                  <div class="empty-state">
+                                      <p>No active traders found</p>
+                                  </div>
+                              {:else}
+                                  {#each topLosers as user}
+                                      <div class="table-row" on:click={() => handleProfileClick(user)} role="button" tabindex="0">
+                                          <div class="td user-col">
+                                              <img src={user.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${user.username}`} alt="" class="row-avatar"/>
+                                              <div class="user-meta">
+                                                  <span class="row-name">{user.full_name}</span>
+                                                  <span class="row-username">${user.username.toUpperCase()}</span>
+                                              </div>
+                                          </div>
+                                          <div class="td price-col">
+                                              <div class="price-wrapper">
+                                                  <Coins size={14} class="currency-icon" />
+                                                  <span class="price-val">{formatPrice(user.current_price || 0)}</span>
+                                              </div>
+                                          </div>
+                                          <div class="td change-col">
+                                              <span class="change-badge negative">{user.change_pct.toFixed(2)}%</span>
+                                          </div>
+                                          <div class="td action-col">
+                                              <div class="view-btn">View</div>
+                                              <ArrowRight size={18} class="action-icon" />
                                           </div>
                                       </div>
-                                      <div class="td price-col">
-                                          <span class="price-val">{formatPrice(user.current_price || 0)}</span>
-                                      </div>
-                                      <div class="td change-col">
-                                          <span class="change-badge negative">{user.change_pct.toFixed(2)}%</span>
-                                      </div>
-                                      <div class="td action-col">
-                                          <div class="view-btn">View</div>
-                                          <ArrowRight size={18} class="action-icon" />
-                                      </div>
-                                  </div>
-                              {/each}
+                                  {/each}
+                              {/if}
                           {/if}
                       {/if}
                   {/if}

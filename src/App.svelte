@@ -7,7 +7,7 @@
   import Notifications from "./components/pages/Notifications.svelte";
   import Settings from "./components/pages/Settings.svelte";
   import Profile from "./components/pages/Profile.svelte";
-  import Post from "./components/pages/Post.svelte";
+  import CreatePostModal from "./components/general/CreatePostModal.svelte";
   import Login from "./components/pages/Login.svelte";
   import Register from "./components/pages/Register.svelte";
   import TopNavbar from "./components/general/navbar/TopNavbar.svelte";
@@ -83,7 +83,7 @@
     </main>
 
     {#if showPostModal}
-      <Post onClose={closePostModal} />
+      <CreatePostModal onClose={closePostModal} />
     {/if}
   </div>
 {/if}

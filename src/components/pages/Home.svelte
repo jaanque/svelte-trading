@@ -4,7 +4,7 @@
   import { userProfile } from "../../lib/authStore";
   import { supabase } from "../../lib/supabase";
   import Chart from "chart.js/auto";
-  import Post from "./Post.svelte";
+  import CreatePostModal from "../../components/general/CreatePostModal.svelte";
   import InvestModal from "../../components/general/InvestModal.svelte";
 
   // Data state
@@ -25,6 +25,7 @@
   let showPostModal = false;
   let showInvestModal = false;
   let selectedUser: any = null;
+  let postCreatedTrigger = 0; // Trigger to force re-render/fetch
 
   // For the inline post input
   let postInputContent = "";
@@ -143,6 +144,12 @@
       showPostModal = true;
   }
 
+  function handlePostCreated() {
+    showPostModal = false;
+    postCreatedTrigger++;
+    fetchData(); // Reload data
+  }
+
   function claimReward() {
       if (dailyRewardClaimed) return;
       dailyRewardClaimed = true;
@@ -240,34 +247,46 @@
       <!-- Feed -->
       <div class="feed-list">
           {#if loading}
-              <div class="loading-feed">Cargando feed...</div>
+              <div class="feed-skeleton">
+                  {#each Array(3) as _}
+                      <div class="skeleton-item">
+                          <div class="skeleton-avatar"></div>
+                          <div class="skeleton-content">
+                              <div class="skeleton-line short"></div>
+                              <div class="skeleton-line long"></div>
+                              <div class="skeleton-line medium"></div>
+                          </div>
+                      </div>
+                  {/each}
+              </div>
           {:else if feedItems.length === 0}
               <div class="empty-feed">
                   <div class="empty-icon">
                       <MessageCircle size={48} color="var(--text-secondary)" />
                   </div>
                   <h3>No hay actividad reciente</h3>
-                  <p>¡Sé el primero en publicar algo!</p>
+                  <p>¡Sé el primero en publicar algo para iniciar la conversación!</p>
+                  <button class="create-first-post-btn" on:click={openPostModal}>Crear Publicación</button>
               </div>
           {:else}
               {#each feedItems as item}
                   <!-- Only render posts -->
                   <div class="feed-item post">
                       <div class="item-avatar">
-                          <img src={item.user?.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${item.user?.username}`} alt=""/>
+                          <img src={item.user?.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${item.user?.username || 'unknown'}`} alt="avatar"/>
                       </div>
                       <div class="item-content">
                           <div class="item-header">
-                              <span class="name">{item.user?.full_name}</span>
-                              <span class="handle">@{item.user?.username}</span>
+                              <span class="name">{item.user?.full_name || 'Usuario desconocido'}</span>
+                              <span class="handle">@{item.user?.username || 'unknown'}</span>
                               <span class="dot">·</span>
                               <span class="time">{formatTime(item.created_at)}</span>
                           </div>
                           <div class="post-text">{item.content}</div>
                           <div class="post-actions">
-                              <button class="action-btn"><MessageCircle size={18} /> <span>0</span></button>
-                              <button class="action-btn"><Share2 size={18} /></button>
-                              <button class="action-btn"><Heart size={18} /> <span>{item.likes_count}</span></button>
+                              <button class="action-btn" aria-label="Comment"><MessageCircle size={18} /> <span>0</span></button>
+                              <button class="action-btn" aria-label="Share"><Share2 size={18} /></button>
+                              <button class="action-btn" aria-label="Like"><Heart size={18} /> <span>{item.likes_count}</span></button>
                           </div>
                       </div>
                   </div>
@@ -346,7 +365,7 @@
 </div>
 
 {#if showPostModal}
-  <Post onClose={() => showPostModal = false} />
+  <CreatePostModal onClose={() => showPostModal = false} />
 {/if}
 
 {#if showInvestModal && selectedUser}
@@ -865,9 +884,59 @@
 
   .highlight { color: var(--primary-color); font-weight: 700; }
 
-  .loading-feed {
-      padding: 24px;
-      text-align: center;
-      color: var(--text-secondary);
+  /* Skeleton Loading */
+  .feed-skeleton {
+      display: flex;
+      flex-direction: column;
+  }
+
+  .skeleton-item {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      gap: 12px;
+  }
+
+  .skeleton-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      animation: shimmer 1.5s infinite linear;
+  }
+
+  .skeleton-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+  }
+
+  .skeleton-line {
+      height: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      animation: shimmer 1.5s infinite linear;
+  }
+
+  .skeleton-line.short { width: 30%; }
+  .skeleton-line.long { width: 90%; }
+  .skeleton-line.medium { width: 60%; }
+
+  @keyframes shimmer {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
+  }
+
+  .create-first-post-btn {
+      margin-top: 12px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 99px;
+      padding: 8px 24px;
+      font-weight: 700;
+      cursor: pointer;
   }
 </style>

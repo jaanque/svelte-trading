@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { userProfile, userSession } from "../../lib/authStore";
   import { supabase } from "../../lib/supabase";
-  import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft, MoreHorizontal, MessageSquare, LogOut, Share2, TrendingUp, Users } from "lucide-svelte";
+  import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft, MoreHorizontal, MessageSquare, LogOut, Share2, TrendingUp, Users, Heart, MessageCircle } from "lucide-svelte";
   import InvestModal from "../../components/general/InvestModal.svelte";
   import SellModal from "../../components/general/SellModal.svelte";
   import PriceChart from "../../components/general/PriceChart.svelte";
@@ -19,6 +19,9 @@
   let showMoreMenu = false;
   let userShares = 0;
   let shareholdersCount = 0;
+  let postsCount = 0;
+  let profilePosts: any[] = [];
+  let loadingPosts = false;
 
   let activeTab = "Chart";
   const tabs = ["Chart", "Posts", "Replies", "Media", "Likes"];
@@ -37,6 +40,16 @@
   function formatPrice(num: number | undefined | null) {
       if (num === undefined || num === null) return "0";
       return num.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  }
+
+  function formatTime(iso: string) {
+      const date = new Date(iso);
+      const now = new Date();
+      const diffMins = Math.floor((now.getTime() - date.getTime()) / 60000);
+      if (diffMins < 60) return `${diffMins}m`;
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `${diffHours}h`;
+      return date.toLocaleDateString();
   }
 
   async function loadProfile() {
@@ -110,13 +123,44 @@
             });
             shareholdersCount = count;
         }
+
+        // Fetch Posts Count
+        const { count, error: countPostsError } = await supabase
+            .from('posts')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', profileData.id);
+
+        if (!countPostsError) {
+            postsCount = count || 0;
+        }
+
+        // Load posts initially
+        loadUserPosts();
     }
 
     loading = false;
   }
 
+  async function loadUserPosts() {
+      if (!profileData) return;
+      loadingPosts = true;
+      const { data, error } = await supabase
+          .from('posts')
+          .select('*')
+          .eq('user_id', profileData.id)
+          .order('created_at', { ascending: false });
+
+      if (!error && data) {
+          profilePosts = data;
+      }
+      loadingPosts = false;
+  }
+
   function setActiveTab(tab: string) {
       activeTab = tab;
+      if (tab === 'Posts') {
+          loadUserPosts();
+      }
   }
 
   async function handleLogout() {
@@ -183,7 +227,7 @@
          {/if}
          <div class="header-name">
             <h3>{profileData.full_name || profileData.username}</h3>
-            <span class="post-count">0 posts</span>
+            <span class="post-count">{postsCount} posts</span>
          </div>
        </div>
     </div>
@@ -282,8 +326,8 @@
           <!-- Social Stats -->
           <div class="stats-row social">
              <div class="stat-item">
-               <span class="stat-value">0</span>
-               <span class="stat-label">Inversiones</span>
+               <span class="stat-value">{postsCount}</span>
+               <span class="stat-label">Posts</span>
              </div>
              <div class="stat-item">
                <span class="stat-value">{formatNumber(shareholdersCount)}</span>
@@ -329,13 +373,41 @@
       <!-- Feed Content -->
       <div class="feed-content">
          {#if activeTab === "Posts"}
-             <div class="empty-feed">
-                <div class="empty-icon-circle">
-                    <MessageSquare size={32} />
-                </div>
-                <h3>No posts yet</h3>
-                <p>${profileData.username.toUpperCase()} hasn't posted anything yet. When they do, it will show up here.</p>
-             </div>
+             {#if loadingPosts}
+                 <div class="center-content">
+                     <Loader2 class="animate-spin" size={24} color="var(--primary-color)" />
+                 </div>
+             {:else if profilePosts.length === 0}
+                 <div class="empty-feed">
+                    <div class="empty-icon-circle">
+                        <MessageSquare size={32} />
+                    </div>
+                    <h3>No posts yet</h3>
+                    <p>${profileData.username.toUpperCase()} hasn't posted anything yet. When they do, it will show up here.</p>
+                 </div>
+             {:else}
+                 {#each profilePosts as post}
+                     <div class="feed-item">
+                         <div class="item-avatar">
+                             <img src={profileData.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${profileData.username}`} alt="" />
+                         </div>
+                         <div class="item-content">
+                             <div class="item-header">
+                                  <span class="name">{profileData.full_name}</span>
+                                  <span class="handle">@{profileData.username}</span>
+                                  <span class="dot">·</span>
+                                  <span class="time">{formatTime(post.created_at)}</span>
+                              </div>
+                              <div class="post-text">{post.content}</div>
+                              <div class="post-actions">
+                                  <button class="action-btn"><MessageCircle size={18} /> <span>0</span></button>
+                                  <button class="action-btn"><Share2 size={18} /></button>
+                                  <button class="action-btn"><Heart size={18} /> <span>{post.likes_count}</span></button>
+                              </div>
+                         </div>
+                     </div>
+                 {/each}
+             {/if}
          {:else if activeTab === "Chart"}
              <div class="chart-tab-content">
                  <PriceChart
@@ -815,6 +887,72 @@
   .chart-tab-content {
       padding: 16px;
   }
+
+  /* Feed Items */
+  .feed-item {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      gap: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+  }
+
+  .feed-item:hover {
+      background-color: var(--bg-hover);
+  }
+
+  .item-avatar img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+  }
+
+  .item-content {
+      flex-grow: 1;
+  }
+
+  .item-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 15px;
+      margin-bottom: 4px;
+  }
+
+  .item-header .name { font-weight: 700; color: var(--text-main); }
+  .item-header .handle { color: var(--text-secondary); }
+  .item-header .dot { color: var(--text-secondary); }
+  .item-header .time { color: var(--text-secondary); }
+
+  .post-text {
+      font-size: 15px;
+      color: var(--text-main);
+      line-height: 1.4;
+      white-space: pre-wrap;
+  }
+
+  .post-actions {
+      display: flex;
+      justify-content: space-between;
+      max-width: 300px;
+      margin-top: 12px;
+  }
+
+  .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: color 0.2s;
+  }
+
+  .action-btn:hover { color: var(--primary-color); }
 
   .empty-feed {
     padding: 60px 20px;

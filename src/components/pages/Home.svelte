@@ -87,22 +87,7 @@
             };
         }
 
-        // 4. Fetch Feed (Posts + Investments)
-
-        // Fetch Investments
-        const { data: activity, error: actError } = await supabase
-            .from('investments')
-            .select(`
-                id,
-                created_at,
-                amount_tokens,
-                investor:profiles!investor_id(username, avatar_url, full_name),
-                target:profiles!target_user_id(id, username, price)
-            `)
-            .order('created_at', { ascending: false })
-            .limit(10);
-
-        // Fetch Posts (if table exists)
+        // 4. Fetch Feed (Posts ONLY)
         let posts: any[] = [];
         const { data: postsData, error: postsError } = await supabase
             .from('posts')
@@ -114,19 +99,14 @@
                 user:profiles!user_id(username, avatar_url, full_name)
             `)
             .order('created_at', { ascending: false })
-            .limit(10);
+            .limit(20);
 
         if (!postsError && postsData && postsData.length > 0) {
             posts = postsData.map((p: any) => ({ ...p, type: 'post' }));
         }
 
-        let investments = [];
-        if (!actError && activity && activity.length > 0) {
-            investments = activity.map((a: any) => ({ ...a, type: 'investment' }));
-        }
-
-        // Merge and sort
-        feedItems = [...posts, ...investments].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        // Set feed items directly to posts, no investments
+        feedItems = posts;
 
         // 5. Fetch Suggested Users (Unique to Home)
         suggestedUsers = [
@@ -163,18 +143,11 @@
       showPostModal = true;
   }
 
-  function openInvestModal(target: any) {
-      if (!target) return;
-      selectedUser = target;
-      showInvestModal = true;
-  }
-
   function claimReward() {
       if (dailyRewardClaimed) return;
       dailyRewardClaimed = true;
       // In real app, call RPC to add tokens
 
-      // Toast logic would go here
       const toast = document.createElement('div');
       toast.className = 'reward-toast';
       toast.innerText = '+50 Tokens Reclamados!';
@@ -274,56 +247,30 @@
                       <MessageCircle size={48} color="var(--text-secondary)" />
                   </div>
                   <h3>No hay actividad reciente</h3>
-                  <p>¡Sé el primero en publicar algo o invierte en un mercado!</p>
+                  <p>¡Sé el primero en publicar algo!</p>
               </div>
           {:else}
               {#each feedItems as item}
-                  {#if item.type === 'post'}
-                      <div class="feed-item post">
-                          <div class="item-avatar">
-                              <img src={item.user?.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${item.user?.username}`} alt=""/>
+                  <!-- Only render posts -->
+                  <div class="feed-item post">
+                      <div class="item-avatar">
+                          <img src={item.user?.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${item.user?.username}`} alt=""/>
+                      </div>
+                      <div class="item-content">
+                          <div class="item-header">
+                              <span class="name">{item.user?.full_name}</span>
+                              <span class="handle">@{item.user?.username}</span>
+                              <span class="dot">·</span>
+                              <span class="time">{formatTime(item.created_at)}</span>
                           </div>
-                          <div class="item-content">
-                              <div class="item-header">
-                                  <span class="name">{item.user?.full_name}</span>
-                                  <span class="handle">@{item.user?.username}</span>
-                                  <span class="dot">·</span>
-                                  <span class="time">{formatTime(item.created_at)}</span>
-                              </div>
-                              <div class="post-text">{item.content}</div>
-                              <div class="post-actions">
-                                  <button class="action-btn"><MessageCircle size={18} /> <span>0</span></button>
-                                  <button class="action-btn"><Share2 size={18} /></button>
-                                  <button class="action-btn"><Heart size={18} /> <span>{item.likes_count}</span></button>
-                              </div>
+                          <div class="post-text">{item.content}</div>
+                          <div class="post-actions">
+                              <button class="action-btn"><MessageCircle size={18} /> <span>0</span></button>
+                              <button class="action-btn"><Share2 size={18} /></button>
+                              <button class="action-btn"><Heart size={18} /> <span>{item.likes_count}</span></button>
                           </div>
                       </div>
-                  {:else}
-                      <div class="feed-item investment">
-                          <div class="item-avatar">
-                               <img src={item.investor?.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${item.investor?.username}`} alt=""/>
-                          </div>
-                          <div class="item-content">
-                              <div class="item-header">
-                                  <span class="name">{item.investor?.full_name}</span>
-                                  <span class="handle">@{item.investor?.username}</span>
-                                  <span class="dot">·</span>
-                                  <span class="time">{formatTime(item.created_at)}</span>
-                              </div>
-                              <div class="investment-row">
-                                <div class="investment-text">
-                                    Invirtió <span class="amount">{item.amount_tokens} tokens</span> en <span class="ticker">${item.target?.username.toUpperCase()}</span>
-                                </div>
-                                <button class="invest-action-btn" on:click|stopPropagation={() => openInvestModal(item.target)}>
-                                    Invertir
-                                </button>
-                              </div>
-                          </div>
-                          <div class="investment-badge">
-                              <TrendingUp size={16} />
-                          </div>
-                      </div>
-                  {/if}
+                  </div>
               {/each}
           {/if}
       </div>

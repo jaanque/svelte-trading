@@ -566,10 +566,6 @@
         justify-content: center;
         padding: 12px;
     }
-    /* Hide tokens pill in tablet/mobile for now if no space, or let it collapse naturally */
-    .tokens-pill {
-       display: none;
-    }
   }
 
   @media (max-width: 640px) {

@@ -519,7 +519,7 @@
       background-color: var(--border-color);
   }
 
-  .animate-spin {
+  :global(.animate-spin) {
     animation: spin 1s linear infinite;
   }
 

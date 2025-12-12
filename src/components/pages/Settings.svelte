@@ -15,7 +15,9 @@
     CreditCard,
     Lock,
     Smartphone,
-    Mail
+    Mail,
+    Camera,
+    Loader2
   } from "lucide-svelte";
   import type { ComponentType } from "svelte";
 
@@ -23,6 +25,50 @@
   let notificationsEnabled = true;
   let darkMode = false;
   let privateAccount = false;
+  let fileInput: HTMLInputElement;
+  let uploading = false;
+
+  async function uploadAvatar(event: Event) {
+      const target = event.target as HTMLInputElement;
+      if (!target.files || target.files.length === 0) return;
+
+      const file = target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${$userProfile?.id}/${fileName}`;
+
+      uploading = true;
+      try {
+          const { error: uploadError } = await supabase.storage
+              .from('avatars')
+              .upload(filePath, file);
+
+          if (uploadError) throw uploadError;
+
+          const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+
+          const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ avatar_url: data.publicUrl })
+              .eq('id', $userProfile?.id);
+
+          if (updateError) throw updateError;
+
+          // Update auth store
+          if ($userProfile) {
+              userProfile.set({ ...$userProfile, avatar_url: data.publicUrl });
+          }
+      } catch (err) {
+          console.error('Error uploading avatar:', err);
+          alert('Error uploading avatar');
+      } finally {
+          uploading = false;
+      }
+  }
+
+  function triggerFileInput() {
+      fileInput.click();
+  }
 
   async function handleLogout() {
       await supabase.auth.signOut();
@@ -109,12 +155,26 @@
       <!-- User Summary Card -->
       {#if $userProfile}
       <div class="user-summary">
-          <div class="avatar-container">
+          <div class="avatar-container" on:click={triggerFileInput} role="button" tabindex="0" on:keydown={(e) => e.key === 'Enter' && triggerFileInput()}>
                <img
                   src={$userProfile.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${$userProfile.username}`}
                   alt={$userProfile.username}
                   class="avatar"
                />
+               <div class="avatar-overlay">
+                    {#if uploading}
+                        <Loader2 class="animate-spin" size={24} color="white" />
+                    {:else}
+                        <Camera size={24} color="white" />
+                    {/if}
+               </div>
+               <input
+                    type="file"
+                    accept="image/*"
+                    bind:this={fileInput}
+                    on:change={uploadAvatar}
+                    style="display: none;"
+                />
           </div>
           <div class="user-info">
               <h2 class="fullname">{$userProfile.full_name || $userProfile.username}</h2>
@@ -222,6 +282,8 @@
       width: 72px;
       height: 72px;
       flex-shrink: 0;
+      position: relative;
+      cursor: pointer;
   }
 
   .avatar {
@@ -231,6 +293,26 @@
       object-fit: cover;
       background-color: var(--bg-tertiary);
       border: 2px solid white;
+  }
+
+  .avatar-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.4);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+      border: 2px solid transparent; /* To match avatar border sizing if needed */
+  }
+
+  .avatar-container:hover .avatar-overlay {
+      opacity: 1;
   }
 
   .user-info {

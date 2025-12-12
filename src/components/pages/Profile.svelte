@@ -23,7 +23,9 @@
   let profilePosts: any[] = [];
   let loadingPosts = false;
   let fileInput: HTMLInputElement;
+  let bannerInput: HTMLInputElement;
   let uploading = false;
+  let uploadingBanner = false;
 
   let activeTab = "Chart";
   const tabs = ["Chart", "Posts", "Replies", "Media", "Likes"];
@@ -204,9 +206,54 @@
       }
   }
 
+  async function uploadBanner(event: Event) {
+      const target = event.target as HTMLInputElement;
+      if (!target.files || target.files.length === 0) return;
+
+      const file = target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${profileData.id}/${fileName}`;
+
+      uploadingBanner = true;
+      try {
+          const { error: uploadError } = await supabase.storage
+              .from('banners')
+              .upload(filePath, file);
+
+          if (uploadError) throw uploadError;
+
+          const { data } = supabase.storage.from('banners').getPublicUrl(filePath);
+
+          const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ banner_url: data.publicUrl })
+              .eq('id', profileData.id);
+
+          if (updateError) throw updateError;
+
+          // Update local state
+          profileData.banner_url = data.publicUrl;
+          if ($userProfile) {
+              userProfile.set({ ...$userProfile, banner_url: data.publicUrl } as any);
+          }
+      } catch (err) {
+          console.error('Error uploading banner:', err);
+          alert('Error uploading banner');
+      } finally {
+          uploadingBanner = false;
+      }
+  }
+
   function triggerFileInput() {
       if (isOwnProfile) {
           fileInput.click();
+      }
+  }
+
+  function triggerBannerInput() {
+      if (isOwnProfile) {
+          bannerInput.click();
       }
   }
 
@@ -280,8 +327,25 @@
     </div>
 
     <!-- Banner - Full Width -->
-    <div class="banner">
-      <!-- Could add image support here -->
+    <div class="banner" style={profileData.banner_url ? `background-image: url(${profileData.banner_url}); background-size: cover; background-position: center;` : ''}>
+       {#if isOwnProfile}
+           <div class="banner-overlay">
+               <button class="edit-banner-btn" on:click={triggerBannerInput}>
+                   {#if uploadingBanner}
+                       <Loader2 class="animate-spin" size={20} color="white" />
+                   {:else}
+                       <Camera size={20} color="white" />
+                   {/if}
+               </button>
+               <input
+                    type="file"
+                    accept="image/*"
+                    bind:this={bannerInput}
+                    on:change={uploadBanner}
+                    style="display: none;"
+                />
+           </div>
+       {/if}
     </div>
 
     <!-- Profile Content Container (Centered) -->
@@ -608,6 +672,45 @@
     background-color: var(--bg-tertiary); /* Soft gray/blue */
     background: linear-gradient(to right, #cfd9df 0%, #e2ebf0 100%); /* Subtle gradient */
     width: 100%;
+    position: relative;
+  }
+
+  .banner-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.1); /* Subtle darkening on hover? Or just the button? */
+      /* Actually let's just put the button in the corner */
+      opacity: 0;
+      transition: opacity 0.2s;
+      display: flex;
+      justify-content: flex-end;
+      align-items: flex-end;
+      padding: 16px;
+  }
+
+  .banner:hover .banner-overlay {
+      opacity: 1;
+  }
+
+  .edit-banner-btn {
+      background-color: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+      transition: background-color 0.2s;
+  }
+
+  .edit-banner-btn:hover {
+      background-color: rgba(0, 0, 0, 0.7);
   }
 
   /* Content Wrapper - Controls width of the actual profile info and feed */

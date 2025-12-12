@@ -9,6 +9,10 @@
   import ImageCropperModal from "../../components/general/ImageCropperModal.svelte";
 
   export let currentPath = "";
+  export let onNavigate: (path: string) => void = (path) => {
+      window.history.pushState({}, "", path);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+  };
 
   let loading = true;
   let profileData: any = null;
@@ -553,7 +557,13 @@
                  </div>
              {:else}
                  {#each profilePosts as post}
-                     <div class="feed-item">
+                     <div
+                        class="feed-item"
+                        on:click={() => onNavigate(`/post/details?id=${post.id}`)}
+                        on:keydown={(e) => e.key === 'Enter' && onNavigate(`/post/details?id=${post.id}`)}
+                        role="button"
+                        tabindex="0"
+                     >
                          <div class="item-avatar">
                              <img src={profileData.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${profileData.username}`} alt="" />
                          </div>
@@ -566,9 +576,9 @@
                               </div>
                               <div class="post-text">{post.content}</div>
                               <div class="post-actions">
-                                  <button class="action-btn"><MessageCircle size={18} /> <span>0</span></button>
-                                  <button class="action-btn"><Share2 size={18} /></button>
-                                  <button class="action-btn"><Heart size={18} /> <span>{post.likes_count}</span></button>
+                                  <button class="action-btn" on:click|stopPropagation={() => {}}><MessageCircle size={18} /> <span>{post.replies_count || 0}</span></button>
+                                  <button class="action-btn" on:click|stopPropagation={() => {}}><Share2 size={18} /></button>
+                                  <button class="action-btn" on:click|stopPropagation={() => {}}><Heart size={18} /> <span>{post.likes_count}</span></button>
                               </div>
                          </div>
                      </div>

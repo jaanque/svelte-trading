@@ -7,6 +7,7 @@
   import Notifications from "./components/pages/Notifications.svelte";
   import Settings from "./components/pages/Settings.svelte";
   import Profile from "./components/pages/Profile.svelte";
+  import PostDetails from "./components/pages/PostDetails.svelte";
   import CreatePostModal from "./components/general/CreatePostModal.svelte";
   import Login from "./components/pages/Login.svelte";
   import Register from "./components/pages/Register.svelte";
@@ -76,6 +77,11 @@
           <Settings />
         {:else if route === "/profile"}
           <Profile {currentPath} />
+        {:else if route === "/post/details"}
+          <PostDetails
+             postId={new URLSearchParams(currentPath.split('?')[1]).get('id') || ''}
+             onNavigate={handleNavigate}
+          />
         {:else}
           <Home />
         {/if}

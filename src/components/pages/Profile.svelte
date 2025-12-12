@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { userProfile, userSession } from "../../lib/authStore";
   import { supabase } from "../../lib/supabase";
-  import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft, MoreHorizontal, MessageSquare, LogOut, Share2, TrendingUp, Users, Heart, MessageCircle } from "lucide-svelte";
+  import { Loader2, Calendar, Link as LinkIcon, MapPin, ArrowLeft, MoreHorizontal, MessageSquare, LogOut, Share2, TrendingUp, Users, Heart, MessageCircle, Camera } from "lucide-svelte";
   import InvestModal from "../../components/general/InvestModal.svelte";
   import SellModal from "../../components/general/SellModal.svelte";
   import PriceChart from "../../components/general/PriceChart.svelte";
@@ -22,6 +22,8 @@
   let postsCount = 0;
   let profilePosts: any[] = [];
   let loadingPosts = false;
+  let fileInput: HTMLInputElement;
+  let uploading = false;
 
   let activeTab = "Chart";
   const tabs = ["Chart", "Posts", "Replies", "Media", "Likes"];
@@ -163,6 +165,51 @@
       }
   }
 
+  async function uploadAvatar(event: Event) {
+      const target = event.target as HTMLInputElement;
+      if (!target.files || target.files.length === 0) return;
+
+      const file = target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${profileData.id}/${fileName}`;
+
+      uploading = true;
+      try {
+          const { error: uploadError } = await supabase.storage
+              .from('avatars')
+              .upload(filePath, file);
+
+          if (uploadError) throw uploadError;
+
+          const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+
+          const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ avatar_url: data.publicUrl })
+              .eq('id', profileData.id);
+
+          if (updateError) throw updateError;
+
+          // Update local state and auth store
+          profileData.avatar_url = data.publicUrl;
+          if ($userProfile) {
+              userProfile.set({ ...$userProfile, avatar_url: data.publicUrl });
+          }
+      } catch (err) {
+          console.error('Error uploading avatar:', err);
+          alert('Error uploading avatar');
+      } finally {
+          uploading = false;
+      }
+  }
+
+  function triggerFileInput() {
+      if (isOwnProfile) {
+          fileInput.click();
+      }
+  }
+
   async function handleLogout() {
       await supabase.auth.signOut();
       window.location.href = '/login';
@@ -246,7 +293,34 @@
               src={profileData.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${profileData.username}`}
               alt={profileData.username}
               class="profile-avatar"
+              on:click={triggerFileInput}
+              on:keydown={(e) => e.key === 'Enter' && triggerFileInput()}
+              role={isOwnProfile ? "button" : undefined}
+              tabindex={isOwnProfile ? 0 : -1}
+              style={isOwnProfile ? "cursor: pointer;" : ""}
             />
+            {#if isOwnProfile}
+                <div
+                    class="avatar-overlay"
+                    on:click={triggerFileInput}
+                    on:keydown={(e) => e.key === 'Enter' && triggerFileInput()}
+                    role="button"
+                    tabindex="0"
+                >
+                    {#if uploading}
+                        <Loader2 class="animate-spin" size={24} color="white" />
+                    {:else}
+                        <Camera size={24} color="white" />
+                    {/if}
+                </div>
+                <input
+                    type="file"
+                    accept="image/*"
+                    bind:this={fileInput}
+                    on:change={uploadAvatar}
+                    style="display: none;"
+                />
+            {/if}
            </div>
 
            <div class="actions">
@@ -583,6 +657,27 @@
     z-index: 10;
   }
 
+  .avatar-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.4);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+      cursor: pointer;
+      margin: 4px; /* Match padding */
+  }
+
+  .avatar-wrapper:hover .avatar-overlay {
+      opacity: 1;
+  }
+
   /* Responsive Avatar */
   @media (max-width: 640px) {
     .banner {
@@ -604,7 +699,7 @@
     border-radius: 50%;
     object-fit: cover;
     background-color: var(--bg-tertiary);
-    cursor: pointer;
+    cursor: default; /* Changed from pointer unless logic overrides */
     border: 4px solid var(--bg-main); /* Ensure separation from banner/bg */
     box-sizing: content-box; /* To account for border inside sizing if needed, or just let padding handle it */
     margin: -4px; /* Counter padding */

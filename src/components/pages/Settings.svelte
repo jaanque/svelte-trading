@@ -20,6 +20,7 @@
     Loader2
   } from "lucide-svelte";
   import type { ComponentType } from "svelte";
+  import ImageCropperModal from "../../components/general/ImageCropperModal.svelte";
 
   // Mock toggle states
   let notificationsEnabled = true;
@@ -28,13 +29,27 @@
   let fileInput: HTMLInputElement;
   let uploading = false;
 
-  async function uploadAvatar(event: Event) {
+  // Cropper
+  let showCropper = false;
+  let cropImageFile: File | null = null;
+
+  function handleFileSelect(event: Event) {
       const target = event.target as HTMLInputElement;
       if (!target.files || target.files.length === 0) return;
 
-      const file = target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+      cropImageFile = target.files[0];
+      showCropper = true;
+      target.value = '';
+  }
+
+  async function handleCrop(event: CustomEvent) {
+      const blob = event.detail.blob;
+      showCropper = false;
+      await uploadAvatar(blob);
+  }
+
+  async function uploadAvatar(file: Blob) {
+      const fileName = `${Math.random()}.jpg`;
       const filePath = `${$userProfile?.id}/${fileName}`;
 
       uploading = true;
@@ -172,7 +187,7 @@
                     type="file"
                     accept="image/*"
                     bind:this={fileInput}
-                    on:change={uploadAvatar}
+                    on:change={handleFileSelect}
                     style="display: none;"
                 />
           </div>
@@ -235,6 +250,16 @@
           </div>
       </div>
   </div>
+
+  {#if showCropper}
+    <ImageCropperModal
+      imageFile={cropImageFile}
+      aspectRatio={1}
+      circular={true}
+      on:cancel={() => showCropper = false}
+      on:crop={handleCrop}
+    />
+  {/if}
 </div>
 
 <style>

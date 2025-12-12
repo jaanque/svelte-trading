@@ -2,7 +2,7 @@
   import { onMount, onDestroy, createEventDispatcher } from 'svelte';
   import Cropper from 'cropperjs';
   import 'cropperjs/dist/cropper.css';
-  import { X, Check, RotateCw, ZoomIn, ZoomOut, RefreshCcw } from 'lucide-svelte';
+  import { X, Check, RotateCw, ZoomIn, ZoomOut, RefreshCcw, Loader2 } from 'lucide-svelte';
 
   export let imageFile: File | null = null;
   export let aspectRatio: number = 1; // Default square
@@ -12,6 +12,7 @@
   let imageElement: HTMLImageElement;
   let cropper: Cropper | null = null;
   let objectUrl: string | null = null;
+  let processing = false;
 
   onMount(() => {
     if (imageFile) {
@@ -34,7 +35,7 @@
         aspectRatio: aspectRatio,
         viewMode: 1, // Restrict crop box to image size
         dragMode: 'move',
-        autoCropArea: 0.8,
+        autoCropArea: 0.9,
         restore: false,
         guides: true,
         center: true,
@@ -42,7 +43,8 @@
         cropBoxMovable: true,
         cropBoxResizable: true,
         toggleDragModeOnDblclick: false,
-        background: false // We use our own background
+        background: false, // We use our own background
+        checkCrossOrigin: false,
       });
     }
   }
@@ -67,17 +69,22 @@
     dispatch('cancel');
   }
 
-  function save() {
+  async function save() {
     if (!cropper) return;
+    processing = true;
+
+    // Small delay to allow UI to update
+    await new Promise(resolve => setTimeout(resolve, 50));
 
     const canvas = cropper.getCroppedCanvas({
-      // You might want to limit max size here for performance/storage
-      maxWidth: 1024,
-      maxHeight: 1024,
+      // Reasonable limits for web profile images
+      maxWidth: 1200,
+      maxHeight: 1200,
       imageSmoothingQuality: 'high',
     });
 
     canvas.toBlob((blob) => {
+      processing = false;
       if (blob) {
         dispatch('crop', { blob });
       }
@@ -85,11 +92,13 @@
   }
 </script>
 
-<div class="cropper-overlay">
-  <div class="cropper-modal">
+<div class="cropper-overlay" role="dialog" aria-modal="true">
+  <div class="cropper-modal card">
     <div class="cropper-header">
-      <h3>Edit Image</h3>
-      <button class="btn-icon" on:click={cancel}><X size={24} /></button>
+      <h3>Edit Media</h3>
+      <button class="btn-icon-close" on:click={cancel} aria-label="Close">
+        <X size={20} />
+      </button>
     </div>
 
     <div class="cropper-body">
@@ -104,21 +113,45 @@
             class="source-image"
           />
         </div>
+      {:else}
+        <div class="loading-state">
+           <Loader2 class="animate-spin" size={32} />
+        </div>
       {/if}
     </div>
 
-    <div class="cropper-controls">
-      <button class="control-btn" on:click={() => zoom(0.1)} title="Zoom In"><ZoomIn size={20} /></button>
-      <button class="control-btn" on:click={() => zoom(-0.1)} title="Zoom Out"><ZoomOut size={20} /></button>
-      <button class="control-btn" on:click={rotate} title="Rotate"><RotateCw size={20} /></button>
-      <button class="control-btn" on:click={reset} title="Reset"><RefreshCcw size={20} /></button>
+    <div class="cropper-toolbar">
+      <div class="toolbar-group">
+        <button class="tool-btn" on:click={() => zoom(0.1)} title="Zoom In">
+          <ZoomIn size={18} />
+        </button>
+        <button class="tool-btn" on:click={() => zoom(-0.1)} title="Zoom Out">
+          <ZoomOut size={18} />
+        </button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <div class="toolbar-group">
+        <button class="tool-btn" on:click={rotate} title="Rotate 90°">
+          <RotateCw size={18} />
+        </button>
+        <button class="tool-btn" on:click={reset} title="Reset">
+          <RefreshCcw size={18} />
+        </button>
+      </div>
     </div>
 
     <div class="cropper-footer">
-      <button class="btn-cancel" on:click={cancel}>Cancel</button>
-      <button class="btn-save" on:click={save}>
-        <Check size={18} />
-        <span>Save & Upload</span>
+      <button class="btn-cancel" on:click={cancel} disabled={processing}>Cancel</button>
+      <button class="btn-save" on:click={save} disabled={processing}>
+        {#if processing}
+          <Loader2 class="animate-spin" size={18} />
+          <span>Saving...</span>
+        {:else}
+          <Check size={18} />
+          <span>Apply</span>
+        {/if}
       </button>
     </div>
   </div>
@@ -131,25 +164,39 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
     z-index: 9999;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: 16px;
     box-sizing: border-box;
+    animation: fade-in 0.2s ease-out;
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   .cropper-modal {
     background-color: var(--bg-main, #fff);
     width: 100%;
-    max-width: 600px;
-    border-radius: 16px;
+    max-width: 520px; /* Optimal for profile pictures */
+    border-radius: 20px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    max-height: 90vh;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    max-height: 85vh;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid var(--border-color, #e1e8ed);
+  }
+
+  @keyframes slide-up {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 
   .cropper-header {
@@ -157,45 +204,50 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--border-color, #eee);
+    border-bottom: 1px solid var(--border-color, #eff3f4);
+    background-color: var(--bg-main, #fff);
   }
 
   .cropper-header h3 {
     margin: 0;
     font-size: 18px;
-    font-weight: 700;
+    font-weight: 800;
+    color: var(--text-main, #0f1419);
   }
 
-  .btn-icon {
-    background: none;
+  .btn-icon-close {
+    background: transparent;
     border: none;
     cursor: pointer;
-    padding: 4px;
+    padding: 8px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-secondary, #666);
+    color: var(--text-main, #0f1419);
+    transition: background-color 0.2s;
   }
-  .btn-icon:hover {
-    background-color: var(--bg-hover, #f5f5f5);
+  .btn-icon-close:hover {
+    background-color: var(--bg-hover, rgba(15, 20, 25, 0.1));
   }
 
   .cropper-body {
     flex: 1;
-    background-color: #000;
+    background-color: #111; /* Dark background for image editing specifically */
     position: relative;
     overflow: hidden;
     min-height: 300px;
-    max-height: 500px; /* Limit height */
+    /* max-height is handled by flex modal */
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .img-container {
     width: 100%;
     height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    /* Ensure image fits */
+    max-height: 60vh;
   }
 
   .source-image {
@@ -204,75 +256,127 @@
     max-height: 100%;
   }
 
-  .cropper-controls {
+  .loading-state {
+    color: white;
     display: flex;
+    align-items: center;
     justify-content: center;
-    gap: 16px;
-    padding: 12px;
-    background-color: var(--bg-secondary, #f9f9f9);
-    border-bottom: 1px solid var(--border-color, #eee);
+    height: 100%;
+    width: 100%;
   }
 
-  .control-btn {
-    background: none;
-    border: 1px solid var(--border-strong, #ddd);
-    width: 40px;
-    height: 40px;
+  /* Toolbar */
+  .cropper-toolbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background-color: var(--bg-secondary, #f7f9f9);
+    border-bottom: 1px solid var(--border-color, #eff3f4);
+  }
+
+  .toolbar-group {
+    display: flex;
+    gap: 4px;
+    background-color: var(--bg-main, #fff);
+    border-radius: 12px;
+    padding: 4px;
+    border: 1px solid var(--border-color, #cfd9de);
+  }
+
+  .toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background-color: var(--border-strong, #cfd9de);
+    margin: 0 4px;
+  }
+
+  .tool-btn {
+    background: transparent;
+    border: none;
+    width: 36px;
+    height: 36px;
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: var(--text-main, #333);
+    color: var(--text-secondary, #536471);
     transition: all 0.2s;
   }
 
-  .control-btn:hover {
-    background-color: var(--bg-hover, #eee);
-    border-color: var(--text-secondary, #999);
+  .tool-btn:hover {
+    background-color: var(--bg-hover, rgba(15, 20, 25, 0.1));
+    color: var(--primary-color, #1d9bf0);
   }
 
+  /* Footer */
   .cropper-footer {
     padding: 16px 20px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between; /* Spread out cancel and save */
     gap: 12px;
     background-color: var(--bg-main, #fff);
   }
 
   .btn-cancel {
-    padding: 10px 20px;
-    border: 1px solid var(--border-color, #ddd);
+    padding: 10px 24px;
+    border: 1px solid var(--border-strong, #cfd9de);
     background: transparent;
-    border-radius: 99px;
-    font-weight: 600;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 15px;
     cursor: pointer;
-    color: var(--text-secondary, #666);
+    color: var(--text-main, #0f1419);
+    transition: background-color 0.2s;
   }
   .btn-cancel:hover {
-    background-color: var(--bg-hover, #f5f5f5);
+    background-color: var(--bg-hover, rgba(15, 20, 25, 0.1));
   }
 
   .btn-save {
     padding: 10px 24px;
-    background-color: var(--primary-color, #000);
-    color: white;
-    border: none;
-    border-radius: 99px;
+    background-color: var(--text-main, #0f1419); /* Black primary button */
+    color: var(--bg-main, #fff);
+    border: 1px solid transparent;
+    border-radius: 9999px;
     font-weight: 700;
+    font-size: 15px;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
     transition: opacity 0.2s;
+    margin-left: auto; /* Push to right if we want, but justify-between handles it */
   }
   .btn-save:hover {
     opacity: 0.9;
+  }
+  .btn-save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   /* Circular visual guide override */
   :global(.circular-guide .cropper-view-box),
   :global(.circular-guide .cropper-face) {
     border-radius: 50%;
+  }
+
+  /* Make the crop box outline cleaner */
+  :global(.cropper-view-box) {
+    outline: 2px solid var(--primary-color, #1d9bf0) !important;
+    outline-color: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  :global(.cropper-line) {
+    background-color: rgba(255, 255, 255, 0.5) !important;
+  }
+
+  :global(.cropper-point) {
+    background-color: var(--primary-color, #1d9bf0) !important;
+    width: 8px !important;
+    height: 8px !important;
   }
 </style>

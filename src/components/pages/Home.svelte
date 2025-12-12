@@ -28,6 +28,11 @@
   let postCreatedTrigger = 0; // Trigger to force re-render/fetch
 
   // For the inline post input
+  export let onNavigate: (path: string) => void = (path) => {
+      window.history.pushState({}, "", path);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
   let postInputContent = "";
 
   async function fetchData() {
@@ -289,7 +294,13 @@
           {:else}
               {#each feedItems as item}
                   <!-- Only render posts -->
-                  <div class="feed-item post">
+                  <div
+                    class="feed-item post"
+                    on:click={() => onNavigate(`/post/details?id=${item.id}`)}
+                    on:keydown={(e) => e.key === 'Enter' && onNavigate(`/post/details?id=${item.id}`)}
+                    role="button"
+                    tabindex="0"
+                  >
                       <div class="item-avatar">
                           <img src={item.user?.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${item.user?.username || 'unknown'}`} alt="avatar"/>
                       </div>
@@ -315,10 +326,10 @@
                           </div>
                           <div class="post-text">{item.content}</div>
                           <div class="post-actions">
-                              <button class="action-btn" aria-label="Comment"><MessageCircle size={18} /> <span>0</span></button>
-                              <button class="action-btn" aria-label="Share"><Share2 size={18} /></button>
-                              <button class="action-btn" aria-label="Like"><Heart size={18} /> <span>{item.likes_count}</span></button>
-                              <button class="invest-btn-small" on:click={() => { selectedUser = item.user; showInvestModal = true; }}>
+                              <button class="action-btn" aria-label="Comment" on:click|stopPropagation={() => {}}><MessageCircle size={18} /> <span>{item.replies_count || 0}</span></button>
+                              <button class="action-btn" aria-label="Share" on:click|stopPropagation={() => {}}><Share2 size={18} /></button>
+                              <button class="action-btn" aria-label="Like" on:click|stopPropagation={() => {}}><Heart size={18} /> <span>{item.likes_count}</span></button>
+                              <button class="invest-btn-small" on:click|stopPropagation={() => { selectedUser = item.user; showInvestModal = true; }}>
                                   Invertir
                               </button>
                           </div>

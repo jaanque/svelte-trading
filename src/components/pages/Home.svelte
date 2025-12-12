@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { TrendingUp, Users, DollarSign, Activity, ArrowUpRight, ArrowDownRight, Clock, Coins, MessageCircle, Heart, Share2, Image as ImageIcon, BarChart2, Smile, Gift, ThumbsUp, ThumbsDown, UserPlus, Plus } from "lucide-svelte";
+  import { TrendingUp, TrendingDown, Users, DollarSign, Activity, ArrowUpRight, ArrowDownRight, Clock, Coins, MessageCircle, Heart, Share2, Image as ImageIcon, BarChart2, Smile, Gift, ThumbsUp, ThumbsDown, UserPlus, Plus } from "lucide-svelte";
   import { userProfile } from "../../lib/authStore";
   import { supabase } from "../../lib/supabase";
   import Chart from "chart.js/auto";
@@ -140,6 +140,12 @@
       return date.toLocaleDateString();
   };
 
+  // Mock price change for feed users (since we don't have it in the posts query yet)
+  function getMockPriceChange() {
+      const change = (Math.random() * 10) - 4; // -4% to +6%
+      return change;
+  }
+
   function openPostModal() {
       showPostModal = true;
   }
@@ -199,6 +205,24 @@
 
   <!-- Main Feed Column -->
   <div class="feed-column">
+      <!-- Dashboard Header (Mobile/Desktop Unified for "Intuitive" feel) -->
+      <div class="dashboard-header">
+          <div class="dh-item">
+              <span class="dh-label">Portafolio</span>
+              <span class="dh-value">{formatCurrency(portfolioValue)} <span class="currency">TKN</span></span>
+          </div>
+          <div class="dh-divider"></div>
+          <div class="dh-item">
+               <span class="dh-label">Mercado</span>
+               <div class="dh-sentiment">
+                   <span class="{sentimentRatio > 50 ? 'positive' : 'negative'}">
+                       {sentimentRatio > 50 ? 'Alcista' : 'Bajista'}
+                   </span>
+                   <Activity size={14} class={sentimentRatio > 50 ? 'positive-icon' : 'negative-icon'} />
+               </div>
+          </div>
+      </div>
+
       <!-- Create Post Box -->
       <div class="compose-box">
           <div class="compose-avatar">
@@ -215,7 +239,7 @@
             role="button"
             tabindex="0"
           >
-              <input type="text" placeholder="¿Qué está pasando?" readonly />
+              <input type="text" placeholder="¿Qué estás pensando sobre el mercado?" readonly />
               <div class="compose-actions">
                   <ImageIcon size={20} color="var(--primary-color)" />
                   <BarChart2 size={20} color="var(--primary-color)" transform="rotate(90)"/>
@@ -235,18 +259,6 @@
              <button class="m-claim-btn {dailyRewardClaimed ? 'claimed' : ''}" on:click={claimReward}>
                  {dailyRewardClaimed ? '¡Reclamado!' : 'Reclamar 50 Tokens'}
              </button>
-          </div>
-
-          <!-- Sentiment (Mobile) -->
-          <div class="mobile-feature-card">
-             <div class="m-sentiment-header">
-                 <Activity size={20} color="var(--text-main)"/>
-                 <span class="m-title">Sentimiento: {sentimentRatio > 50 ? 'Alcista' : 'Bajista'}</span>
-             </div>
-             <div class="sentiment-bar mobile">
-                  <div class="bar-fill buy" style="width: {sentimentRatio}%"></div>
-                  <div class="bar-fill sell" style="width: {100 - sentimentRatio}%"></div>
-             </div>
           </div>
       </div>
 
@@ -283,16 +295,32 @@
                       </div>
                       <div class="item-content">
                           <div class="item-header">
-                              <span class="name">{item.user?.full_name || 'Usuario desconocido'}</span>
-                              <span class="handle">@{item.user?.username || 'unknown'}</span>
-                              <span class="dot">·</span>
-                              <span class="time">{formatTime(item.created_at)}</span>
+                              <div class="header-left">
+                                  <span class="name">{item.user?.full_name || 'Usuario desconocido'}</span>
+                                  <span class="handle">@{item.user?.username || 'unknown'}</span>
+                                  <span class="dot">·</span>
+                                  <span class="time">{formatTime(item.created_at)}</span>
+                              </div>
+                              <!-- Visual cue for trading context -->
+                              {#if item.user}
+                                  <div class="price-badge {Math.random() > 0.5 ? 'positive' : 'negative'}">
+                                      {#if Math.random() > 0.5}
+                                          <TrendingUp size={12} />
+                                      {:else}
+                                          <TrendingDown size={12} />
+                                      {/if}
+                                      <span>${(50 + Math.random()*10).toFixed(0)}</span>
+                                  </div>
+                              {/if}
                           </div>
                           <div class="post-text">{item.content}</div>
                           <div class="post-actions">
                               <button class="action-btn" aria-label="Comment"><MessageCircle size={18} /> <span>0</span></button>
                               <button class="action-btn" aria-label="Share"><Share2 size={18} /></button>
                               <button class="action-btn" aria-label="Like"><Heart size={18} /> <span>{item.likes_count}</span></button>
+                              <button class="invest-btn-small" on:click={() => { selectedUser = item.user; showInvestModal = true; }}>
+                                  Invertir
+                              </button>
                           </div>
                       </div>
                   </div>
@@ -565,7 +593,7 @@
       gap: 8px;
   }
 
-  .m-reward-header, .m-sentiment-header {
+  .m-reward-header {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -590,14 +618,6 @@
   .m-claim-btn.claimed {
       background-color: var(--bg-tertiary);
       color: var(--text-secondary);
-  }
-
-  .sentiment-bar.mobile {
-      height: 6px;
-      border-radius: 99px;
-      display: flex;
-      overflow: hidden;
-      background: var(--bg-tertiary);
   }
 
   .feed-list {
@@ -671,13 +691,14 @@
   .action-btn:hover { color: var(--primary-color); }
 
   .empty-feed {
-      padding: 40px 20px;
+      padding: 60px 20px;
       text-align: center;
       color: var(--text-secondary);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
+      background: var(--bg-main);
   }
 
   .empty-icon {
@@ -900,13 +921,118 @@
   }
 
   .create-first-post-btn {
-      margin-top: 12px;
+      margin-top: 8px;
       background-color: var(--primary-color);
       color: white;
       border: none;
       border-radius: 99px;
-      padding: 8px 24px;
+      padding: 10px 24px;
       font-weight: 700;
       cursor: pointer;
+      transition: opacity 0.2s;
+  }
+
+  .create-first-post-btn:hover {
+      opacity: 0.9;
+  }
+
+  /* Dashboard Header */
+  .dashboard-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+  }
+
+  .dh-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+  }
+
+  .dh-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+  }
+
+  .dh-value {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+  }
+
+  .dh-value .currency {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+  }
+
+  .dh-divider {
+      width: 1px;
+      height: 32px;
+      background-color: var(--border-color);
+  }
+
+  .dh-sentiment {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 16px;
+  }
+
+  .positive { color: var(--success-color); }
+  .negative { color: var(--danger-color); }
+  :global(.positive-icon) { color: var(--success-color); }
+  :global(.negative-icon) { color: var(--danger-color); }
+
+  .header-left {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+  }
+
+  .price-badge {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: auto;
+  }
+
+  .price-badge.positive {
+      color: var(--success-color);
+      background-color: rgba(16, 185, 129, 0.1);
+  }
+
+  .price-badge.negative {
+      color: var(--danger-color);
+      background-color: rgba(239, 68, 68, 0.1);
+  }
+
+  .invest-btn-small {
+      margin-left: auto;
+      background-color: transparent;
+      border: 1px solid var(--primary-color);
+      color: var(--primary-color);
+      padding: 4px 12px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+  }
+
+  .invest-btn-small:hover {
+      background-color: rgba(29, 155, 240, 0.1);
   }
 </style>

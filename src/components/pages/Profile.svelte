@@ -6,6 +6,7 @@
   import InvestModal from "../../components/general/InvestModal.svelte";
   import SellModal from "../../components/general/SellModal.svelte";
   import PriceChart from "../../components/general/PriceChart.svelte";
+  import ImageCropperModal from "../../components/general/ImageCropperModal.svelte";
 
   export let currentPath = "";
 
@@ -26,6 +27,13 @@
   let bannerInput: HTMLInputElement;
   let uploading = false;
   let uploadingBanner = false;
+
+  // Cropper State
+  let showCropper = false;
+  let cropImageFile: File | null = null;
+  let cropAspectRatio = 1;
+  let cropCircular = false;
+  let isBannerCrop = false; // To distinguish between avatar and banner upload in cropper callback
 
   let activeTab = "Chart";
   const tabs = ["Chart", "Posts", "Replies", "Media", "Likes"];
@@ -167,13 +175,38 @@
       }
   }
 
-  async function uploadAvatar(event: Event) {
+  function handleFileSelect(event: Event, isBanner: boolean) {
       const target = event.target as HTMLInputElement;
       if (!target.files || target.files.length === 0) return;
 
-      const file = target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+      cropImageFile = target.files[0];
+      isBannerCrop = isBanner;
+
+      if (isBanner) {
+          cropAspectRatio = 3; // Wider aspect ratio for banners, or NaN for free? Let's say 3:1 is good guidance
+          cropCircular = false;
+      } else {
+          cropAspectRatio = 1;
+          cropCircular = true;
+      }
+
+      showCropper = true;
+      target.value = ''; // Reset input so same file can be selected again if needed
+  }
+
+  async function handleCrop(event: CustomEvent) {
+      const blob = event.detail.blob;
+      showCropper = false;
+
+      if (isBannerCrop) {
+          await uploadBanner(blob);
+      } else {
+          await uploadAvatar(blob);
+      }
+  }
+
+  async function uploadAvatar(file: Blob) {
+      const fileName = `${Math.random()}.jpg`; // Cropper exports as jpeg by default
       const filePath = `${profileData.id}/${fileName}`;
 
       uploading = true;
@@ -206,13 +239,8 @@
       }
   }
 
-  async function uploadBanner(event: Event) {
-      const target = event.target as HTMLInputElement;
-      if (!target.files || target.files.length === 0) return;
-
-      const file = target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+  async function uploadBanner(file: Blob) {
+      const fileName = `${Math.random()}.jpg`;
       const filePath = `${profileData.id}/${fileName}`;
 
       uploadingBanner = true;
@@ -341,7 +369,7 @@
                     type="file"
                     accept="image/*"
                     bind:this={bannerInput}
-                    on:change={uploadBanner}
+                    on:change={(e) => handleFileSelect(e, true)}
                     style="display: none;"
                 />
            </div>
@@ -381,7 +409,7 @@
                     type="file"
                     accept="image/*"
                     bind:this={fileInput}
-                    on:change={uploadAvatar}
+                    on:change={(e) => handleFileSelect(e, false)}
                     style="display: none;"
                 />
             {/if}
@@ -595,6 +623,16 @@
         on:success={loadProfile}
     />
   {/if}
+
+  {#if showCropper}
+    <ImageCropperModal
+      imageFile={cropImageFile}
+      aspectRatio={cropAspectRatio}
+      circular={cropCircular}
+      on:cancel={() => showCropper = false}
+      on:crop={handleCrop}
+    />
+  {/if}
 </div>
 
 <style>
@@ -675,44 +713,6 @@
     position: relative;
   }
 
-  .banner-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.1); /* Subtle darkening on hover? Or just the button? */
-      /* Actually let's just put the button in the corner */
-      opacity: 0;
-      transition: opacity 0.2s;
-      display: flex;
-      justify-content: flex-end;
-      align-items: flex-end;
-      padding: 16px;
-  }
-
-  .banner:hover .banner-overlay {
-      opacity: 1;
-  }
-
-  .edit-banner-btn {
-      background-color: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: white;
-      transition: background-color 0.2s;
-  }
-
-  .edit-banner-btn:hover {
-      background-color: rgba(0, 0, 0, 0.7);
-  }
-
   /* Content Wrapper - Controls width of the actual profile info and feed */
   .profile-content-wrapper {
       width: 100%;
@@ -760,27 +760,6 @@
     z-index: 10;
   }
 
-  .avatar-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0.4);
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      opacity: 0;
-      transition: opacity 0.2s;
-      cursor: pointer;
-      margin: 4px; /* Match padding */
-  }
-
-  .avatar-wrapper:hover .avatar-overlay {
-      opacity: 1;
-  }
-
   /* Responsive Avatar */
   @media (max-width: 640px) {
     .banner {
@@ -802,7 +781,7 @@
     border-radius: 50%;
     object-fit: cover;
     background-color: var(--bg-tertiary);
-    cursor: default; /* Changed from pointer unless logic overrides */
+    cursor: pointer;
     border: 4px solid var(--bg-main); /* Ensure separation from banner/bg */
     box-sizing: content-box; /* To account for border inside sizing if needed, or just let padding handle it */
     margin: -4px; /* Counter padding */
@@ -1230,5 +1209,43 @@
   }
   .btn-secondary:hover {
     background-color: var(--bg-hover);
+  }
+
+  .banner-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.1); /* Subtle darkening on hover? Or just the button? */
+      /* Actually let's just put the button in the corner */
+      opacity: 0;
+      transition: opacity 0.2s;
+      display: flex;
+      justify-content: flex-end;
+      align-items: flex-end;
+      padding: 16px;
+  }
+
+  .banner:hover .banner-overlay {
+      opacity: 1;
+  }
+
+  .edit-banner-btn {
+      background-color: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+      transition: background-color 0.2s;
+  }
+
+  .edit-banner-btn:hover {
+      background-color: rgba(0, 0, 0, 0.7);
   }
 </style>
